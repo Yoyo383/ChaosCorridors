@@ -1,6 +1,8 @@
 #pragma once
 #include "SFML/System.hpp"
 
+float degToRad(float degrees);
+
 float vecMagnitude(const sf::Vector2f& vec);
 float vecAngle(const sf::Vector2f& vec);
 sf::Vector2f vecNormalize(const sf::Vector2f& vec);

@@ -1,6 +1,10 @@
 #include "util.h"
 #include <math.h>
 
+float degToRad(float degrees) {
+	return degrees * (M_PI / 180);
+}
+
 float vecMagnitude(const sf::Vector2f& vec) {
 	return sqrtf(vec.x * vec.x + vec.y * vec.y);
 }
@@ -8,6 +12,8 @@ float vecAngle(const sf::Vector2f& vec) {
 	return atan2f(vec.y, vec.x);
 }
 sf::Vector2f vecNormalize(const sf::Vector2f& vec) {
+	if (vec == sf::Vector2f(0, 0))
+		return vec;
 	float magnitude = vecMagnitude(vec);
 	return { vec.x / magnitude, vec.y / magnitude };
 }
