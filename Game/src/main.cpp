@@ -81,7 +81,11 @@ static std::pair<bool, float> raycast(sf::Vector2f pos, float angle, int world[]
 	return std::make_pair(foundCell, distance);
 }
 
-	return hit;
+static sf::Vector2f wasdInput() {
+	return {
+		(float)(sf::Keyboard::isKeyPressed(sf::Keyboard::W) - sf::Keyboard::isKeyPressed(sf::Keyboard::S)),
+		(float)(sf::Keyboard::isKeyPressed(sf::Keyboard::D) - sf::Keyboard::isKeyPressed(sf::Keyboard::A))
+	};
 }
 
 int main() {
@@ -102,14 +106,17 @@ int main() {
 	float dt;
 
 	sf::Vector2f pos(WORLD_SIZE / 2, WORLD_SIZE / 2);
+	sf::Vector2f velocity;
+	float direction = 0;
+	float fov = degToRad(70);
 	float speed = WORLD_SIZE / 4.0f;
 
 	sf::Vector2f hit;
 
-	sf::CircleShape circle(10);
-	circle.setFillColor(sf::Color::Green);
-	circle.setOrigin(10, 10);
-	circle.setPosition(pos);
+	sf::CircleShape playerCircle(10);
+	playerCircle.setFillColor(sf::Color::Green);
+	playerCircle.setOrigin(10, 10);
+	playerCircle.setPosition(pos);
 
 	while (window.isOpen()) {
 		dt = deltaClock.restart().asSeconds();
@@ -117,21 +124,45 @@ int main() {
 		while (window.pollEvent(event)) {
 			if (event.type == sf::Event::Closed)
 				window.close();
+			if (event.type == sf::Event::KeyPressed)
+				if (event.key.code == sf::Keyboard::Escape)
+					window.close();
 		}
 
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
-			window.close();
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
-			pos.y -= speed * dt;
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
-			pos.y += speed * dt;
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
-			pos.x -= speed * dt;
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
-			pos.x += speed * dt;
+		// setting player's direction
+		direction = vecAngle(static_cast<sf::Vector2f>(sf::Mouse::getPosition(window)) - sf::Vector2f(WINDOW_SIZE / 2, WINDOW_SIZE / 2));
+
+		// getting input
+		sf::Vector2f wasd = wasdInput();
+		if (wasd != sf::Vector2f()) {
+			float movementAngle = vecAngle(wasd);
+			float cos = cosf(movementAngle), sin = sinf(movementAngle);
+			// fix weird bug
+			if (abs(cos) < 0.00001f)
+				cos = 0;
+			if (abs(sin) < 0.00001f)
+				sin = 0;
+
+			sf::Vector2f dirVector = { cosf(direction), sinf(direction) };
+			// rotating dirVector by movementAngle
+			velocity = {
+				dirVector.x * cos - dirVector.y * sin,
+				dirVector.x * sin + dirVector.y * cos
+			};
+		}
+		else
+			velocity = { 0, 0 };
+		
+		// applying velocity
+		velocity = vecNormalize(velocity) * speed * dt;
+		sf::Vector2f nextPos = pos + velocity;
+		if (world[(int)nextPos.y][(int)nextPos.x] == 0)
+			pos = nextPos;
+
 
 		window.clear(sf::Color::Black);
 
+		// drawing the world
 		for (int i = 0; i < WORLD_SIZE; i++) {
 			for (int j = 0; j < WORLD_SIZE; j++) {
 				int value = world[i][j];
@@ -144,30 +175,8 @@ int main() {
 			}
 		}
 
-
-		if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
-			hit = raycast(window, pos, world);
-			sf::Vector2i mouseRaw = sf::Mouse::getPosition(window);
-			sf::Vertex line[] = { 
-				sf::Vertex(pos * CELL_SIZE, sf::Color::Magenta), 
-				sf::Vertex({(float)mouseRaw.x, (float)mouseRaw.y}, sf::Color::Magenta) 
-			};
-			window.draw(line, 2, sf::Lines);
-		}
-		else
-			hit = { -1, -1 };
-
-
-		circle.setPosition(pos * CELL_SIZE);
-		window.draw(circle);
-
-		if (hit != sf::Vector2f(-1, -1)) {
-			sf::CircleShape collision(5);
-			collision.setFillColor(sf::Color::Red);
-			collision.setOrigin(5, 5);
-			collision.setPosition(hit * CELL_SIZE);
-			window.draw(collision);
-		}
+		playerCircle.setPosition(pos * CELL_SIZE);
+		window.draw(playerCircle);
 
 		window.display();
 	}
