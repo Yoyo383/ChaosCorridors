@@ -9,23 +9,19 @@ const int WORLD_SIZE = 8;
 const int CELL_SIZE = WINDOW_SIZE / WORLD_SIZE;
 
 /// <summary>
-/// The function raycasts from pos to the mouse and finds a collision with the world.
+/// The function raycasts from pos in a certain direction and finds a collision with the world.
 /// It uses the DDA algorithm from this video: https://youtu.be/NbSee-XM7WA
 /// </summary>
-/// <param name="window">The window.</param>
 /// <param name="pos">The starting position.</param>
+/// <param name="angle">The direction of the ray.</param>
 /// <param name="world">The world.</param>
-/// <returns>The coordinates of the collision. If there is no collision, it returns (-1, -1).</returns>
-static sf::Vector2f raycast(sf::RenderWindow& window, sf::Vector2f pos, int world[][WORLD_SIZE]) {
+/// <returns>Whether the ray hit + the distance of the ray. If there is no collision, it returns (-1, -1).</returns>
+static std::pair<bool, float> raycast(sf::Vector2f pos, float angle, int world[][WORLD_SIZE]) {
 	// the result
 	sf::Vector2f hit(-1, -1);
 
-	// get mouse position relative to screen
-	sf::Vector2i mouseRaw = sf::Mouse::getPosition(window);
-	sf::Vector2f mouse = sf::Vector2f((float)mouseRaw.x, (float)mouseRaw.y) / CELL_SIZE;
-
-	// ray direction (also normalized)
-	sf::Vector2f rayDir = vecNormalize(mouse - pos);
+	// ray direction
+	sf::Vector2f rayDir = { cosf(angle), sinf(angle) };
 
 	// the unit step size
 	sf::Vector2f rayUnitStepSize = { 
@@ -60,7 +56,7 @@ static sf::Vector2f raycast(sf::RenderWindow& window, sf::Vector2f pos, int worl
 	float maxDistance = WORLD_SIZE;
 	float distance = 0;
 
-	// walk on the ray until collision (or distance exceeds maxDistance)
+	// walk on the ray until collision (or distance is bigger than maxDistance)
 	while (!foundCell && distance < maxDistance) {
 		if (rayLength1D.x < rayLength1D.y) {
 			currentCell.x += step.x;
