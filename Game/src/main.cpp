@@ -4,6 +4,10 @@
 #include "SFML/Graphics.hpp"
 #include "util.h"
 
+const int WINDOW_SIZE = 800;
+const int WORLD_SIZE = 8;
+const int CELL_SIZE = WINDOW_SIZE / WORLD_SIZE;
+
 /// <summary>
 /// The function raycasts from pos to the mouse and finds a collision with the world.
 /// It uses the DDA algorithm from this video: https://youtu.be/NbSee-XM7WA
@@ -12,13 +16,13 @@
 /// <param name="pos">The starting position.</param>
 /// <param name="world">The world.</param>
 /// <returns>The coordinates of the collision. If there is no collision, it returns (-1, -1).</returns>
-static sf::Vector2f raycast(sf::RenderWindow& window, sf::Vector2f pos, int world[][8]) {
+static sf::Vector2f raycast(sf::RenderWindow& window, sf::Vector2f pos, int world[][WORLD_SIZE]) {
 	// the result
 	sf::Vector2f hit(-1, -1);
 
 	// get mouse position relative to screen
 	sf::Vector2i mouseRaw = sf::Mouse::getPosition(window);
-	sf::Vector2f mouse = sf::Vector2f((float)mouseRaw.x, (float)mouseRaw.y) / 100;
+	sf::Vector2f mouse = sf::Vector2f((float)mouseRaw.x, (float)mouseRaw.y) / CELL_SIZE;
 
 	// ray direction (also normalized)
 	sf::Vector2f rayDir = vecNormalize(mouse - pos);
@@ -33,6 +37,7 @@ static sf::Vector2f raycast(sf::RenderWindow& window, sf::Vector2f pos, int worl
 	sf::Vector2f rayLength1D;
 	sf::Vector2i step;
 
+	// set step and initial ray length
 	if (rayDir.x < 0) {
 		step.x = -1;
 		rayLength1D.x = (pos.x - float(currentCell.x)) * rayUnitStepSize.x;
@@ -52,9 +57,10 @@ static sf::Vector2f raycast(sf::RenderWindow& window, sf::Vector2f pos, int worl
 	}
 
 	bool foundCell = false;
-	float maxDistance = 8;
+	float maxDistance = WORLD_SIZE;
 	float distance = 0;
 
+	// walk on the ray until collision (or distance exceeds maxDistance)
 	while (!foundCell && distance < maxDistance) {
 		if (rayLength1D.x < rayLength1D.y) {
 			currentCell.x += step.x;
@@ -67,7 +73,7 @@ static sf::Vector2f raycast(sf::RenderWindow& window, sf::Vector2f pos, int worl
 			rayLength1D.y += rayUnitStepSize.y;
 		}
 
-		if (currentCell.x >= 0 && currentCell.x < 8 && currentCell.y >= 0 && currentCell.y < 8)
+		if (currentCell.x >= 0 && currentCell.x < WORLD_SIZE && currentCell.y >= 0 && currentCell.y < WORLD_SIZE)
 		{
 			if (world[currentCell.y][currentCell.x] == 1)
 			{
@@ -83,9 +89,9 @@ static sf::Vector2f raycast(sf::RenderWindow& window, sf::Vector2f pos, int worl
 }
 
 int main() {
-	sf::RenderWindow window(sf::VideoMode(800, 800), "Yay window!", sf::Style::Titlebar | sf::Style::Close);
+	sf::RenderWindow window(sf::VideoMode(WINDOW_SIZE, WINDOW_SIZE), "Yay window!", sf::Style::Titlebar | sf::Style::Close);
 
-	int world[][8] = {
+	int world[][WORLD_SIZE] = {
 		{1, 1, 1, 1, 1, 1, 1, 1},
 		{1, 0, 0, 0, 0, 0, 0, 1},
 		{1, 0, 1, 0, 1, 0, 1, 1},
@@ -99,10 +105,10 @@ int main() {
 	sf::Clock deltaClock;
 	float dt;
 
-	sf::Vector2f pos(4, 4);
-	float speed = 4;
+	sf::Vector2f pos(WORLD_SIZE / 2, WORLD_SIZE / 2);
+	float speed = WORLD_SIZE / 4.0f;
 
-	sf::Vector2f hit(1, 6);
+	sf::Vector2f hit;
 
 	sf::CircleShape circle(10);
 	circle.setFillColor(sf::Color::Green);
@@ -130,14 +136,14 @@ int main() {
 
 		window.clear(sf::Color::Black);
 
-		for (int i = 0; i < 8; i++) {
-			for (int j = 0; j < 8; j++) {
+		for (int i = 0; i < WORLD_SIZE; i++) {
+			for (int j = 0; j < WORLD_SIZE; j++) {
 				int value = world[i][j];
 				sf::Color c;
 				value == 0 ? c = sf::Color::White : c = sf::Color::Blue;
-				sf::RectangleShape square(sf::Vector2f(100, 100));
+				sf::RectangleShape square(sf::Vector2f(CELL_SIZE, CELL_SIZE));
 				square.setFillColor(c);
-				square.setPosition(j * 100, i * 100);
+				square.setPosition(j * CELL_SIZE, i * CELL_SIZE);
 				window.draw(square);
 			}
 		}
@@ -147,7 +153,7 @@ int main() {
 			hit = raycast(window, pos, world);
 			sf::Vector2i mouseRaw = sf::Mouse::getPosition(window);
 			sf::Vertex line[] = { 
-				sf::Vertex(pos * 100, sf::Color::Magenta), 
+				sf::Vertex(pos * CELL_SIZE, sf::Color::Magenta), 
 				sf::Vertex({(float)mouseRaw.x, (float)mouseRaw.y}, sf::Color::Magenta) 
 			};
 			window.draw(line, 2, sf::Lines);
@@ -156,14 +162,14 @@ int main() {
 			hit = { -1, -1 };
 
 
-		circle.setPosition(pos * 100);
+		circle.setPosition(pos * CELL_SIZE);
 		window.draw(circle);
 
 		if (hit != sf::Vector2f(-1, -1)) {
 			sf::CircleShape collision(5);
 			collision.setFillColor(sf::Color::Red);
 			collision.setOrigin(5, 5);
-			collision.setPosition(hit * 100);
+			collision.setPosition(hit * CELL_SIZE);
 			window.draw(collision);
 		}
 
