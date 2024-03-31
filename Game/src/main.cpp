@@ -78,8 +78,8 @@ static std::pair<bool, float> raycast(sf::Vector2f pos, float angle, int world[]
 		}
 	}
 
-	if (foundCell)
-		hit = pos + distance * rayDir;
+	return std::make_pair(foundCell, distance);
+}
 
 	return hit;
 }
