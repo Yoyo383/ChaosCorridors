@@ -105,7 +105,7 @@ int main() {
 	sf::Clock deltaClock;
 	float dt;
 
-	sf::Vector2f pos(WORLD_SIZE / 2, WORLD_SIZE / 2);
+	sf::Vector2f pos(1.5, 1.5);
 	sf::Vector2f velocity;
 	float direction = 0;
 	float fov = degToRad(70);
@@ -130,7 +130,11 @@ int main() {
 		}
 
 		// setting player's direction
-		direction = vecAngle(static_cast<sf::Vector2f>(sf::Mouse::getPosition(window)) - sf::Vector2f(WINDOW_SIZE / 2, WINDOW_SIZE / 2));
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
+			direction -= dt;
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
+			direction += dt;
+		// direction = vecAngle(static_cast<sf::Vector2f>(sf::Mouse::getPosition(window)) - sf::Vector2f(WINDOW_SIZE / 2, WINDOW_SIZE / 2));
 
 		// getting input
 		sf::Vector2f wasd = wasdInput();
@@ -162,21 +166,35 @@ int main() {
 
 		window.clear(sf::Color::Black);
 
-		// drawing the world
-		for (int i = 0; i < WORLD_SIZE; i++) {
-			for (int j = 0; j < WORLD_SIZE; j++) {
-				int value = world[i][j];
-				sf::Color c;
-				value == 0 ? c = sf::Color::White : c = sf::Color::Blue;
-				sf::RectangleShape square(sf::Vector2f(CELL_SIZE, CELL_SIZE));
-				square.setFillColor(c);
-				square.setPosition(j * CELL_SIZE, i * CELL_SIZE);
-				window.draw(square);
-			}
-		}
+		float angle;
+		for (int x = 0; x < window.getSize().x; x++) {
+			angle = (direction - fov / 2.0f) + ((float)x / (float)window.getSize().x) * fov;
 
-		playerCircle.setPosition(pos * CELL_SIZE);
-		window.draw(playerCircle);
+			// casting ray and fixing the fisheye problem
+			auto[isHit, distance] = raycast(pos, angle, world);
+			distance *= cosf(direction - angle);
+
+			if (!isHit)
+				continue;
+
+			// calculating floor and ceiling y values
+			float ceiling = (window.getSize().y / 2.0f) - 20 * (window.getSize().y / (distance * CELL_SIZE));
+			float floor = window.getSize().y - ceiling;
+
+			// calculating shading
+			sf::Color color = sf::Color::Blue;
+			float brightness = 1.0f - (distance / WORLD_SIZE);
+			if (brightness < 0.0f)
+				brightness = 0.0f;
+			color.b *= brightness;
+
+			sf::Vertex blockLine[2] = {
+				sf::Vertex({ (float)x, ceiling }, color),
+				sf::Vertex({ (float)x, floor }, color)
+			};
+
+			window.draw(blockLine, 2, sf::Lines);
+		}
 
 		window.display();
 	}
