@@ -27,7 +27,7 @@ static std::tuple<bool, float, bool> raycast(sf::Vector2f pos, float angle, int 
 		sqrt(1 + (rayDir.x / rayDir.y) * (rayDir.x / rayDir.y)) 
 	};
 
-	sf::Vector2i currentCell = { (int)pos.x, (int)pos.y };
+	sf::Vector2i currentCell = { (int)floor(pos.x), (int)floor(pos.y) };
 	sf::Vector2f rayLength1D;
 	sf::Vector2i step;
 
@@ -52,7 +52,7 @@ static std::tuple<bool, float, bool> raycast(sf::Vector2f pos, float angle, int 
 
 	bool foundCell = false;
 	bool differentColor = false;
-	float maxDistance = WORLD_SIZE;
+	float maxDistance = 2 * WORLD_SIZE;
 	float distance = 0;
 
 	// walk on the ray until collision (or distance is bigger than maxDistance)
@@ -90,11 +90,11 @@ static sf::Vector2f wasdInput() {
 }
 
 int main() {
-	sf::RenderWindow window(sf::VideoMode::getDesktopMode(), "Yay window!", sf::Style::Fullscreen);
+	sf::RenderWindow window(sf::VideoMode(1000, 800), "Yay window!");
 	window.setMouseCursorVisible(false);
 
 	int world[][WORLD_SIZE] = {
-		{1, 1, 1, 1, 1, 1, 1, 1},
+		{1, 0, 1, 1, 1, 1, 1, 1},
 		{1, 0, 0, 0, 0, 0, 0, 1},
 		{1, 0, 1, 0, 1, 0, 1, 1},
 		{1, 1, 1, 0, 1, 0, 0, 1},
@@ -177,14 +177,29 @@ int main() {
 		// applying velocity
 		velocity = vecNormalize(velocity) * speed * dt;
 		sf::Vector2f nextPos = pos + velocity;
-		if (world[(int)nextPos.y][(int)nextPos.x] == 0)
+		if ((int)floor(nextPos.y) >= WORLD_SIZE ||
+			(int)floor(nextPos.x) >= WORLD_SIZE || 
+			(int)floor(nextPos.y) < 0 || 
+			(int)floor(nextPos.x) < 0)
+			pos = nextPos;
+		else if (world[(int)nextPos.y][(int)nextPos.x] == 0)
 			pos = nextPos;
 
 
 		window.clear(sf::Color::Black);
 
+		sf::RectangleShape sky({ (float)window.getSize().x, (float)window.getSize().y / 2 });
+		sky.setPosition({ 0, 0 });
+		sky.setFillColor({ 135, 206, 235 });
+		window.draw(sky);
+
+		sf::RectangleShape ground({ (float)window.getSize().x, (float)window.getSize().y / 2 });
+		ground.setPosition({ 0, (float)window.getSize().y / 2 });
+		ground.setFillColor({ 38, 139, 7 });
+		window.draw(ground);
+
 		float angle;
-		for (int x = 0; x < window.getSize().x; x++) {
+		for (int x = 0; x <= window.getSize().x; x++) {
 			angle = (direction - fov / 2.0f) + ((float)x / (float)window.getSize().x) * fov;
 
 			// casting ray and fixing the fisheye problem
@@ -194,7 +209,7 @@ int main() {
 			if (!isHit)
 				continue;
 
-			float wallHeight = ((float)window.getSize().y) / (WORLD_SIZE / 2.0f * distance);
+			float wallHeight = ((float)window.getSize().y) / (WORLD_SIZE / 3.0f * distance);
 			if (wallHeight > (float)window.getSize().y)
 				wallHeight = (float)window.getSize().y;
 
