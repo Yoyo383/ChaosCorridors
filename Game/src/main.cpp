@@ -89,7 +89,8 @@ static sf::Vector2f wasdInput() {
 }
 
 int main() {
-	sf::RenderWindow window(sf::VideoMode(WINDOW_SIZE, WINDOW_SIZE), "Yay window!", sf::Style::Titlebar | sf::Style::Close);
+	sf::RenderWindow window(sf::VideoMode::getDesktopMode(), "Yay window!", sf::Style::Fullscreen);
+	window.setMouseCursorVisible(false);
 
 	int world[][WORLD_SIZE] = {
 		{1, 1, 1, 1, 1, 1, 1, 1},
@@ -111,6 +112,13 @@ int main() {
 	float fov = degToRad(70);
 	float speed = WORLD_SIZE / 4.0f;
 
+	float sensitivity = 1.3;
+
+	sf::Vector2i fixedMousePos = { (int)window.getSize().x / 2, (int)window.getSize().y / 2 };
+	bool isFocused = true;
+
+	sf::Mouse::setPosition(fixedMousePos, window);
+
 	sf::Vector2f hit;
 
 	sf::CircleShape playerCircle(10);
@@ -124,20 +132,28 @@ int main() {
 		while (window.pollEvent(event)) {
 			if (event.type == sf::Event::Closed)
 				window.close();
-			if (event.type == sf::Event::KeyPressed)
+			else if (event.type == sf::Event::KeyPressed) {
 				if (event.key.code == sf::Keyboard::Escape)
 					window.close();
+			}
+			else if (event.type == sf::Event::LostFocus)
+				isFocused = false;
+			else if (event.type == sf::Event::GainedFocus)
+				isFocused = true;
 		}
 
-		// setting player's direction
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
-			direction -= dt;
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
-			direction += dt;
-		// direction = vecAngle(static_cast<sf::Vector2f>(sf::Mouse::getPosition(window)) - sf::Vector2f(WINDOW_SIZE / 2, WINDOW_SIZE / 2));
+		// setting player's direction according to mouse
+		if (isFocused) {
+			int currentMousePos = sf::Mouse::getPosition(window).x;
+			float deltaMousePos = (currentMousePos - fixedMousePos.x) * sensitivity;
+			direction += deltaMousePos * dt;
+			sf::Mouse::setPosition(fixedMousePos, window);
+		}
 
 		// getting input
-		sf::Vector2f wasd = wasdInput();
+		sf::Vector2f wasd;
+		if (isFocused)
+			wasd = wasdInput();
 		if (wasd != sf::Vector2f()) {
 			float movementAngle = vecAngle(wasd);
 			float cos = cosf(movementAngle), sin = sinf(movementAngle);
@@ -182,10 +198,12 @@ int main() {
 			float floor = window.getSize().y - ceiling;
 
 			// calculating shading
-			sf::Color color = sf::Color::Blue;
+			sf::Color color = sf::Color::Magenta;
 			float brightness = 1.0f - (distance / WORLD_SIZE);
 			if (brightness < 0.0f)
 				brightness = 0.0f;
+			color.r *= brightness;
+			color.g *= brightness;
 			color.b *= brightness;
 
 			sf::Vertex blockLine[2] = {
