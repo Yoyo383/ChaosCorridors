@@ -90,7 +90,7 @@ static sf::Vector2f wasdInput() {
 }
 
 int main() {
-	sf::RenderWindow window(sf::VideoMode::getDesktopMode(), "Yay window!", sf::Style::Fullscreen);
+	sf::RenderWindow window(sf::VideoMode(1000, 800), "Yay window!");
 	window.setMouseCursorVisible(false);
 
 	int world[][WORLD_SIZE] = {
@@ -183,8 +183,18 @@ int main() {
 
 		window.clear(sf::Color::Black);
 
+		sf::RectangleShape sky({ (float)window.getSize().x, (float)window.getSize().y / 2 });
+		sky.setPosition({ 0, 0 });
+		sky.setFillColor({ 135, 206, 235 });
+		window.draw(sky);
+
+		sf::RectangleShape ground({ (float)window.getSize().x, (float)window.getSize().y / 2 });
+		ground.setPosition({ 0, (float)window.getSize().y / 2 });
+		ground.setFillColor({ 38, 139, 7 });
+		window.draw(ground);
+
 		float angle;
-		for (int x = 0; x < window.getSize().x; x++) {
+		for (int x = 0; x <= window.getSize().x; x++) {
 			angle = (direction - fov / 2.0f) + ((float)x / (float)window.getSize().x) * fov;
 
 			// casting ray and fixing the fisheye problem
@@ -194,7 +204,7 @@ int main() {
 			if (!isHit)
 				continue;
 
-			float wallHeight = ((float)window.getSize().y) / (WORLD_SIZE / 2.0f * distance);
+			float wallHeight = ((float)window.getSize().y) / (WORLD_SIZE / 3.0f * distance);
 			if (wallHeight > (float)window.getSize().y)
 				wallHeight = (float)window.getSize().y;
 
