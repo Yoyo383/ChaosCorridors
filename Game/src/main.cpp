@@ -4,9 +4,7 @@
 #include "SFML/Graphics.hpp"
 #include "util.h"
 
-const int WINDOW_SIZE = 800;
 const int WORLD_SIZE = 8;
-const int CELL_SIZE = WINDOW_SIZE / WORLD_SIZE;
 
 /// <summary>
 /// The function raycasts from pos in a certain direction and finds a collision with the world.
@@ -16,7 +14,7 @@ const int CELL_SIZE = WINDOW_SIZE / WORLD_SIZE;
 /// <param name="angle">The direction of the ray.</param>
 /// <param name="world">The world.</param>
 /// <returns>Whether the ray hit + the distance of the ray. If there is no collision, it returns (-1, -1).</returns>
-static std::pair<bool, float> raycast(sf::Vector2f pos, float angle, int world[][WORLD_SIZE]) {
+static std::tuple<bool, float, bool> raycast(sf::Vector2f pos, float angle, int world[][WORLD_SIZE]) {
 	// the result
 	sf::Vector2f hit(-1, -1);
 
@@ -53,6 +51,7 @@ static std::pair<bool, float> raycast(sf::Vector2f pos, float angle, int world[]
 	}
 
 	bool foundCell = false;
+	bool differentColor = false;
 	float maxDistance = WORLD_SIZE;
 	float distance = 0;
 
@@ -62,11 +61,13 @@ static std::pair<bool, float> raycast(sf::Vector2f pos, float angle, int world[]
 			currentCell.x += step.x;
 			distance = rayLength1D.x;
 			rayLength1D.x += rayUnitStepSize.x;
+			differentColor = true;
 		}
 		else {
 			currentCell.y += step.y;
 			distance = rayLength1D.y;
 			rayLength1D.y += rayUnitStepSize.y;
+			differentColor = false;
 		}
 
 		if (currentCell.x >= 0 && currentCell.x < WORLD_SIZE && currentCell.y >= 0 && currentCell.y < WORLD_SIZE)
@@ -78,7 +79,7 @@ static std::pair<bool, float> raycast(sf::Vector2f pos, float angle, int world[]
 		}
 	}
 
-	return std::make_pair(foundCell, distance);
+	return std::make_tuple(foundCell, distance, differentColor);
 }
 
 static sf::Vector2f wasdInput() {
@@ -187,21 +188,31 @@ int main() {
 			angle = (direction - fov / 2.0f) + ((float)x / (float)window.getSize().x) * fov;
 
 			// casting ray and fixing the fisheye problem
-			auto[isHit, distance] = raycast(pos, angle, world);
+			auto[isHit, distance, differentColor] = raycast(pos, angle, world);
 			distance *= cosf(direction - angle);
 
 			if (!isHit)
 				continue;
 
+			float wallHeight = ((float)window.getSize().y) / (WORLD_SIZE / 2.0f * distance);
+			if (wallHeight > (float)window.getSize().y)
+				wallHeight = (float)window.getSize().y;
+
 			// calculating floor and ceiling y values
-			float ceiling = (window.getSize().y / 2.0f) - 20 * (window.getSize().y / (distance * CELL_SIZE));
+			float ceiling = (window.getSize().y / 2.0f) - (wallHeight / 2.0f);
 			float floor = window.getSize().y - ceiling;
 
 			// calculating shading
-			sf::Color color = sf::Color::Magenta;
+			sf::Color color(100, 100, 100);
 			float brightness = 1.0f - (distance / WORLD_SIZE);
+
+			// darkening the walls with different color
+			if (differentColor)
+				brightness *= 0.7;
+
 			if (brightness < 0.0f)
 				brightness = 0.0f;
+
 			color.r *= brightness;
 			color.g *= brightness;
 			color.b *= brightness;
