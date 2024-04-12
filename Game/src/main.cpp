@@ -148,23 +148,21 @@ int main() {
 			int currentMousePos = sf::Mouse::getPosition(window).x;
 			float deltaMousePos = (currentMousePos - fixedMousePos.x) * sensitivity;
 			direction += deltaMousePos * dt;
+			// always setting the mouse position to the center
 			sf::Mouse::setPosition(fixedMousePos, window);
 		}
 
 		// getting input
 		sf::Vector2f wasd;
+		sf::Vector2f dirVector;
+
 		if (isFocused)
 			wasd = wasdInput();
 		if (wasd != sf::Vector2f()) {
 			float movementAngle = vecAngle(wasd);
 			float cos = cosf(movementAngle), sin = sinf(movementAngle);
-			// fix weird bug
-			if (abs(cos) < 0.00001f)
-				cos = 0;
-			if (abs(sin) < 0.00001f)
-				sin = 0;
 
-			sf::Vector2f dirVector = { cosf(direction), sinf(direction) };
+			dirVector = { cosf(direction), sinf(direction) };
 			// rotating dirVector by movementAngle
 			velocity = {
 				dirVector.x * cos - dirVector.y * sin,
@@ -174,11 +172,19 @@ int main() {
 		else
 			velocity = { 0, 0 };
 		
-		// applying velocity
+		// calculating velocity
 		velocity = vecNormalize(velocity) * speed * dt;
-		sf::Vector2f nextPos = pos + velocity;
-		if (world[(int)nextPos.y][(int)nextPos.x] == 0)
-			pos = nextPos;
+
+		// move collision away from camera
+		sf::Vector2f collisionPos = pos + dirVector * 0.3;
+		
+		// checking collision
+		if (world[(int)(collisionPos.y + velocity.y)][(int)collisionPos.x] == 1)
+			velocity.y = 0;
+		if (world[(int)collisionPos.y][(int)(collisionPos.x + velocity.x)] == 1)
+			velocity.x = 0;
+
+		pos += velocity;
 
 
 		window.clear(sf::Color::Black);
@@ -223,6 +229,7 @@ int main() {
 			if (brightness < 0.0f)
 				brightness = 0.0f;
 
+			// apply brightness
 			color.r *= brightness;
 			color.g *= brightness;
 			color.b *= brightness;
