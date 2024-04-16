@@ -175,17 +175,23 @@ int main() {
 		// calculating velocity
 		velocity = vecNormalize(velocity) * speed * dt;
 
+		// return sign of a number (1, -1, or 0)
+		auto sign = [](float x) {
+			return (x > 0) - (x < 0);
+		};
+
 		// move collision away from camera
-		sf::Vector2f collisionPos = pos + dirVector * 0.3;
+		sf::Vector2f collisionRadius = sf::Vector2f(sign(velocity.x), sign(velocity.y)) * 0.25f;
 		
 		// checking collision
-		if (world[(int)(collisionPos.y + velocity.y)][(int)collisionPos.x] == 1)
+		if (world[(int)(pos.y + velocity.y + collisionRadius.y)][(int)pos.x] == 1)
 			velocity.y = 0;
-		if (world[(int)collisionPos.y][(int)(collisionPos.x + velocity.x)] == 1)
+		if (world[(int)pos.y][(int)(pos.x + velocity.x + collisionRadius.x)] == 1)
 			velocity.x = 0;
 
 		pos += velocity;
 
+		// start drawing
 
 		window.clear(sf::Color::Black);
 
