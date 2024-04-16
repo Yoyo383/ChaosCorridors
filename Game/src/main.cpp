@@ -3,8 +3,7 @@
 #include "SFML/Window.hpp"
 #include "SFML/Graphics.hpp"
 #include "util.h"
-
-const int WORLD_SIZE = 8;
+#include "maze.h"
 
 /// <summary>
 /// The function raycasts from pos in a certain direction and finds a collision with the world.
@@ -14,7 +13,7 @@ const int WORLD_SIZE = 8;
 /// <param name="angle">The direction of the ray.</param>
 /// <param name="world">The world.</param>
 /// <returns>Whether the ray hit + the distance of the ray. If there is no collision, it returns (-1, -1).</returns>
-static std::tuple<bool, float, bool> raycast(sf::Vector2f pos, float angle, int world[][WORLD_SIZE]) {
+static std::tuple<bool, float, bool> raycast(sf::Vector2f pos, float angle, MazeArr world) {
 	// the result
 	sf::Vector2f hit(-1, -1);
 
@@ -52,7 +51,7 @@ static std::tuple<bool, float, bool> raycast(sf::Vector2f pos, float angle, int 
 
 	bool foundCell = false;
 	bool differentColor = false;
-	float maxDistance = WORLD_SIZE;
+	float maxDistance = consts::WORLD_WIDTH;
 	float distance = 0;
 
 	// walk on the ray until collision (or distance is bigger than maxDistance)
@@ -70,7 +69,7 @@ static std::tuple<bool, float, bool> raycast(sf::Vector2f pos, float angle, int 
 			differentColor = false;
 		}
 
-		if (currentCell.x >= 0 && currentCell.x < WORLD_SIZE && currentCell.y >= 0 && currentCell.y < WORLD_SIZE)
+		if (currentCell.x >= 0 && currentCell.x < consts::WORLD_WIDTH && currentCell.y >= 0 && currentCell.y < consts::WORLD_HEIGHT)
 		{
 			if (world[currentCell.y][currentCell.x] == 1)
 			{
@@ -90,19 +89,12 @@ static sf::Vector2f wasdInput() {
 }
 
 int main() {
+	srand(time(NULL));
+
 	sf::RenderWindow window(sf::VideoMode(1000, 800), "Yay window!");
 	window.setMouseCursorVisible(false);
 
-	int world[][WORLD_SIZE] = {
-		{1, 1, 1, 1, 1, 1, 1, 1},
-		{1, 0, 0, 0, 0, 0, 0, 1},
-		{1, 0, 1, 0, 1, 0, 1, 1},
-		{1, 1, 1, 0, 1, 0, 0, 1},
-		{1, 0, 0, 0, 1, 0, 0, 1},
-		{1, 0, 1, 0, 0, 0, 0, 1},
-		{1, 0, 0, 0, 0, 0, 1, 1},
-		{1, 1, 1, 1, 1, 1, 1, 1}
-	};
+	MazeArr world = generateMaze();
 
 	sf::Clock deltaClock;
 	float dt;
@@ -111,7 +103,7 @@ int main() {
 	sf::Vector2f velocity;
 	float direction = 0;
 	float fov = degToRad(70);
-	float speed = WORLD_SIZE / 4.0f;
+	float speed = 2.0f;
 
 	float sensitivity = 1.3;
 
@@ -216,7 +208,7 @@ int main() {
 			if (!isHit)
 				continue;
 
-			float wallHeight = ((float)window.getSize().y) / (WORLD_SIZE / 3.0f * distance);
+			float wallHeight = ((float)window.getSize().y) / (2 * distance);
 			if (wallHeight > (float)window.getSize().y)
 				wallHeight = (float)window.getSize().y;
 
@@ -226,7 +218,7 @@ int main() {
 
 			// calculating shading
 			sf::Color color(100, 100, 100);
-			float brightness = 1.0f - (distance / WORLD_SIZE);
+			float brightness = 1.0f - (distance / 10);
 
 			// darkening the walls with different color
 			if (differentColor)

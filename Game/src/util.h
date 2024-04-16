@@ -1,4 +1,5 @@
 #pragma once
+
 #include "SFML/System.hpp"
 
 float degToRad(float degrees);
