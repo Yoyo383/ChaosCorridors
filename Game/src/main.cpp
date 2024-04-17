@@ -4,6 +4,7 @@
 #include "SFML/Graphics.hpp"
 #include "util.h"
 #include "maze.h"
+#include "player.h"
 
 /// <summary>
 /// The function raycasts from pos in a certain direction and finds a collision with the world.
@@ -13,7 +14,7 @@
 /// <param name="angle">The direction of the ray.</param>
 /// <param name="world">The world.</param>
 /// <returns>Whether the ray hit + the distance of the ray. If there is no collision, it returns (-1, -1).</returns>
-static std::tuple<bool, float, bool> raycast(sf::Vector2f pos, float angle, MazeArr world) {
+static std::tuple<bool, float, bool> raycast(sf::Vector2f pos, float angle, MazeArr& world) {
 	// the result
 	sf::Vector2f hit(-1, -1);
 
@@ -88,24 +89,22 @@ static sf::Vector2f wasdInput() {
 	};
 }
 
+static void resetMousePos(sf::RenderWindow& window, sf::Vector2i fixedMousePos) {
+	sf::Mouse::setPosition(fixedMousePos, window);
+}
+
 int main() {
 	srand(time(NULL));
 
 	sf::RenderWindow window(sf::VideoMode(1000, 800), "Yay window!");
 	window.setMouseCursorVisible(false);
 
-	MazeArr world = generateMaze();
+	MazeArr maze = generateMaze();
 
 	sf::Clock deltaClock;
 	float dt;
 
-	sf::Vector2f pos(1.5, 1.5);
-	sf::Vector2f velocity;
-	float direction = 0;
-	float fov = degToRad(70);
-	float speed = 2.0f;
-
-	float sensitivity = 1.3;
+	Player player;
 
 	sf::Vector2i fixedMousePos = { (int)window.getSize().x / 2, (int)window.getSize().y / 2 };
 	bool isFocused = true;
@@ -113,11 +112,6 @@ int main() {
 	sf::Mouse::setPosition(fixedMousePos, window);
 
 	sf::Vector2f hit;
-
-	sf::CircleShape playerCircle(10);
-	playerCircle.setFillColor(sf::Color::Green);
-	playerCircle.setOrigin(10, 10);
-	playerCircle.setPosition(pos);
 
 	while (window.isOpen()) {
 		dt = deltaClock.restart().asSeconds();
@@ -137,11 +131,8 @@ int main() {
 
 		// setting player's direction according to mouse
 		if (isFocused) {
-			int currentMousePos = sf::Mouse::getPosition(window).x;
-			float deltaMousePos = (currentMousePos - fixedMousePos.x) * sensitivity;
-			direction += deltaMousePos * dt;
-			// always setting the mouse position to the center
-			sf::Mouse::setPosition(fixedMousePos, window);
+			player.setDirection(window, fixedMousePos, dt);
+			resetMousePos(window, fixedMousePos);
 		}
 
 		// getting input
@@ -150,38 +141,10 @@ int main() {
 
 		if (isFocused)
 			wasd = wasdInput();
-		if (wasd != sf::Vector2f()) {
-			float movementAngle = vecAngle(wasd);
-			float cos = cosf(movementAngle), sin = sinf(movementAngle);
 
-			dirVector = { cosf(direction), sinf(direction) };
-			// rotating dirVector by movementAngle
-			velocity = {
-				dirVector.x * cos - dirVector.y * sin,
-				dirVector.x * sin + dirVector.y * cos
-			};
-		}
-		else
-			velocity = { 0, 0 };
-		
-		// calculating velocity
-		velocity = vecNormalize(velocity) * speed * dt;
-
-		// return sign of a number (1, -1, or 0)
-		auto sign = [](float x) {
-			return (x > 0) - (x < 0);
-		};
-
-		// move collision away from camera
-		sf::Vector2f collisionRadius = sf::Vector2f(sign(velocity.x), sign(velocity.y)) * 0.25f;
-		
-		// checking collision
-		if (world[(int)(pos.y + velocity.y + collisionRadius.y)][(int)pos.x] == consts::CELL_WALL)
-			velocity.y = 0;
-		if (world[(int)pos.y][(int)(pos.x + velocity.x + collisionRadius.x)] == consts::CELL_WALL)
-			velocity.x = 0;
-
-		pos += velocity;
+		player.calculateVelocity(wasd, dt);
+		player.checkCollision(maze);
+		player.move();
 
 		// start drawing
 
@@ -199,11 +162,11 @@ int main() {
 
 		float angle;
 		for (int x = 0; x <= window.getSize().x; x++) {
-			angle = (direction - fov / 2.0f) + ((float)x / (float)window.getSize().x) * fov;
+			angle = (player.direction() - player.fov() / 2.0f) + ((float)x / (float)window.getSize().x) * player.fov();
 
 			// casting ray and fixing the fisheye problem
-			auto[isHit, distance, differentColor] = raycast(pos, angle, world);
-			distance *= cosf(direction - angle);
+			auto[isHit, distance, differentColor] = raycast(player.pos(), angle, maze);
+			distance *= cosf(player.direction() - angle);
 
 			if (!isHit)
 				continue;

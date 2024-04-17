@@ -1,5 +1,7 @@
 #pragma once
 
+#include <array>
+
 // global constants
 namespace consts {
 	// maze size
@@ -18,3 +20,5 @@ namespace consts {
 		CELL_VISITED =	2
 	};
 }
+
+using MazeArr = std::array<std::array<char, consts::WORLD_WIDTH>, consts::WORLD_HEIGHT>;
