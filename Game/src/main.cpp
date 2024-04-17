@@ -71,7 +71,7 @@ static std::tuple<bool, float, bool> raycast(sf::Vector2f pos, float angle, Maze
 
 		if (currentCell.x >= 0 && currentCell.x < consts::WORLD_WIDTH && currentCell.y >= 0 && currentCell.y < consts::WORLD_HEIGHT)
 		{
-			if (world[currentCell.y][currentCell.x] == 1)
+			if (world[currentCell.y][currentCell.x] == consts::CELL_WALL)
 			{
 				foundCell = true;
 			}
@@ -176,9 +176,9 @@ int main() {
 		sf::Vector2f collisionRadius = sf::Vector2f(sign(velocity.x), sign(velocity.y)) * 0.25f;
 		
 		// checking collision
-		if (world[(int)(pos.y + velocity.y + collisionRadius.y)][(int)pos.x] == 1)
+		if (world[(int)(pos.y + velocity.y + collisionRadius.y)][(int)pos.x] == consts::CELL_WALL)
 			velocity.y = 0;
-		if (world[(int)pos.y][(int)(pos.x + velocity.x + collisionRadius.x)] == 1)
+		if (world[(int)pos.y][(int)(pos.x + velocity.x + collisionRadius.x)] == consts::CELL_WALL)
 			velocity.x = 0;
 
 		pos += velocity;

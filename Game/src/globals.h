@@ -9,4 +9,12 @@ namespace consts {
 	// the world array size (with walls)
 	const int WORLD_WIDTH = MAZE_WIDTH * 2 + 1;
 	const int WORLD_HEIGHT = MAZE_HEIGHT * 2 + 1;
+
+	// cell state
+	enum
+	{
+		CELL_EMPTY =	0,
+		CELL_WALL =		1,
+		CELL_VISITED =	2
+	};
 }
