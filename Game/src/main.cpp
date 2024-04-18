@@ -179,9 +179,16 @@ int main() {
 		ground.setFillColor({ 38, 139, 7 });
 		window.draw(ground);
 
+		// variables for angle increment
+		// math taken from here:
+		// https://stackoverflow.com/questions/24173966/raycasting-engine-rendering-creating-slight-distortion-increasing-towards-edges
+		float screenHalfLen = atan2f(player.fov(), 2);
+		float segLen = 2 * screenHalfLen / window.getSize().x;
+
 		float angle;
-		for (int x = 0; x < window.getSize().x; x++) {
-			angle = (player.direction() - player.fov() / 2.0f) + ((float)x / (float)window.getSize().x) * player.fov();
+		for (int x = 0; x <= window.getSize().x; x++) {
+			// angle calculation such that the walls aren't distorted
+			angle = player.direction() + atanf(segLen * x - screenHalfLen);
 
 			// casting ray and fixing the fisheye problem
 			Ray ray = raycast(player.pos(), angle, maze);
