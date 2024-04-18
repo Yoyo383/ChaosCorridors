@@ -21,4 +21,5 @@ namespace consts {
 	};
 }
 
+// type for the maze array (2d array of bytes)
 using MazeArr = std::array<std::array<char, consts::WORLD_WIDTH>, consts::WORLD_HEIGHT>;

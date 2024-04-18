@@ -6,6 +6,13 @@
 #include "maze.h"
 #include "player.h"
 
+struct Ray {
+	bool isHit;
+	bool verticalHit;
+	float distance;
+	float hitCoord;
+};
+
 /// <summary>
 /// The function raycasts from pos in a certain direction and finds a collision with the world.
 /// It uses the DDA algorithm from this video: https://youtu.be/NbSee-XM7WA
@@ -13,8 +20,8 @@
 /// <param name="pos">The starting position.</param>
 /// <param name="angle">The direction of the ray.</param>
 /// <param name="world">The world.</param>
-/// <returns>Whether the ray hit + the distance of the ray. If there is no collision, it returns (-1, -1).</returns>
-static std::tuple<bool, float, bool> raycast(sf::Vector2f pos, float angle, MazeArr& world) {
+/// <returns>A Ray object.</returns>
+static Ray raycast(sf::Vector2f pos, float angle, MazeArr& world) {
 	// the result
 	sf::Vector2f hit(-1, -1);
 
@@ -51,9 +58,10 @@ static std::tuple<bool, float, bool> raycast(sf::Vector2f pos, float angle, Maze
 	}
 
 	bool foundCell = false;
-	bool differentColor = false;
+	bool verticalHit = false;
 	float maxDistance = consts::WORLD_WIDTH;
 	float distance = 0;
+	float hitCoord = 0;
 
 	// walk on the ray until collision (or distance is bigger than maxDistance)
 	while (!foundCell && distance < maxDistance) {
@@ -61,13 +69,13 @@ static std::tuple<bool, float, bool> raycast(sf::Vector2f pos, float angle, Maze
 			currentCell.x += step.x;
 			distance = rayLength1D.x;
 			rayLength1D.x += rayUnitStepSize.x;
-			differentColor = true;
+			verticalHit = true;
 		}
 		else {
 			currentCell.y += step.y;
 			distance = rayLength1D.y;
 			rayLength1D.y += rayUnitStepSize.y;
-			differentColor = false;
+			verticalHit = false;
 		}
 
 		if (currentCell.x >= 0 && currentCell.x < consts::WORLD_WIDTH && currentCell.y >= 0 && currentCell.y < consts::WORLD_HEIGHT)
@@ -79,7 +87,14 @@ static std::tuple<bool, float, bool> raycast(sf::Vector2f pos, float angle, Maze
 		}
 	}
 
-	return std::make_tuple(foundCell, distance, differentColor);
+	sf::Vector2f hitPos = pos + rayDir * distance;
+
+	if (verticalHit)
+		hitCoord = hitPos.y;
+	else
+		hitCoord = hitPos.x;
+
+	return { foundCell, verticalHit, distance, hitCoord - int(hitCoord) };
 }
 
 static sf::Vector2f wasdInput() {
@@ -111,11 +126,16 @@ int main() {
 
 	sf::Mouse::setPosition(fixedMousePos, window);
 
-	sf::Vector2f hit;
+	sf::Texture wallTexture;
+	if (!wallTexture.loadFromFile("assets/redbrick.png")) {
+		std::cout << "ERROR: Can't load wall texture." << std::endl;
+		return -1;
+	}
 
 	while (window.isOpen()) {
 		dt = deltaClock.restart().asSeconds();
 		sf::Event event;
+
 		while (window.pollEvent(event)) {
 			if (event.type == sf::Event::Closed)
 				window.close();
@@ -137,7 +157,6 @@ int main() {
 
 		// getting input
 		sf::Vector2f wasd;
-		sf::Vector2f dirVector;
 
 		if (isFocused)
 			wasd = wasdInput();
@@ -161,30 +180,28 @@ int main() {
 		window.draw(ground);
 
 		float angle;
-		for (int x = 0; x <= window.getSize().x; x++) {
+		for (int x = 0; x < window.getSize().x; x++) {
 			angle = (player.direction() - player.fov() / 2.0f) + ((float)x / (float)window.getSize().x) * player.fov();
 
 			// casting ray and fixing the fisheye problem
-			auto[isHit, distance, differentColor] = raycast(player.pos(), angle, maze);
-			distance *= cosf(player.direction() - angle);
+			Ray ray = raycast(player.pos(), angle, maze);
+			ray.distance *= cosf(player.direction() - angle);
 
-			if (!isHit)
+			if (!ray.isHit)
 				continue;
 
-			float wallHeight = ((float)window.getSize().y) / (2 * distance);
-			if (wallHeight > (float)window.getSize().y)
-				wallHeight = (float)window.getSize().y;
+			float wallHeight = ((float)window.getSize().y) / (2 * ray.distance);
 
 			// calculating floor and ceiling y values
 			float ceiling = (window.getSize().y / 2.0f) - (wallHeight / 2.0f);
 			float floor = window.getSize().y - ceiling;
 
 			// calculating shading
-			sf::Color color(100, 100, 100);
-			float brightness = 1.0f - (distance / 10);
+			sf::Color color = sf::Color::White;
+			float brightness = 1.0f - (ray.distance / 8);
 
-			// darkening the walls with different color
-			if (differentColor)
+			// darkening the vertical walls
+			if (ray.verticalHit)
 				brightness *= 0.7;
 
 			if (brightness < 0.0f)
@@ -195,12 +212,14 @@ int main() {
 			color.g *= brightness;
 			color.b *= brightness;
 
-			sf::Vertex blockLine[2] = {
-				sf::Vertex({ (float)x, ceiling }, color),
-				sf::Vertex({ (float)x, floor }, color)
-			};
-
-			window.draw(blockLine, 2, sf::Lines);
+			sf::RectangleShape wall({ 2, floor - ceiling });
+			wall.setPosition({ (float)x, ceiling });
+			wall.setTexture(&wallTexture);
+			// set texture to be just one column
+			wall.setTextureRect(sf::IntRect(wallTexture.getSize().x * ray.hitCoord, 0, 1, wallTexture.getSize().y));
+			// shade the wall
+			wall.setFillColor(color);
+			window.draw(wall);
 		}
 
 		window.display();
