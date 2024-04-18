@@ -149,6 +149,10 @@ int main() {
 				isFocused = true;
 		}
 
+		std::string title = "Yay Window! FPS: ";
+		title += std::to_string(1 / dt);
+		window.setTitle(title);
+
 		// setting player's direction according to mouse
 		if (isFocused) {
 			player.setDirection(window, fixedMousePos, dt);
@@ -212,14 +216,23 @@ int main() {
 			color.g *= brightness;
 			color.b *= brightness;
 
-			sf::RectangleShape wall({ 2, floor - ceiling });
-			wall.setPosition({ (float)x, ceiling });
-			wall.setTexture(&wallTexture);
-			// set texture to be just one column
-			wall.setTextureRect(sf::IntRect(wallTexture.getSize().x * ray.hitCoord, 0, 1, wallTexture.getSize().y));
-			// shade the wall
-			wall.setFillColor(color);
-			window.draw(wall);
+
+			float textureX = wallTexture.getSize().x * ray.hitCoord;
+			sf::VertexArray wall(sf::Lines, 2);
+
+			// setting wall position and height
+			wall[0].position = { (float)x, ceiling };
+			wall[1].position = { (float)x, floor };
+
+			// shading the wall
+			wall[0].color = color;
+			wall[1].color = color;
+			
+			// texturing the wall according to the hit coordinate
+			wall[0].texCoords = { textureX, 0 };
+			wall[1].texCoords = { textureX, (float)wallTexture.getSize().y };
+
+			window.draw(wall, &wallTexture);
 		}
 
 		window.display();
