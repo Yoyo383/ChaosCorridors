@@ -121,16 +121,31 @@ int main() {
 
 	Player player;
 
-	sf::Vector2i fixedMousePos = { (int)window.getSize().x / 2, (int)window.getSize().y / 2 };
+	const sf::Vector2i FIXED_MOUSE_POS = { (int)window.getSize().x / 2, (int)window.getSize().y / 2 };
 	bool isFocused = true;
 
-	sf::Mouse::setPosition(fixedMousePos, window);
+	sf::Mouse::setPosition(FIXED_MOUSE_POS, window);
 
 	sf::Texture wallTexture;
 	if (!wallTexture.loadFromFile("assets/redbrick.png")) {
 		std::cout << "ERROR: Can't load wall texture." << std::endl;
 		return -1;
 	}
+
+	sf::Texture floorTexture;
+	if (!floorTexture.loadFromFile("assets/wood.png")) {
+		std::cout << "ERROR: Can't load floor texture." << std::endl;
+		return -1;
+	}
+	floorTexture.setRepeated(true);
+
+	sf::Texture ceilingTexture;
+	if (!ceilingTexture.loadFromFile("assets/colorstone.png")) {
+		std::cout << "ERROR: Can't load ceiling texture." << std::endl;
+		return -1;
+	}
+	ceilingTexture.setRepeated(true);
+
 
 	while (window.isOpen()) {
 		dt = deltaClock.restart().asSeconds();
@@ -151,8 +166,8 @@ int main() {
 
 		// setting player's direction according to mouse
 		if (isFocused) {
-			player.setDirection(window, fixedMousePos, dt);
-			resetMousePos(window, fixedMousePos);
+			player.setDirection(window, FIXED_MOUSE_POS, dt);
+			resetMousePos(window, FIXED_MOUSE_POS);
 		}
 
 		// getting input
@@ -165,19 +180,47 @@ int main() {
 		player.checkCollision(maze);
 		player.move();
 
+
 		// start drawing
 
 		window.clear(sf::Color::Black);
 
-		sf::RectangleShape sky({ (float)window.getSize().x, (float)window.getSize().y / 2 });
-		sky.setPosition({ 0, 0 });
-		sky.setFillColor({ 135, 206, 235 });
-		window.draw(sky);
+		// doing floor/ceiling things
+		float cos = cosf(player.direction()), sin = sinf(player.direction());
 
-		sf::RectangleShape ground({ (float)window.getSize().x, (float)window.getSize().y / 2 });
-		ground.setPosition({ 0, (float)window.getSize().y / 2 });
-		ground.setFillColor({ 38, 139, 7 });
-		window.draw(ground);
+		for (int y = 0; y <= window.getSize().y / 2; y++) {
+			// floor and ceiling texture have the same size so it doesn't matter
+			int d = floorTexture.getSize().x * window.getSize().y / 2 / (y + 1);
+
+			sf::Vector2f startPos = {
+				d * cos - d * sin / 2, 
+				d * sin + d * cos / 2
+			};
+			sf::Vector2f endPos = {
+				d * cos + d * sin / 2,
+				d * sin - d * cos / 2
+			};
+
+			sf::VertexArray scanLine(sf::Lines, 2);
+
+			// texturing the floor/ceiling according to the start and end sample positions and the player position
+			scanLine[0].texCoords = endPos + player.pos() * floorTexture.getSize().x;
+			scanLine[1].texCoords = startPos + player.pos() * floorTexture.getSize().x;
+
+
+			// setting floor position
+			scanLine[0].position = { 0, (float)y + window.getSize().y / 2 };
+			scanLine[1].position = { (float)window.getSize().x - 1, (float)y + window.getSize().y / 2 };
+
+			window.draw(scanLine, &floorTexture);
+
+
+			// setting ceiling position
+			scanLine[0].position = { 0, window.getSize().y / 2 - (float)y };
+			scanLine[1].position = { (float)window.getSize().x - 1, window.getSize().y / 2 - (float)y };
+
+			window.draw(scanLine, &ceilingTexture);
+		}
 
 		// variables for angle increment
 		// math taken from here:
