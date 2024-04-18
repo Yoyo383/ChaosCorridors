@@ -2,9 +2,9 @@
 #include <iostream>
 #include "SFML/Window.hpp"
 #include "SFML/Graphics.hpp"
-#include "util.h"
-#include "maze.h"
-#include "player.h"
+#include "util.hpp"
+#include "maze.hpp"
+#include "player.hpp"
 
 struct Ray {
 	bool isHit;

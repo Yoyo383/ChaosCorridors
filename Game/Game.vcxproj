@@ -141,10 +141,10 @@
     <ClCompile Include="src\util.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\player.h" />
-    <ClInclude Include="src\globals.h" />
-    <ClInclude Include="src\maze.h" />
-    <ClInclude Include="src\util.h" />
+    <ClInclude Include="src\player.hpp" />
+    <ClInclude Include="src\globals.hpp" />
+    <ClInclude Include="src\maze.hpp" />
+    <ClInclude Include="src\util.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

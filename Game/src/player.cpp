@@ -1,5 +1,5 @@
-#include "player.h"
-#include "util.h"
+#include "player.hpp"
+#include "util.hpp"
 
 Player::Player() {
 	_pos = { 1.5, 1.5 };

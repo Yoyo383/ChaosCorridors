@@ -29,16 +29,16 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\util.h">
+    <ClInclude Include="src\util.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\maze.h">
+    <ClInclude Include="src\maze.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\globals.h">
+    <ClInclude Include="src\globals.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\player.h">
+    <ClInclude Include="src\player.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
