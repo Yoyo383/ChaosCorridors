@@ -149,10 +149,6 @@ int main() {
 				isFocused = true;
 		}
 
-		std::string title = "Yay Window! FPS: ";
-		title += std::to_string(1 / dt);
-		window.setTitle(title);
-
 		// setting player's direction according to mouse
 		if (isFocused) {
 			player.setDirection(window, fixedMousePos, dt);
@@ -194,15 +190,15 @@ int main() {
 			if (!ray.isHit)
 				continue;
 
-			float wallHeight = ((float)window.getSize().y) / (2 * ray.distance);
+			float wallHeight = (float)window.getSize().y / ray.distance;
 
 			// calculating floor and ceiling y values
-			float ceiling = (window.getSize().y / 2.0f) - (wallHeight / 2.0f);
+			float ceiling = (window.getSize().y - wallHeight) / 2.0f;
 			float floor = window.getSize().y - ceiling;
 
 			// calculating shading
 			sf::Color color = sf::Color::White;
-			float brightness = 1.0f - (ray.distance / 8);
+			float brightness = 1.0f - (ray.distance / 16);
 
 			// darkening the vertical walls
 			if (ray.verticalHit)
@@ -216,8 +212,12 @@ int main() {
 			color.g *= brightness;
 			color.b *= brightness;
 
+			// making sure the texture is the right aspect ration
+			float xMultiplier = (float)window.getSize().x / window.getSize().y;
+			// the x coord to sample from in the texture
+			float textureX = (int)(wallTexture.getSize().x * ray.hitCoord * xMultiplier) % wallTexture.getSize().x;
 
-			float textureX = wallTexture.getSize().x * ray.hitCoord;
+
 			sf::VertexArray wall(sf::Lines, 2);
 
 			// setting wall position and height
