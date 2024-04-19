@@ -189,7 +189,7 @@ int main() {
 		float cos = cosf(player.direction()), sin = sinf(player.direction());
 
 		for (int y = 0; y <= window.getSize().y / 2; y++) {
-			// floor and ceiling texture have the same size so it doesn't matter
+			// floor and ceiling texture have the same size so it doesn't matter which size is in the formula
 			int d = floorTexture.getSize().x * window.getSize().y / 2 / (y + 1);
 
 			sf::Vector2f startPos = {
@@ -201,11 +201,24 @@ int main() {
 				d * sin - d * cos / 2
 			};
 
+			// calculating shading based on distance
+			sf::Color color = sf::Color::White;
+			float brightness = 1.0f - (float)d / window.getSize().y;
+			if (brightness < 0)
+				brightness = 0;
+			color.r *= brightness;
+			color.g *= brightness;
+			color.b *= brightness;
+
+
 			sf::VertexArray scanLine(sf::Lines, 2);
 
 			// texturing the floor/ceiling according to the start and end sample positions and the player position
 			scanLine[0].texCoords = endPos + player.pos() * floorTexture.getSize().x;
 			scanLine[1].texCoords = startPos + player.pos() * floorTexture.getSize().x;
+			// shading
+			scanLine[0].color = color;
+			scanLine[1].color = color;
 
 
 			// setting floor position
@@ -254,8 +267,8 @@ int main() {
 			if (ray.verticalHit)
 				brightness *= 0.7;
 
-			if (brightness < 0.0f)
-				brightness = 0.0f;
+			if (brightness < 0)
+				brightness = 0;
 
 			// apply brightness
 			color.r *= brightness;
