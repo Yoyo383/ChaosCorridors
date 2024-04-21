@@ -185,6 +185,9 @@ int main() {
 
 		window.clear(sf::Color::Black);
 
+		// scale factor for d (and other stuff)
+		float tan = tanf(player.fov() / 2);
+
 		// doing floor/ceiling things
 		float cos = cosf(player.direction()), sin = sinf(player.direction());
 
@@ -193,12 +196,12 @@ int main() {
 			int d = floorTexture.getSize().x * window.getSize().y / 2 / (y + 1);
 
 			sf::Vector2f startPos = {
-				d * cos - d * sin / 2, 
-				d * sin + d * cos / 2
+				d * cos - d * tan * sin, 
+				d * sin + d * tan * cos
 			};
 			sf::Vector2f endPos = {
-				d * cos + d * sin / 2,
-				d * sin - d * cos / 2
+				d * cos + d * tan * sin,
+				d * sin - d * tan * cos
 			};
 
 			// calculating shading based on distance
@@ -223,14 +226,14 @@ int main() {
 
 			// setting floor position
 			scanLine[0].position = { 0, (float)y + window.getSize().y / 2 };
-			scanLine[1].position = { (float)window.getSize().x - 1, (float)y + window.getSize().y / 2 };
+			scanLine[1].position = { (float)window.getSize().x, (float)y + window.getSize().y / 2 };
 
 			window.draw(scanLine, &floorTexture);
 
 
 			// setting ceiling position
 			scanLine[0].position = { 0, window.getSize().y / 2 - (float)y };
-			scanLine[1].position = { (float)window.getSize().x - 1, window.getSize().y / 2 - (float)y };
+			scanLine[1].position = { (float)window.getSize().x, window.getSize().y / 2 - (float)y };
 
 			window.draw(scanLine, &ceilingTexture);
 		}
@@ -238,7 +241,7 @@ int main() {
 		// variables for angle increment
 		// math taken from here:
 		// https://stackoverflow.com/questions/24173966/raycasting-engine-rendering-creating-slight-distortion-increasing-towards-edges
-		float screenHalfLen = atan2f(player.fov(), 2);
+		float screenHalfLen = tan;
 		float segLen = 2 * screenHalfLen / window.getSize().x;
 
 		float angle;
