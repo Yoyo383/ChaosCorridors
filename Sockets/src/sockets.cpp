@@ -43,7 +43,7 @@ namespace sockets {
 		return result == 0;
 	}
 
-	void exit() {
+	void terminate() {
 		WSACleanup();
 	}
 
