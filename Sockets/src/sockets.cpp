@@ -2,6 +2,38 @@
 #include <stdexcept>
 #include <memory>
 
+static sockaddr_in addressToRawAddress(sockets::Address address) {
+	int result;
+	// getting ip from string
+	unsigned long ip;
+
+	result = inet_pton(AF_INET, address.ip.c_str(), &ip);
+	if (result != 1)
+		throw std::exception("Error: Invalid IP.");
+
+	// setting up the address
+	sockaddr_in rawAddress;
+	memset(&rawAddress, 0, sizeof(rawAddress));
+	rawAddress.sin_family = AF_INET;
+	rawAddress.sin_port = htons(address.port);
+	rawAddress.sin_addr.s_addr = ip;
+
+	return rawAddress;
+}
+static sockets::Address rawAddressToAddress(sockaddr_in rawAddress) {
+	char ipBuffer[16];
+
+	PCSTR result = inet_ntop(AF_INET, &rawAddress.sin_addr.s_addr, ipBuffer, 16);
+	if (result == NULL)
+		throw std::exception(("Error: " + std::to_string(WSAGetLastError())).c_str());
+
+	std::string ip = ipBuffer;
+	unsigned short port = ntohs(rawAddress.sin_port);
+
+	sockets::Address resultAddr = { ip, port };
+	return resultAddr;
+}
+
 namespace sockets {
 
 	bool initialize() {
@@ -37,22 +69,9 @@ namespace sockets {
 	}
 
 	void Socket::bind(Address address) {
-		int result;
-		// getting ip from string
-		unsigned long ip;
+		sockaddr_in bindAddress = addressToRawAddress(address);
 
-		result = inet_pton(AF_INET, address.ip.c_str(), &ip);
-		if (result != 1)
-			throw std::exception("Error: Invalid IP.");
-
-		// setting up the address
-		sockaddr_in bindAddress;
-		memset(&bindAddress, 0, sizeof(bindAddress));
-		bindAddress.sin_family = AF_INET;
-		bindAddress.sin_port = htons(address.port);
-		bindAddress.sin_addr.s_addr = ip;
-
-		result = ::bind(_socketId, (sockaddr*)&bindAddress, sizeof(bindAddress));
+		int result = ::bind(_socketId, (sockaddr*)&bindAddress, sizeof(bindAddress));
 		if (result != 0)
 			throw std::exception(("Error when binding socket: " + std::to_string(WSAGetLastError())).c_str());
 	}
@@ -76,14 +95,7 @@ namespace sockets {
 
 		Socket socket(newId, Protocol::TCP);
 
-		// getting address
-		char ipBuffer[16];
-		PCSTR result = inet_ntop(AF_INET, &addr.sin_addr.s_addr, ipBuffer, 16);
-		if (result == NULL)
-			throw std::exception(("Error when accepting: " + std::to_string(WSAGetLastError())).c_str());
-		std::string ip = ipBuffer;
-		unsigned short port = ntohs(addr.sin_port);
-		Address resultAddr = { ip, port };
+		Address resultAddr = rawAddressToAddress(addr);
 		
 		return std::make_pair(socket, resultAddr);
 	}
@@ -95,26 +107,14 @@ namespace sockets {
 	}
 
 	void Socket::connect(Address address) {
-		int result;
-		// getting ip from string
-		unsigned long ip;
+		sockaddr_in connectAddress = addressToRawAddress(address);
 
-		result = inet_pton(AF_INET, address.ip.c_str(), &ip);
-		if (result != 1)
-			throw std::exception("Error: Invalid IP.");
-
-		// setting up the address
-		sockaddr_in connectAddress;
-		memset(&connectAddress, 0, sizeof(connectAddress));
-		connectAddress.sin_family = AF_INET;
-		connectAddress.sin_port = htons(address.port);
-		connectAddress.sin_addr.s_addr = ip;
-
-		result = ::connect(_socketId, (sockaddr*)&connectAddress, sizeof(connectAddress));
+		int result = ::connect(_socketId, (sockaddr*)&connectAddress, sizeof(connectAddress));
 		if (result != 0)
 			throw std::exception(("Error when connecting: " + std::to_string(WSAGetLastError())).c_str());
 	}
 
+	// TCP send/recv
 	int Socket::send(const char* data, int size) {
 		int result = ::send(_socketId, data, size, 0);
 		if (result == SOCKET_ERROR)
@@ -141,5 +141,42 @@ namespace sockets {
 	std::string Socket::recvString(int size) {
 		std::vector<char> data = recv(size);
 		return std::string(data.begin(), data.end());
+	}
+
+	// UDP send/recv
+	int Socket::sendTo(const char* data, int size, Address address) {
+		sockaddr_in sendAddress = addressToRawAddress(address);
+
+		int result = ::sendto(_socketId, data, size, 0, (sockaddr*)&sendAddress, sizeof(sendAddress));
+		if (result == SOCKET_ERROR)
+			throw std::exception(("Error when sending: " + std::to_string(WSAGetLastError())).c_str());
+		return result;
+	}
+	int Socket::sendTo(std::vector<char> data, Address address) {
+		return sendTo(data.data(), data.size(), address);
+	}
+	int Socket::sendTo(std::string data, Address address) {
+		return sendTo(data.data(), data.size(), address);
+	}
+
+	std::pair<std::vector<char>, Address> Socket::recvFrom(int size) {
+		std::vector<char> buf(size);
+
+		sockaddr_in addr;
+		memset(&addr, 0, sizeof(addr));
+		socklen_t addrlen = sizeof(addr);
+		int bytes = ::recvfrom(_socketId, buf.data(), size, 0, (sockaddr*)&addr, &addrlen);
+
+		if (bytes == SOCKET_ERROR)
+			throw std::exception(("Error when receiving: " + std::to_string(WSAGetLastError())).c_str());
+
+		Address resultAddress = rawAddressToAddress(addr);
+
+		buf.resize(bytes);
+		return std::make_pair(buf, resultAddress);
+	}
+	std::pair<std::string, Address> Socket::recvFromString(int size) {
+		auto [data, address] = recvFrom(size);
+		return std::make_pair(std::string(data.begin(), data.end()), address);
 	}
 }

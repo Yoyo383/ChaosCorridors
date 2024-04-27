@@ -34,11 +34,20 @@ namespace sockets {
 		void close();
 		void connect(Address address);
 		
+		// TCP send/recv
 		int send(const char* data, int size);
 		int send(std::vector<char> data);
 		int send(std::string data);
 
 		std::vector<char> recv(int size);
 		std::string recvString(int size);
+
+		// UDP send/recv
+		int sendTo(const char* data, int size, Address address);
+		int sendTo(std::vector<char> data, Address address);
+		int sendTo(std::string data, Address address);
+
+		std::pair<std::vector<char>, Address> recvFrom(int size);
+		std::pair<std::string, Address> recvFromString(int size);
 	};
 }
