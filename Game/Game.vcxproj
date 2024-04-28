@@ -135,12 +135,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\graphics.cpp" />
     <ClCompile Include="src\player.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\maze.cpp" />
     <ClCompile Include="src\util.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\graphics.hpp" />
     <ClInclude Include="src\player.hpp" />
     <ClInclude Include="src\globals.hpp" />
     <ClInclude Include="src\maze.hpp" />
