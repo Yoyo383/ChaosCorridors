@@ -1,6 +1,7 @@
 #include "sockets.hpp"
 #include <stdexcept>
 #include <memory>
+#include <iostream>
 
 static sockaddr_in addressToRawAddress(sockets::Address address) {
 	int result;
@@ -66,6 +67,10 @@ namespace sockets {
 		if (_socketId == INVALID_SOCKET) {
 			throw std::exception(("Error when creating socket: " + std::to_string(WSAGetLastError())).c_str());
 		}
+
+		timeval tv{};
+		tv.tv_sec = 2;
+		setsockopt(_socketId, SOL_SOCKET, SO_RCVTIMEO, (char*)&tv, sizeof(struct timeval));
 	}
 
 	void Socket::bind(Address address) {
@@ -112,6 +117,18 @@ namespace sockets {
 		int result = ::connect(_socketId, (sockaddr*)&connectAddress, sizeof(connectAddress));
 		if (result != 0)
 			throw std::exception(("Error when connecting: " + std::to_string(WSAGetLastError())).c_str());
+	}
+
+	void Socket::setTimeout(float seconds) {
+		timeval tv{};
+		tv.tv_sec = (long)seconds;
+		tv.tv_usec = (seconds - long(seconds)) * 1000000;
+		setsockopt(_socketId, SOL_SOCKET, SO_RCVTIMEO, (char*)&tv, sizeof(struct timeval));
+	}
+
+	void Socket::setBlocking(bool blocking) {
+		unsigned long mode = !blocking;
+		ioctlsocket(_socketId, FIONBIO, &mode);
 	}
 
 	// TCP send/recv

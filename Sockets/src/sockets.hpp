@@ -63,26 +63,42 @@ namespace sockets {
 		 * @param address The address to bind.
 		*/
 		void bind(Address address);
+
 		/**
 		 * @brief Enable a socket to accept connections.
 		 * @param The number of unaccepted connections that the system will allow before refusing new connections.
 		*/
 		void listen(int backlog);
+
 		/**
 		 * @brief Accepts a connection.
 		 * @return A pair with a new socket object usable to send and receive data on the connection,
 		 * and the address bound to the socket on the other end of the connection.
 		*/
 		std::pair<Socket, Address> accept();
+
 		/**
 		 * @brief Closes the socket.
 		*/
 		void close();
+
 		/**
 		 * @brief Connects to an address.
 		 * @param address The address to connect to.
 		*/
 		void connect(Address address);
+		
+		/**
+		 * @brief Sets the timeout of the socket.
+		 * @param seconds Timeout in seconds.
+		*/
+		void setTimeout(float seconds);
+
+		/**
+		 * @brief Sets whether the socket is in blocking or non-blocking mode.
+		 * @param blocking Blocking or non-blocking mode.
+		*/
+		void setBlocking(bool blocking);
 		
 #pragma region TCP send/recv
 		
