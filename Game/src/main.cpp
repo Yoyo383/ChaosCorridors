@@ -146,6 +146,16 @@ int main() {
 	}
 	ceilingTexture.setRepeated(true);
 
+	sf::Texture characterTexture;
+	if (!characterTexture.loadFromFile("assets/character.png")) {
+		std::cout << "ERROR: Can't load character texture." << std::endl;
+		return -1;
+	}
+
+	sf::Vector2f characterPos = { 1.5f, 1.5f };
+
+	float* zBuffer = new float[window.getSize().x + 1];
+
 
 	while (window.isOpen()) {
 		dt = deltaClock.restart().asSeconds();
@@ -253,6 +263,8 @@ int main() {
 			Ray ray = raycast(player.pos(), angle, maze);
 			ray.distance *= cosf(player.direction() - angle);
 
+			zBuffer[x] = ray.distance;
+
 			if (!ray.isHit)
 				continue;
 
@@ -301,6 +313,71 @@ int main() {
 			window.draw(wall, &wallTexture);
 		}
 
+		// sprites
+		float angleFromPlayer = vecAngle(characterPos - player.pos());
+		float relativeAngle = player.direction() - angleFromPlayer;
+
+		if (relativeAngle > M_PI)
+			relativeAngle -= 2 * M_PI;
+		else if (relativeAngle < -M_PI)
+			relativeAngle += 2 * M_PI;
+
+		float distance = vecMagnitude(characterPos - player.pos());
+		distance *= cosf(relativeAngle);
+
+		if (distance >= 0.5f) {
+			float height = (float)window.getSize().y / distance;
+
+			// calculating floor and ceiling y values
+			float ceiling = (window.getSize().y - height) / 2.0f;
+			float floor = window.getSize().y - ceiling;
+
+			// getting width of texture
+			float aspectRatio = (float)characterTexture.getSize().x / characterTexture.getSize().y;
+			float width = height * aspectRatio;
+
+			// calculating middle of texture
+			float middle = window.getSize().x - (relativeAngle / player.fov() + 0.5f) * window.getSize().x;
+
+			for (int x = 0; x <= width; x++) {
+				float posX = middle + (float)x - (width / 2.0f);
+
+				// if outside window or behind walls then don't draw
+				if (posX < 0 || posX > window.getSize().x || zBuffer[(int)posX] < distance)
+					continue;
+
+				sf::VertexArray character(sf::Lines, 2);
+
+				sf::Color color = sf::Color::White;
+				float brightness = 1.0f - (distance / 16);
+
+				if (brightness < 0)
+					brightness = 0;
+
+				// apply brightness
+				color.r *= brightness;
+				color.g *= brightness;
+				color.b *= brightness;
+
+				// setting position and height
+				character[0].position = { posX, ceiling};
+				character[1].position = { posX, floor };
+
+				// shading
+				character[0].color = color;
+				character[1].color = color;
+
+				// texturing
+				character[0].texCoords = { characterTexture.getSize().x * (float)x / width, 0 };
+				character[1].texCoords = { characterTexture.getSize().x * (float)x / width, (float)characterTexture.getSize().y };
+
+				window.draw(character, &characterTexture);
+			}
+		}
+
 		window.display();
 	}
+
+	delete[] zBuffer;
+
 }
