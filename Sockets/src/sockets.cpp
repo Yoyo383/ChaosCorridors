@@ -37,6 +37,10 @@ static sockets::Address rawAddressToAddress(sockaddr_in rawAddress) {
 
 namespace sockets {
 
+	bool operator <(const sockets::Address& addr1, const sockets::Address& addr2) {
+		return addr1.port < addr2.port;
+	}
+
 	bool initialize() {
 		// initializing WSA
 		WSADATA wsaData;
@@ -51,6 +55,10 @@ namespace sockets {
 	Socket::Socket(SOCKET id, Protocol protocol) {
 		_socketId = id;
 		_protocol = protocol;
+
+		timeval tv{};
+		tv.tv_sec = 2;
+		setsockopt(_socketId, SOL_SOCKET, SO_RCVTIMEO, (char*)&tv, sizeof(struct timeval));
 	}
 
 	Socket::Socket(Protocol protocol) {

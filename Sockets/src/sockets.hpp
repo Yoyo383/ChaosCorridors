@@ -26,6 +26,14 @@ namespace sockets {
 	};
 
 	/**
+	 * @brief Operator of comparison of addresses for std::map.
+	 * @param addr1 First Address object.
+	 * @param addr2 Second Address object.
+	 * @return Whether addr1 is less than addr2.
+	*/
+	bool operator <(const Address& addr1, const Address& addr2);
+
+	/**
 	 * @brief Initializes the socket library. Should be called at the start of the code.
 	 * @return Whether the initialization was successful.
 	*/
