@@ -56,9 +56,7 @@ namespace sockets {
 		_socketId = id;
 		_protocol = protocol;
 
-		timeval tv{};
-		tv.tv_sec = 2;
-		setsockopt(_socketId, SOL_SOCKET, SO_RCVTIMEO, (char*)&tv, sizeof(struct timeval));
+		setTimeout(2);
 	}
 
 	Socket::Socket(Protocol protocol) {
@@ -76,9 +74,7 @@ namespace sockets {
 			throw std::exception(("Error when creating socket: " + std::to_string(WSAGetLastError())).c_str());
 		}
 
-		timeval tv{};
-		tv.tv_sec = 2;
-		setsockopt(_socketId, SOL_SOCKET, SO_RCVTIMEO, (char*)&tv, sizeof(struct timeval));
+		setTimeout(2);
 	}
 
 	void Socket::bind(Address address) {
@@ -128,10 +124,8 @@ namespace sockets {
 	}
 
 	void Socket::setTimeout(float seconds) {
-		timeval tv{};
-		tv.tv_sec = (long)seconds;
-		tv.tv_usec = (seconds - long(seconds)) * 1000000;
-		setsockopt(_socketId, SOL_SOCKET, SO_RCVTIMEO, (char*)&tv, sizeof(struct timeval));
+		unsigned long milliseconds = seconds * 1000;
+		setsockopt(_socketId, SOL_SOCKET, SO_RCVTIMEO, (char*)&milliseconds, sizeof(milliseconds));
 	}
 
 	void Socket::setBlocking(bool blocking) {
