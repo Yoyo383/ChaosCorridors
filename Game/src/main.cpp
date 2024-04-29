@@ -20,8 +20,7 @@ int main() {
 	textures["ceiling"].setRepeated(true);
 	textures.addTexture("wall", "assets/redbrick.png");
 	textures.addTexture("character", "assets/character.png");
-	textures.addTexture("buttonNormal", "assets/buttonNormal.png");
-	textures.addTexture("buttonClicked", "assets/buttonClicked.png");
+	textures.addTexture("hostButton", "assets/hostButton.png");
 
 	StateManager stateManager;
 

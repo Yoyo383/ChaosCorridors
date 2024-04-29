@@ -5,6 +5,7 @@ Button::Button(sf::Vector2f position, TextureManager& textures, std::string text
 	: sprite(textures[textureID])
 {
 	sprite.setPosition(position);
+	sprite.setOrigin(sprite.getLocalBounds().width / 2.0f, sprite.getLocalBounds().height / 2.0f);
 }
 
 void Button::setSizeRelativeToWindow(sf::RenderWindow& window, float percentage) {

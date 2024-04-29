@@ -1,10 +1,12 @@
 #include "MainMenuState.hpp"
 #include <iostream>
 #include "GameState.hpp"
+#include "../server.hpp"
+#include <thread>
 
 MainMenuState::MainMenuState(StateManager& manager, sf::RenderWindow& window, TextureManager& textures)
 	: State{ manager, window, textures },
-	hostButton({ 0, 0 }, textures, "buttonNormal", "buttonClicked")
+	hostButton({ window.getSize().x / 2.0f, window.getSize().y / 2.0f }, textures, "hostButton")
 {
 	hostButton.setSizeRelativeToWindow(window, 0.5f);
 }
