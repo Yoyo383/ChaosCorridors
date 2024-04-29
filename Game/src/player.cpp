@@ -6,13 +6,13 @@ Player::Player() {
 	_direction = 0;
 	_fov = degToRad(60);
 	_speed = 2.0f;
-	_sensitivity = 1.3f;
+	_sensitivity = 0.01f;
 }
 
 void Player::setDirection(sf::RenderWindow& window, sf::Vector2i fixedMousePos, float dt) {
 	int currentMousePos = sf::Mouse::getPosition(window).x;
 	float deltaMousePos = (currentMousePos - fixedMousePos.x) * _sensitivity;
-	_direction += deltaMousePos * dt;
+	_direction += deltaMousePos;
 }
 
 void Player::calculateVelocity(sf::Vector2f wasd, float dt) {
