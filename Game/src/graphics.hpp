@@ -1,5 +1,6 @@
 #pragma once
 #include "player.hpp"
+#include <unordered_map>
 
 namespace graphics {
 
@@ -10,8 +11,12 @@ namespace graphics {
 		float hitCoord;
 	};
 
-	struct Textures {
-		sf::Texture wallTexture, floorTexture, ceilingTexture, characterTexture;
+	class TextureManager {
+	private:
+		std::unordered_map<std::string, sf::Texture> map;
+	public:
+		sf::Texture& operator[](std::string id);
+		bool addTexture(std::string id, std::string filename);
 	};
 
 	/**
@@ -23,11 +28,4 @@ namespace graphics {
 	 * @return A Ray object representing the ray.
 	*/
 	Ray raycast(sf::Vector2f pos, float angle, const MazeArr& world);
-
-	Textures loadTextures();
-
-	void drawFloorAndCeiling(sf::RenderWindow& window, const Player& player, Textures textures);
-	void drawWalls(sf::RenderWindow& window, const Player& player, const MazeArr& maze, float* zBuffer, Textures textures);
-	void drawCharacter(sf::RenderWindow& window, const Player& player, const sf::Vector2f& characterPos, float* zBuffer, Textures textures);
-
 }
