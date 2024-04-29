@@ -4,13 +4,10 @@
 
 class Button {
 private:
-	sf::Sprite normalSprite;
-	sf::Sprite clickedSprite;
-	sf::Sprite *currentSprite;
-	bool isClicked;
+	sf::Sprite sprite;
 
 public:
-	Button(sf::Vector2f position, TextureManager& textures, std::string normalID, std::string clickedID);
+	Button(sf::Vector2f position, TextureManager& textures, std::string textureID);
 
 	void setSizeRelativeToWindow(sf::RenderWindow& window, float percentage);
 
