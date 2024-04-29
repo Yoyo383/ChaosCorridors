@@ -143,6 +143,7 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\maze.cpp" />
     <ClCompile Include="src\server.cpp" />
+    <ClCompile Include="src\states\StateManager.cpp" />
     <ClCompile Include="src\util.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -154,6 +155,7 @@
     <ClInclude Include="src\globals.hpp" />
     <ClInclude Include="src\maze.hpp" />
     <ClInclude Include="src\server.hpp" />
+    <ClInclude Include="src\states\StateManager.hpp" />
     <ClInclude Include="src\util.hpp" />
     <ClInclude Include="src\states\State.hpp" />
   </ItemGroup>

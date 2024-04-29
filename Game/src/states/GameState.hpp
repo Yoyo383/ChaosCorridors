@@ -1,13 +1,11 @@
 #pragma once
 #include "SFML/Graphics.hpp"
-#include "State.hpp"
+#include "StateManager.hpp"
 #include "../player.hpp"
 #include "../graphics.hpp"
 
 class GameState : public State {
 private:
-	sf::RenderWindow& window;
-
 	MazeArr maze;
 
 	sf::Clock deltaClock;
@@ -18,12 +16,10 @@ private:
 	sf::Vector2i fixedMousePos;
 	bool isFocused;
 
-	graphics::TextureManager& textures;
-
 	float* zBuffer;
 
 public:
-	GameState(sf::RenderWindow& window, graphics::TextureManager& textures);
+	GameState(StateManager& manager, sf::RenderWindow& window, TextureManager& textures);
 	~GameState();
 
 	void update() override;
@@ -36,4 +32,3 @@ public:
 	void drawWalls();
 	void drawCharacter(const sf::Vector2f& characterPos);
 };
-

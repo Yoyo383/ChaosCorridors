@@ -1,8 +1,10 @@
 #include "GameState.hpp"
 #include "../maze.hpp"
 #include "../util.hpp"
+#include <iostream>
 
-GameState::GameState(sf::RenderWindow& window, graphics::TextureManager& textures) : window(window), textures(textures) {
+GameState::GameState(StateManager& manager, sf::RenderWindow& window, TextureManager& textures) 
+	: State{ manager, window, textures } {
 	maze = generateMaze();
 	fixedMousePos = { (int)window.getSize().x / 2, (int)window.getSize().y / 2 };
 	isFocused = true;
@@ -34,12 +36,14 @@ void GameState::update() {
 	dt = deltaClock.restart().asSeconds();
 	sf::Event event;
 
+	window.setTitle(std::to_string(1 / dt));
+
 	while (window.pollEvent(event)) {
 		if (event.type == sf::Event::Closed)
-			window.close();
+			manager.quit();
 		else if (event.type == sf::Event::KeyPressed) {
 			if (event.key.code == sf::Keyboard::Escape)
-				window.close();
+				manager.quit();
 		}
 		else if (event.type == sf::Event::LostFocus)
 			isFocused = false;
@@ -143,7 +147,7 @@ void GameState::drawWalls() {
 		angle = player.direction() + atanf(segLen * x - screenHalfLen);
 
 		// casting ray and fixing the fisheye problem
-		graphics::Ray ray = graphics::raycast(player.pos(), angle, maze);
+		Ray ray = raycast(player.pos(), angle, maze);
 		ray.distance *= cosf(player.direction() - angle);
 
 		zBuffer[x] = ray.distance;
@@ -260,4 +264,3 @@ void GameState::drawCharacter(const sf::Vector2f& characterPos) {
 		}
 	}
 }
-

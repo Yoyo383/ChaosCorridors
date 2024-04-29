@@ -3,6 +3,7 @@
 #include "sockets.hpp"
 #include "states/GameState.hpp"
 #include "states/MainMenuState.hpp"
+#include "states/StateManager.hpp"
 
 constexpr unsigned short PORT = 12345;
 
@@ -22,19 +23,25 @@ int main() {
 	sockets::initialize();
 
 	sf::RenderWindow window(sf::VideoMode(1000, 800), "Yay window!");
-	graphics::TextureManager textures;
+	TextureManager textures;
 	textures.addTexture("floor", "assets/wood.png");
 	textures["floor"].setRepeated(true);
 	textures.addTexture("ceiling", "assets/colorstone.png");
 	textures["ceiling"].setRepeated(true);
 	textures.addTexture("wall", "assets/redbrick.png");
 	textures.addTexture("character", "assets/character.png");
+	textures.addTexture("buttonNormal", "assets/buttonNormal.png");
+	textures.addTexture("buttonClicked", "assets/buttonClicked.png");
 
-	GameState state(window, textures);
+	StateManager stateManager;
 
-	while (window.isOpen()) {
-		state.update();
-		state.draw();
+	std::unique_ptr<MainMenuState> mainMenuState(new MainMenuState(stateManager, window, textures));
+	stateManager.setNextState(std::move(mainMenuState));
+
+	while (stateManager.isRunning()) {
+		stateManager.changeState();
+		stateManager.update();
+		stateManager.draw();
 	}
 
 	sockets::terminate();
