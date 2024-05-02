@@ -135,26 +135,26 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\Button.cpp" />
+    <ClCompile Include="src\ui\Button.cpp" />
     <ClCompile Include="src\states\MainMenuState.cpp" />
     <ClCompile Include="src\states\GameState.cpp" />
     <ClCompile Include="src\graphics.cpp" />
     <ClCompile Include="src\player.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\maze.cpp" />
-    <ClCompile Include="src\server.cpp" />
+    <ClCompile Include="src\server\server.cpp" />
     <ClCompile Include="src\states\StateManager.cpp" />
     <ClCompile Include="src\util.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\Button.hpp" />
+    <ClInclude Include="src\ui\Button.hpp" />
     <ClInclude Include="src\states\MainMenuState.hpp" />
     <ClInclude Include="src\states\GameState.hpp" />
     <ClInclude Include="src\graphics.hpp" />
     <ClInclude Include="src\player.hpp" />
     <ClInclude Include="src\globals.hpp" />
     <ClInclude Include="src\maze.hpp" />
-    <ClInclude Include="src\server.hpp" />
+    <ClInclude Include="src\server\server.hpp" />
     <ClInclude Include="src\states\StateManager.hpp" />
     <ClInclude Include="src\util.hpp" />
     <ClInclude Include="src\states\State.hpp" />

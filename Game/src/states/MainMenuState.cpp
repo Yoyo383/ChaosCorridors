@@ -1,7 +1,7 @@
 #include "MainMenuState.hpp"
 #include <iostream>
 #include "GameState.hpp"
-#include "../server.hpp"
+#include "../server/server.hpp"
 #include <thread>
 
 MainMenuState::MainMenuState(StateManager& manager, sf::RenderWindow& window, TextureManager& textures)

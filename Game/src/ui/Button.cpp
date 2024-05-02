@@ -1,5 +1,5 @@
 #include "Button.hpp"
-#include "graphics.hpp"
+#include "../graphics.hpp"
 
 Button::Button(sf::Vector2f position, TextureManager& textures, std::string textureID)
 	: sprite(textures[textureID])

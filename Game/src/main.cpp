@@ -23,7 +23,7 @@ int main() {
 	textures.addTexture("hostButton", "assets/hostButton.png");
 
 	StateManager stateManager;
-
+	
 	std::unique_ptr<MainMenuState> mainMenuState(new MainMenuState(stateManager, window, textures));
 	stateManager.setNextState(std::move(mainMenuState));
 

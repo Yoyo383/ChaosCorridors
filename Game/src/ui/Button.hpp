@@ -1,6 +1,6 @@
 #pragma once
 #include "SFML/Graphics.hpp"
-#include "graphics.hpp"
+#include "../graphics.hpp"
 
 class Button {
 private:

@@ -1,7 +1,7 @@
 #pragma once
 #include "StateManager.hpp"
 #include "SFML/Graphics.hpp"
-#include "../Button.hpp"
+#include "../ui/Button.hpp"
 #include "../graphics.hpp"
 
 class MainMenuState : public State {
