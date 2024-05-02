@@ -80,10 +80,10 @@ void GameState::draw() {
 
 void GameState::drawFloorAndCeiling() {
 	// scale factor for d (and other stuff)
-	float tan = tanf(player.fov() / 2);
+	float tan = tanf(player.getFOV() / 2);
 
 	// for doing floor/ceiling things
-	float cos = cosf(player.direction()), sin = sinf(player.direction());
+	float cos = cosf(player.getDirection()), sin = sinf(player.getDirection());
 
 	for (int y = 0; y <= window.getSize().y / 2; y++) {
 		// the distance of the current row
@@ -112,8 +112,8 @@ void GameState::drawFloorAndCeiling() {
 		sf::VertexArray scanLine(sf::Lines, 2);
 
 		// texturing the floor/ceiling according to the start and end sample positions and the player position
-		scanLine[0].texCoords = endPos + player.pos() * textures["floor"].getSize().x;
-		scanLine[1].texCoords = startPos + player.pos() * textures["floor"].getSize().x;
+		scanLine[0].texCoords = endPos + player.getPos() * textures["floor"].getSize().x;
+		scanLine[1].texCoords = startPos + player.getPos() * textures["floor"].getSize().x;
 		// shading
 		scanLine[0].color = color;
 		scanLine[1].color = color;
@@ -138,17 +138,17 @@ void GameState::drawWalls() {
 	// variables for angle increment
 	// math taken from here:
 	// https://stackoverflow.com/questions/24173966/raycasting-engine-rendering-creating-slight-distortion-increasing-towards-edges
-	float screenHalfLen = tanf(player.fov() / 2);
+	float screenHalfLen = tanf(player.getFOV() / 2);
 	float segLen = 2 * screenHalfLen / window.getSize().x;
 
 	float angle;
 	for (int x = 0; x <= window.getSize().x; x++) {
 		// angle calculation such that the walls aren't distorted
-		angle = player.direction() + atanf(segLen * x - screenHalfLen);
+		angle = player.getDirection() + atanf(segLen * x - screenHalfLen);
 
 		// casting ray and fixing the fisheye problem
-		Ray ray = raycast(player.pos(), angle, maze);
-		ray.distance *= cosf(player.direction() - angle);
+		Ray ray = raycast(player.getPos(), angle, maze);
+		ray.distance *= cosf(player.getDirection() - angle);
 
 		zBuffer[x] = ray.distance;
 
@@ -202,15 +202,15 @@ void GameState::drawWalls() {
 }
 
 void GameState::drawCharacter(const sf::Vector2f& characterPos) {
-	float angleFromPlayer = vecAngle(characterPos - player.pos());
-	float relativeAngle = player.direction() - angleFromPlayer;
+	float angleFromPlayer = vecAngle(characterPos - player.getPos());
+	float relativeAngle = player.getDirection() - angleFromPlayer;
 
 	if (relativeAngle > M_PI)
 		relativeAngle -= 2 * M_PI;
 	else if (relativeAngle < -M_PI)
 		relativeAngle += 2 * M_PI;
 
-	float distance = vecMagnitude(characterPos - player.pos());
+	float distance = vecMagnitude(characterPos - player.getPos());
 	distance *= cosf(relativeAngle);
 
 	if (distance >= 0.5f) {
@@ -225,7 +225,7 @@ void GameState::drawCharacter(const sf::Vector2f& characterPos) {
 		float width = height * aspectRatio;
 
 		// calculating middle of texture
-		float middle = window.getSize().x - (relativeAngle / player.fov() + 0.5f) * window.getSize().x;
+		float middle = window.getSize().x - (relativeAngle / player.getFOV() + 0.5f) * window.getSize().x;
 
 		for (int x = 0; x <= width; x++) {
 			float posX = middle + (float)x - (width / 2.0f);
