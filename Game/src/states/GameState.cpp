@@ -53,7 +53,7 @@ void GameState::update() {
 
 	// setting player's direction according to mouse
 	if (isFocused) {
-		player.setDirection(window, fixedMousePos, dt);
+		player.setDirection(window, fixedMousePos);
 		resetMousePos();
 	}
 

@@ -3,12 +3,7 @@
 #include "globals.hpp"
 #include "SFML/Graphics.hpp"
 
-class Player
-{
-private:
-	sf::Vector2f _pos, _velocity;
-	float _direction, _fov, _speed, _sensitivity;
-
+class Player {
 public:
 	Player();
 
@@ -17,11 +12,13 @@ public:
 	float direction() const { return _direction; }
 	float fov() const { return _fov; }
 
-	void setDirection(sf::RenderWindow& window, sf::Vector2i fixedMousePos, float dt);
+	void setDirection(sf::RenderWindow& window, sf::Vector2i fixedMousePos);
 	void calculateVelocity(sf::Vector2f wasd, float dt);
 	void checkCollision(MazeArr& maze);
 	void move();
 
-
+private:
+	sf::Vector2f _pos, _velocity;
+	float _direction, _fov, _speed, _sensitivity;
 };
 

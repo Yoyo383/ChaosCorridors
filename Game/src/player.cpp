@@ -9,7 +9,7 @@ Player::Player() {
 	_sensitivity = 0.01f;
 }
 
-void Player::setDirection(sf::RenderWindow& window, sf::Vector2i fixedMousePos, float dt) {
+void Player::setDirection(sf::RenderWindow& window, sf::Vector2i fixedMousePos) {
 	int currentMousePos = sf::Mouse::getPosition(window).x;
 	float deltaMousePos = (currentMousePos - fixedMousePos.x) * _sensitivity;
 	_direction += deltaMousePos;

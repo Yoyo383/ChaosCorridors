@@ -5,19 +5,6 @@
 #include "../graphics.hpp"
 
 class GameState : public State {
-private:
-	MazeArr maze;
-
-	sf::Clock deltaClock;
-	float dt;
-
-	Player player;
-
-	sf::Vector2i fixedMousePos;
-	bool isFocused;
-
-	float* zBuffer;
-
 public:
 	GameState(StateManager& manager, sf::RenderWindow& window, TextureManager& textures);
 	~GameState();
@@ -31,4 +18,17 @@ public:
 	void drawFloorAndCeiling();
 	void drawWalls();
 	void drawCharacter(const sf::Vector2f& characterPos);
+
+private:
+	MazeArr maze;
+
+	sf::Clock deltaClock;
+	float dt;
+
+	Player player;
+
+	sf::Vector2i fixedMousePos;
+	bool isFocused;
+
+	float* zBuffer;
 };
