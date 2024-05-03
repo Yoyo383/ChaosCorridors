@@ -1,13 +1,11 @@
 #include <iostream>
 #include <map>
 #include "sockets.hpp"
-#include "SFML/System.hpp"
-#include "server.hpp"
 
 constexpr unsigned short PORT = 12345;
 
 struct PlayerData {
-	sf::Vector2f pos;
+	float x, y;
 };
 
 void server() {
@@ -20,7 +18,7 @@ void server() {
 		try {
 			auto [data, address] = serverSocket.recvFrom(1024);
 			if (std::string(data.begin(), data.end()) == "connect") {
-				players[address] = { { 1.5f, 1.5f } };
+				players[address] = { 1.5f, 1.5f };
 				std::cout << "connected" << std::endl;
 			}
 			else if (players.find(address) != players.end()) {

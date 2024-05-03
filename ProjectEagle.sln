@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Game", "Game\Game.vcxproj",
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Sockets", "Sockets\Sockets.vcxproj", "{EB8709DA-8EAC-4BD8-915E-84A6CFAC0197}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Server", "Server\Server.vcxproj", "{C9701477-263B-419D-9C91-7C6FAC246E17}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -31,6 +33,14 @@ Global
 		{EB8709DA-8EAC-4BD8-915E-84A6CFAC0197}.Release|x64.Build.0 = Release|x64
 		{EB8709DA-8EAC-4BD8-915E-84A6CFAC0197}.Release|x86.ActiveCfg = Release|Win32
 		{EB8709DA-8EAC-4BD8-915E-84A6CFAC0197}.Release|x86.Build.0 = Release|Win32
+		{C9701477-263B-419D-9C91-7C6FAC246E17}.Debug|x64.ActiveCfg = Debug|x64
+		{C9701477-263B-419D-9C91-7C6FAC246E17}.Debug|x64.Build.0 = Debug|x64
+		{C9701477-263B-419D-9C91-7C6FAC246E17}.Debug|x86.ActiveCfg = Debug|Win32
+		{C9701477-263B-419D-9C91-7C6FAC246E17}.Debug|x86.Build.0 = Debug|Win32
+		{C9701477-263B-419D-9C91-7C6FAC246E17}.Release|x64.ActiveCfg = Release|x64
+		{C9701477-263B-419D-9C91-7C6FAC246E17}.Release|x64.Build.0 = Release|x64
+		{C9701477-263B-419D-9C91-7C6FAC246E17}.Release|x86.ActiveCfg = Release|Win32
+		{C9701477-263B-419D-9C91-7C6FAC246E17}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
