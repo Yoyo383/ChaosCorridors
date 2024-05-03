@@ -145,6 +145,7 @@
     <ClCompile Include="src\server\server.cpp" />
     <ClCompile Include="src\states\StateManager.cpp" />
     <ClCompile Include="src\util.cpp" />
+    <ClCompile Include="src\ui\TextField.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\ui\Button.hpp" />
@@ -158,6 +159,7 @@
     <ClInclude Include="src\states\StateManager.hpp" />
     <ClInclude Include="src\util.hpp" />
     <ClInclude Include="src\states\State.hpp" />
+    <ClInclude Include="src\ui\TextField.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Sockets\Sockets.vcxproj">
