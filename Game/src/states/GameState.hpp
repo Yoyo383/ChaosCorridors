@@ -3,10 +3,11 @@
 #include "StateManager.hpp"
 #include "../player.hpp"
 #include "../graphics.hpp"
+#include "sockets.hpp"
 
 class GameState : public State {
 public:
-	GameState(StateManager& manager, sf::RenderWindow& window, TextureManager& textures);
+	GameState(StateManager& manager, sf::RenderWindow& window, TextureManager& textures, sockets::Socket& socket);
 	~GameState();
 
 	void update() override;
@@ -20,6 +21,8 @@ public:
 	void drawCharacter(const sf::Vector2f& characterPos);
 
 private:
+	sockets::Socket socket;
+
 	MazeArr maze;
 
 	sf::Clock deltaClock;

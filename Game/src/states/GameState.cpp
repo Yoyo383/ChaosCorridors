@@ -3,8 +3,9 @@
 #include "../util.hpp"
 #include <iostream>
 
-GameState::GameState(StateManager& manager, sf::RenderWindow& window, TextureManager& textures) 
-	: State{ manager, window, textures } {
+GameState::GameState(StateManager& manager, sf::RenderWindow& window, TextureManager& textures, sockets::Socket& socket) 
+	: State{ manager, window, textures }, socket(socket) {
+
 	maze = generateMaze();
 	fixedMousePos = { (int)window.getSize().x / 2, (int)window.getSize().y / 2 };
 	isFocused = true;

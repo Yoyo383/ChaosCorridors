@@ -1,35 +1,51 @@
 #include <iostream>
 #include <map>
+#include <thread>
 #include "sockets.hpp"
 
 constexpr unsigned short PORT = 12345;
+
+static int count = 0;
+
+std::vector<sockets::Socket> clientSockets;
 
 struct PlayerData {
 	float x, y;
 };
 
-void server() {
+static void handleClient(sockets::Socket socket, sockets::Address address) {
+	clientSockets.push_back(socket);
+
+	std::cout << address.ip << " " << address.port << std::endl;
+
+	clientSockets.erase(std::remove(clientSockets.begin(), clientSockets.end(), socket), clientSockets.end());
+	socket.close();
+}
+
+void main() {
+	sockets::initialize();
+
 	std::map<sockets::Address, PlayerData> players;
 
-	sockets::Socket serverSocket(sockets::Protocol::UDP);
-	serverSocket.setTimeout(0);
-	serverSocket.bind({ "0.0.0.0", PORT });
-	while (true) {
-		try {
-			auto [data, address] = serverSocket.recvFrom(1024);
-			if (std::string(data.begin(), data.end()) == "connect") {
-				players[address] = { 1.5f, 1.5f };
-				std::cout << "connected" << std::endl;
-			}
-			else if (players.find(address) != players.end()) {
-				float x = data[0], y = data[1];
-				std::cout << x << ", " << y << std::endl;
-			}
+	sockets::Socket serverSocket(sockets::Protocol::TCP);
+	try {
+		serverSocket.bind({ "0.0.0.0", PORT });
+		serverSocket.listen(4);
+
+		while (count < 2) {
+			auto [clientSocket, clientAddress] = serverSocket.accept();
+			std::thread thread(handleClient, clientSocket, clientAddress);
+			thread.detach();
+			count++;
 		}
-		catch (const std::exception& err) {
-			std::cout << "Error on server socket: " << err.what() << std::endl;
-		}
+
+		std::cout << "start!" << std::endl;
+	}
+	catch (std::exception& err) {
+		std::cout << "Server client error: " << err.what() << std::endl;
 	}
 
 	serverSocket.close();
+
+	sockets::terminate();
 }

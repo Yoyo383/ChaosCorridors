@@ -49,9 +49,9 @@ namespace sockets {
 	class Socket {
 	private:
 		// The ID of the socket, used for windows functions.
-		SOCKET _socketId;
+		SOCKET socketId;
 		// The protocol of the socket.
-		Protocol _protocol;
+		Protocol protocol;
 
 		/**
 		 * @brief Creates a new socket with an ID and a protocol.
@@ -65,6 +65,13 @@ namespace sockets {
 		 * @param protocol The protocol of the socket.
 		*/
 		Socket(Protocol protocol);
+
+		/**
+		 * @brief Checks if two sockets are equal.
+		 * @param other The other socket.
+		 * @return Whether the current and other socket are equal.
+		*/
+		bool operator ==(const Socket& other);
 
 		/**
 		 * @brief Binds the socket to an address.

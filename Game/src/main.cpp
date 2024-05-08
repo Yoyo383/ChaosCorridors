@@ -21,10 +21,11 @@ int main() {
 	textures.addTexture("wall", "assets/redbrick.png");
 	textures.addTexture("character", "assets/character.png");
 	textures.addTexture("hostButton", "assets/hostButton.png");
+	textures.addTexture("buttonNormal", "assets/buttonNormal.png");
 
 	StateManager stateManager;
 	
-	std::unique_ptr<MainMenuState> mainMenuState(new MainMenuState(stateManager, window, textures));
+	std::unique_ptr<MainMenuState> mainMenuState = std::make_unique<MainMenuState>(stateManager, window, textures);
 	stateManager.setNextState(std::move(mainMenuState));
 
 	while (stateManager.isRunning()) {
