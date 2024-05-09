@@ -7,7 +7,7 @@
 
 class GameState : public State {
 public:
-	GameState(StateManager& manager, sf::RenderWindow& window, TextureManager& textures, sockets::Socket& socket);
+	GameState(StateManager& manager, sf::RenderWindow& window, TextureManager& textures, sockets::Socket socket);
 	~GameState();
 
 	void update() override;

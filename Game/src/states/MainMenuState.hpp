@@ -6,13 +6,13 @@
 #include "../ui/TextField.hpp"
 
 class MainMenuState : public State {
-private:
-	Button hostButton;
-	TextField nameField;
-
 public:
 	MainMenuState(StateManager& manager, sf::RenderWindow& window, TextureManager& textures);
 
 	void update() override;
 	void draw() override;
+
+private:
+	Button hostButton;
+	TextField nameField;
 };

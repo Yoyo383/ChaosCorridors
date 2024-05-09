@@ -26,7 +26,7 @@ int main() {
 	StateManager stateManager;
 	
 	std::unique_ptr<MainMenuState> mainMenuState = std::make_unique<MainMenuState>(stateManager, window, textures);
-	stateManager.setNextState(std::move(mainMenuState));
+	stateManager.addState(std::move(mainMenuState));
 
 	while (stateManager.isRunning()) {
 		stateManager.changeState();

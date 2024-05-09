@@ -8,9 +8,9 @@ public:
 	StateManager();
 	~StateManager();
 
-	void pushState(std::unique_ptr<State> state);
-	void popState();
-	void setNextState(std::unique_ptr<State> state);
+	void addState(std::unique_ptr<State> state);
+	void removeState();
+	void setState(std::unique_ptr<State> state);
 	void changeState();
 
 	void update();
@@ -25,5 +25,6 @@ private:
 	std::stack<std::unique_ptr<State>> states;
 	bool running;
 	bool shouldChangeState;
+	bool shouldRemoveState;
 	std::unique_ptr<State> nextState;
 };

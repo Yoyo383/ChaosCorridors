@@ -1,6 +1,6 @@
 #include "MainMenuState.hpp"
 #include <iostream>
-#include "GameState.hpp"
+#include "LobbyState.hpp"
 #include "sockets.hpp"
 #include <thread>
 
@@ -18,10 +18,6 @@ void MainMenuState::update() {
 	while (window.pollEvent(event)) {
 		if (event.type == sf::Event::Closed)
 			manager.quit();
-		else if (event.type == sf::Event::KeyPressed) {
-			if (event.key.code == sf::Keyboard::Escape)
-				manager.quit();
-		}
 		else if (event.type == sf::Event::MouseButtonPressed)
 			hostButton.isButtonClicked(sf::Vector2f(sf::Mouse::getPosition(window)));
 
@@ -34,8 +30,9 @@ void MainMenuState::update() {
 				sockets::Socket socket(sockets::Protocol::TCP);
 				try {
 					socket.connect({ "127.0.0.1", 12345 });
-					std::unique_ptr<GameState> gameState = std::make_unique<GameState>(manager, window, textures, socket);
-					manager.setNextState(std::move(gameState));
+					socket.send(nameField.getText());
+					std::unique_ptr<LobbyState> lobbyState = std::make_unique<LobbyState>(manager, window, textures, socket);
+					manager.addState(std::move(lobbyState));
 				}
 				catch (std::exception& err) {
 					std::cout << "Can't connect to server." << std::endl;

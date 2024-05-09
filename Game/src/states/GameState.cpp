@@ -3,7 +3,7 @@
 #include "../util.hpp"
 #include <iostream>
 
-GameState::GameState(StateManager& manager, sf::RenderWindow& window, TextureManager& textures, sockets::Socket& socket) 
+GameState::GameState(StateManager& manager, sf::RenderWindow& window, TextureManager& textures, sockets::Socket socket) 
 	: State{ manager, window, textures }, socket(socket) {
 
 	maze = generateMaze();
