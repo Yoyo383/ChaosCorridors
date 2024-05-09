@@ -22,8 +22,10 @@ MazeArr generateMaze() {
 	}
 
 	// first cell
-	maze[1][1] = consts::CELL_VISITED;
-	stack.push({ 1, 1 });
+	int firstX = (rand() % consts::MAZE_WIDTH) * 2 + 1;
+	int firstY = (rand() % consts::MAZE_HEIGHT) * 2 + 1;
+	maze[firstY][firstX] = consts::CELL_VISITED;
+	stack.push({ firstX, firstY });
 	visitedCells = 1;
 
 	// loop until every cell is visited

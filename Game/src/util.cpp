@@ -59,6 +59,7 @@ std::tuple<bool, std::string, std::string> receiveKeyValue(sockets::Socket& sock
 			if (err.what() == std::to_string(WSAEWOULDBLOCK))
 				return std::make_tuple(false, "", "");
 			std::cout << "Error in recv: " << err.what() << std::endl;
+			return std::make_tuple(false, "", "");
 		}
 	}
 
