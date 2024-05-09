@@ -9,6 +9,7 @@ static int count = 0;
 
 std::vector<sockets::Socket> clientSockets;
 
+
 struct PlayerData {
 	float x, y;
 };
@@ -17,9 +18,15 @@ static void handleClient(sockets::Socket socket, sockets::Address address) {
 	clientSockets.push_back(socket);
 
 	std::cout << address.ip << " " << address.port << std::endl;
+	std::string name = socket.recvString(1024);
+	std::cout << name << std::endl;
+	socket.send("hello:there\n");
 
-	clientSockets.erase(std::remove(clientSockets.begin(), clientSockets.end(), socket), clientSockets.end());
-	socket.close();
+	if (socket.recvString(1024) == "disconnect") {
+		clientSockets.erase(std::remove(clientSockets.begin(), clientSockets.end(), socket), clientSockets.end());
+		socket.close();
+		count--;
+	}
 }
 
 void main() {
