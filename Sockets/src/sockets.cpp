@@ -71,7 +71,7 @@ namespace sockets {
 		socketId = socket(AF_INET, type, 0);
 
 		if (socketId == INVALID_SOCKET) {
-			throw std::exception(("Error when creating socket: " + std::to_string(WSAGetLastError())).c_str());
+			throw std::exception(std::to_string(WSAGetLastError()).c_str());
 		}
 
 		setTimeout(2);
@@ -86,13 +86,13 @@ namespace sockets {
 
 		int result = ::bind(socketId, (sockaddr*)&bindAddress, sizeof(bindAddress));
 		if (result != 0)
-			throw std::exception(("Error when binding socket: " + std::to_string(WSAGetLastError())).c_str());
+			throw std::exception(std::to_string(WSAGetLastError()).c_str());
 	}
 
 	void Socket::listen(int backlog) {
 		int result = ::listen(socketId, backlog);
 		if (result != 0)
-			throw std::exception(("Error when listening: " + std::to_string(WSAGetLastError())).c_str());
+			throw std::exception(std::to_string(WSAGetLastError()).c_str());
 	}
 
 	std::pair<Socket, Address> Socket::accept() {
@@ -104,7 +104,7 @@ namespace sockets {
 
 		SOCKET newId = ::accept(socketId, (struct sockaddr*)&addr, &addrlen);
 		if (newId == INVALID_SOCKET)
-			throw std::exception(("Error when accepting: " + std::to_string(WSAGetLastError())).c_str());
+			throw std::exception(std::to_string(WSAGetLastError()).c_str());
 
 		Socket socket(newId, Protocol::TCP);
 
@@ -116,7 +116,7 @@ namespace sockets {
 	void Socket::close() {
 		int result = ::closesocket(socketId);
 		if (result == SOCKET_ERROR)
-			throw std::exception(("Error when closing socket: " + std::to_string(WSAGetLastError())).c_str());
+			throw std::exception(std::to_string(WSAGetLastError()).c_str());
 	}
 
 	void Socket::connect(Address address) {
@@ -124,7 +124,7 @@ namespace sockets {
 
 		int result = ::connect(socketId, (sockaddr*)&connectAddress, sizeof(connectAddress));
 		if (result != 0)
-			throw std::exception(("Error when connecting: " + std::to_string(WSAGetLastError())).c_str());
+			throw std::exception(std::to_string(WSAGetLastError()).c_str());
 	}
 
 	void Socket::setTimeout(float seconds) {
@@ -141,7 +141,7 @@ namespace sockets {
 	int Socket::send(const char* data, int size) {
 		int result = ::send(socketId, data, size, 0);
 		if (result == SOCKET_ERROR)
-			throw std::exception(("Error when sending: " + std::to_string(WSAGetLastError())).c_str());
+			throw std::exception(std::to_string(WSAGetLastError()).c_str());
 		return result;
 	}
 	int Socket::send(std::vector<char> data) {
@@ -156,7 +156,7 @@ namespace sockets {
 		int bytes = ::recv(socketId, buf.data(), size, 0);
 
 		if (bytes == SOCKET_ERROR)
-			throw std::exception(("Error when receiving: " + std::to_string(WSAGetLastError())).c_str());
+			throw std::exception(std::to_string(WSAGetLastError()).c_str());
 
 		buf.resize(bytes);
 		return buf;
@@ -172,7 +172,7 @@ namespace sockets {
 
 		int result = ::sendto(socketId, data, size, 0, (sockaddr*)&sendAddress, sizeof(sendAddress));
 		if (result == SOCKET_ERROR)
-			throw std::exception(("Error when sending: " + std::to_string(WSAGetLastError())).c_str());
+			throw std::exception(std::to_string(WSAGetLastError()).c_str());
 		return result;
 	}
 	int Socket::sendTo(std::vector<char> data, Address address) {
@@ -191,7 +191,7 @@ namespace sockets {
 		int bytes = ::recvfrom(socketId, buf.data(), size, 0, (sockaddr*)&addr, &addrlen);
 
 		if (bytes == SOCKET_ERROR)
-			throw std::exception(("Error when receiving: " + std::to_string(WSAGetLastError())).c_str());
+			throw std::exception(std::to_string(WSAGetLastError()).c_str());
 
 		Address resultAddress = rawAddressToAddress(addr);
 
