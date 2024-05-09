@@ -35,13 +35,14 @@ void TextField::handleInput(sf::Event event) {
 		return;
 
 	std::string string = text.getString();
+	unsigned char code = static_cast<unsigned char>(event.text.unicode);
 
-	if (event.text.unicode == '\b') {
+	if (code == '\b') {
 		if (!string.empty())
 			string.pop_back(); // remove last character
 	}
-	else
-		string += static_cast<char>(event.text.unicode);
+	else if (isprint(code))
+		string += code;
 
 	text.setString(string);
 
