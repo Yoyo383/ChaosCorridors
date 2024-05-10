@@ -1,19 +1,25 @@
 #include "GameState.hpp"
-#include "../maze.hpp"
+#include "maze.hpp"
 #include "../util.hpp"
+#include "globals.hpp"
 #include <iostream>
 
-GameState::GameState(StateManager& manager, sf::RenderWindow& window, TextureManager& textures, sockets::Socket socket) 
-	: State{ manager, window, textures }, socket(socket) {
+GameState::GameState(StateManager& manager, sf::RenderWindow& window, TextureManager& textures, sockets::Socket socket)
+	: State{ manager, window, textures }, socket(socket), maze() {
 
-	maze = generateMaze();
+	socket.setBlocking(true);
+	std::vector<char> rawMaze = socket.recv(globals::WORLD_WIDTH * globals::WORLD_HEIGHT);
+	socket.setBlocking(false);
+
+	for (int i = 0; i < rawMaze.size(); i++) {
+		maze[i / globals::WORLD_WIDTH][i % globals::WORLD_WIDTH] = rawMaze[i];
+	}
+
 	fixedMousePos = { (int)window.getSize().x / 2, (int)window.getSize().y / 2 };
 	isFocused = true;
+	paused = false;
 	dt = 0;
 	zBuffer = new float[window.getSize().x + 1];
-
-	window.setMouseCursorVisible(false);
-	resetMousePos();
 
 }
 
@@ -40,11 +46,14 @@ void GameState::update() {
 	window.setTitle(std::to_string(1 / dt));
 
 	while (window.pollEvent(event)) {
-		if (event.type == sf::Event::Closed)
+		if (event.type == sf::Event::Closed) {
 			manager.quit();
+			socket.close();
+			paused = true;
+		}
 		else if (event.type == sf::Event::KeyPressed) {
 			if (event.key.code == sf::Keyboard::Escape)
-				manager.quit();
+				paused = !paused;
 		}
 		else if (event.type == sf::Event::LostFocus)
 			isFocused = false;
@@ -52,11 +61,19 @@ void GameState::update() {
 			isFocused = true;
 	}
 
+	if (paused) {
+		window.setMouseCursorVisible(true);
+		return;
+	}
+
 	// setting player's direction according to mouse
 	if (isFocused) {
+		window.setMouseCursorVisible(false);
 		player.setDirection(window, fixedMousePos);
 		resetMousePos();
 	}
+	else
+		window.setMouseCursorVisible(true);
 
 	// getting input
 	sf::Vector2f wasd;

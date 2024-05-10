@@ -35,7 +35,7 @@ void Player::calculateVelocity(sf::Vector2f wasd, float dt) {
 	velocity = vecNormalize(velocity) * speed * dt;
 }
 
-void Player::checkCollision(MazeArr& maze)
+void Player::checkCollision(globals::MazeArr& maze)
 {
 	// return sign of a number (1, -1, or 0)
 	auto sign = [](float x) { return (x > 0) - (x < 0); };
@@ -44,9 +44,9 @@ void Player::checkCollision(MazeArr& maze)
 	sf::Vector2f collisionRadius = sf::Vector2f(sign(velocity.x), sign(velocity.y)) * 0.25f;
 
 	// checking collision
-	if (maze[(int)(pos.y + velocity.y + collisionRadius.y)][(int)pos.x] == consts::CELL_WALL)
+	if (maze[(int)(pos.y + velocity.y + collisionRadius.y)][(int)pos.x] == globals::CELL_WALL)
 		velocity.y = 0;
-	if (maze[(int)pos.y][(int)(pos.x + velocity.x + collisionRadius.x)] == consts::CELL_WALL)
+	if (maze[(int)pos.y][(int)(pos.x + velocity.x + collisionRadius.x)] == globals::CELL_WALL)
 		velocity.x = 0;
 }
 

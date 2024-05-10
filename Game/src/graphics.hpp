@@ -25,4 +25,4 @@ public:
 	* @param world The world.
 	* @return A Ray object representing the ray.
 */
-Ray raycast(sf::Vector2f pos, float angle, const MazeArr& world);
+Ray raycast(sf::Vector2f pos, float angle, const globals::MazeArr& world);

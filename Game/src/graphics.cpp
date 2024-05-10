@@ -22,7 +22,7 @@ sf::Texture& TextureManager::operator[](std::string id) {
 	return map[id];
 }
 
-Ray raycast(sf::Vector2f pos, float angle, const MazeArr& world) {
+Ray raycast(sf::Vector2f pos, float angle, const globals::MazeArr& world) {
 	// the result
 	sf::Vector2f hit(-1, -1);
 
@@ -60,7 +60,7 @@ Ray raycast(sf::Vector2f pos, float angle, const MazeArr& world) {
 
 	bool foundCell = false;
 	bool verticalHit = false;
-	float maxDistance = consts::WORLD_WIDTH;
+	float maxDistance = globals::WORLD_WIDTH;
 	float distance = 0;
 	float hitCoord = 0;
 
@@ -79,9 +79,9 @@ Ray raycast(sf::Vector2f pos, float angle, const MazeArr& world) {
 			verticalHit = false;
 		}
 
-		if (currentCell.x >= 0 && currentCell.x < consts::WORLD_WIDTH && currentCell.y >= 0 && currentCell.y < consts::WORLD_HEIGHT)
+		if (currentCell.x >= 0 && currentCell.x < globals::WORLD_WIDTH && currentCell.y >= 0 && currentCell.y < globals::WORLD_HEIGHT)
 		{
-			if (world[currentCell.y][currentCell.x] == consts::CELL_WALL)
+			if (world[currentCell.y][currentCell.x] == globals::CELL_WALL)
 			{
 				foundCell = true;
 			}

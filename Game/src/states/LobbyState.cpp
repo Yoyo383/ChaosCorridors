@@ -1,5 +1,6 @@
 #include "LobbyState.hpp"
-#include "../util.hpp"
+#include "GameState.hpp"
+#include "protocol.hpp"
 #include <iostream>
 
 LobbyState::LobbyState(StateManager& manager, sf::RenderWindow& window, TextureManager& textures, sockets::Socket socket)
@@ -13,14 +14,27 @@ void LobbyState::update() {
 	sf::Event event;
 
 	while (window.pollEvent(event)) {
-		if (event.type == sf::Event::Closed)
+		if (event.type == sf::Event::Closed) {
+			socket.close();
 			manager.quit();
+		}
 	}
 
 	try {
-		auto [received, key, value] = receiveKeyValue(socket);
-		if (received)
-			std::cout << key << ": " << value << std::endl;
+		auto [key, value] = protocol::receiveKeyValue(socket);
+		if (key == "player") {
+			sf::Text text;
+			text.setFont(font);
+			text.setCharacterSize(90);
+			text.setPosition(0, playerNamesTexts.size() * 90);
+			text.setString(value);
+			text.setFillColor(sf::Color::Black);
+			playerNamesTexts.push_back(text);
+		}
+		else if (key == "start") {
+			std::unique_ptr<GameState> gameState = std::make_unique<GameState>(manager, window, textures, socket);
+			manager.setState(std::move(gameState));
+		}
 	}
 	catch (...) {
 
@@ -29,5 +43,8 @@ void LobbyState::update() {
 
 void LobbyState::draw() {
 	window.clear(sf::Color::White);
+	for (auto& text : playerNamesTexts) {
+		window.draw(text);
+	}
 	window.display();
 }

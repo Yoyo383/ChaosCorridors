@@ -23,7 +23,7 @@ public:
 private:
 	sockets::Socket socket;
 
-	MazeArr maze;
+	globals::MazeArr maze;
 
 	sf::Clock deltaClock;
 	float dt;
@@ -32,6 +32,8 @@ private:
 
 	sf::Vector2i fixedMousePos;
 	bool isFocused;
+
+	bool paused;
 
 	float* zBuffer;
 };

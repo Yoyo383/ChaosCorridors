@@ -21,9 +21,6 @@
     <ClCompile Include="src\util.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\maze.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\player.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -51,12 +48,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\util.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\maze.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\globals.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\player.hpp">

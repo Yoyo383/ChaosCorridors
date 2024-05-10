@@ -15,7 +15,7 @@ StateManager::~StateManager() {
 void StateManager::addState(std::unique_ptr<State> state) {
 	nextState = std::move(state);
 	shouldChangeState = true;
-	shouldRemoveState = true;
+	shouldRemoveState = false;
 }
 
 void StateManager::removeState() {
@@ -25,7 +25,7 @@ void StateManager::removeState() {
 void StateManager::setState(std::unique_ptr<State> state) {
 	nextState = std::move(state);
 	shouldChangeState = true;
-	shouldRemoveState = false;
+	shouldRemoveState = true;
 }
 
 void StateManager::changeState() {
@@ -39,11 +39,13 @@ void StateManager::changeState() {
 }
 
 void StateManager::update() {
-	states.top()->update();
+	if (running)
+		states.top()->update();
 }
 
 void StateManager::draw() {
-	states.top()->draw();
+	if (running)
+		states.top()->draw();
 }
 
 std::unique_ptr<State> StateManager::getCurrentState() {

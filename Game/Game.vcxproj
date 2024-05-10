@@ -104,7 +104,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);SFML_STATIC;_USE_MATH_DEFINES;NOMINMAX</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\SFML\include;$(SolutionDir)\Sockets\src</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\SFML\include;$(SolutionDir)\Sockets\src;$(SolutionDir)\Globals\src</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
@@ -122,7 +122,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);SFML_STATIC;_USE_MATH_DEFINES;NOMINMAX</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\SFML\include;$(SolutionDir)\Sockets\src</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\SFML\include;$(SolutionDir)\Sockets\src;$(SolutionDir)\Globals\src</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
@@ -142,7 +142,6 @@
     <ClCompile Include="src\graphics.cpp" />
     <ClCompile Include="src\player.cpp" />
     <ClCompile Include="src\main.cpp" />
-    <ClCompile Include="src\maze.cpp" />
     <ClCompile Include="src\states\StateManager.cpp" />
     <ClCompile Include="src\util.cpp" />
     <ClCompile Include="src\ui\TextField.cpp" />
@@ -154,14 +153,15 @@
     <ClInclude Include="src\states\GameState.hpp" />
     <ClInclude Include="src\graphics.hpp" />
     <ClInclude Include="src\player.hpp" />
-    <ClInclude Include="src\globals.hpp" />
-    <ClInclude Include="src\maze.hpp" />
     <ClInclude Include="src\states\StateManager.hpp" />
     <ClInclude Include="src\util.hpp" />
     <ClInclude Include="src\states\State.hpp" />
     <ClInclude Include="src\ui\TextField.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Globals\Globals.vcxproj">
+      <Project>{71678ac9-941d-4a0d-b44e-9b2dfc4e9d53}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\Sockets\Sockets.vcxproj">
       <Project>{eb8709da-8eac-4bd8-915e-84a6cfac0197}</Project>
     </ProjectReference>

@@ -3,10 +3,10 @@
 #include <array>
 
 // global constants
-namespace consts {
+namespace globals {
 	// maze size
-	const int MAZE_WIDTH = 16;
-	const int MAZE_HEIGHT = 16;
+	const int MAZE_WIDTH = 4;
+	const int MAZE_HEIGHT = 4;
 
 	// the world array size (with walls)
 	const int WORLD_WIDTH = MAZE_WIDTH * 2 + 1;
@@ -19,7 +19,7 @@ namespace consts {
 		CELL_WALL =		1,
 		CELL_VISITED =	2
 	};
-}
 
-// type for the maze array (2d array of bytes)
-using MazeArr = std::array<std::array<char, consts::WORLD_WIDTH>, consts::WORLD_HEIGHT>;
+	// type for the maze array (2d array of bytes)
+	using MazeArr = std::array<std::array<char, WORLD_WIDTH>, WORLD_HEIGHT>;
+}

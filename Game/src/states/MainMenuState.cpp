@@ -30,7 +30,7 @@ void MainMenuState::update() {
 				sockets::Socket socket(sockets::Protocol::TCP);
 				try {
 					socket.connect({ "127.0.0.1", 12345 });
-					socket.send(nameField.getText());
+					socket.send("player:" + nameField.getText() + "\n");
 					std::unique_ptr<LobbyState> lobbyState = std::make_unique<LobbyState>(manager, window, textures, socket);
 					manager.addState(std::move(lobbyState));
 				}

@@ -9,6 +9,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Sockets", "Sockets\Sockets.
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Server", "Server\Server.vcxproj", "{C9701477-263B-419D-9C91-7C6FAC246E17}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Globals", "Globals\Globals.vcxproj", "{71678AC9-941D-4A0D-B44E-9B2DFC4E9D53}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -41,6 +43,14 @@ Global
 		{C9701477-263B-419D-9C91-7C6FAC246E17}.Release|x64.Build.0 = Release|x64
 		{C9701477-263B-419D-9C91-7C6FAC246E17}.Release|x86.ActiveCfg = Release|Win32
 		{C9701477-263B-419D-9C91-7C6FAC246E17}.Release|x86.Build.0 = Release|Win32
+		{71678AC9-941D-4A0D-B44E-9B2DFC4E9D53}.Debug|x64.ActiveCfg = Debug|x64
+		{71678AC9-941D-4A0D-B44E-9B2DFC4E9D53}.Debug|x64.Build.0 = Debug|x64
+		{71678AC9-941D-4A0D-B44E-9B2DFC4E9D53}.Debug|x86.ActiveCfg = Debug|Win32
+		{71678AC9-941D-4A0D-B44E-9B2DFC4E9D53}.Debug|x86.Build.0 = Debug|Win32
+		{71678AC9-941D-4A0D-B44E-9B2DFC4E9D53}.Release|x64.ActiveCfg = Release|x64
+		{71678AC9-941D-4A0D-B44E-9B2DFC4E9D53}.Release|x64.Build.0 = Release|x64
+		{71678AC9-941D-4A0D-B44E-9B2DFC4E9D53}.Release|x86.ActiveCfg = Release|Win32
+		{71678AC9-941D-4A0D-B44E-9B2DFC4E9D53}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
