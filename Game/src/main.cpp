@@ -11,7 +11,7 @@ int main() {
 	srand(time(NULL));
 	sockets::initialize();
 
-	sf::RenderWindow window(sf::VideoMode(1000, 800), "Yay window!");
+	sf::RenderWindow window(sf::VideoMode(1000, 800), "Yay window!", sf::Style::Titlebar | sf::Style::Close);
 
 	TextureManager textures;
 	textures.addTexture("floor", "assets/wood.png");

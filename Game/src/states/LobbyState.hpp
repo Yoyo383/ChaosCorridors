@@ -5,13 +5,14 @@
 
 class LobbyState : public State {
 public:
-	LobbyState(StateManager& manager, sf::RenderWindow& window, TextureManager& textures, sockets::Socket socket);
+	LobbyState(StateManager& manager, sf::RenderWindow& window, TextureManager& textures, sockets::Socket tcpSocket, sockets::Socket udpSocket);
 
 	void update() override;
 	void draw() override;
 
 private:
-	sockets::Socket socket;
+	sockets::Socket tcpSocket;
+	sockets::Socket udpSocket;
 
 	std::vector<sf::Text> playerNamesTexts;
 	sf::Font font;

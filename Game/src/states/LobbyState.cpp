@@ -3,10 +3,10 @@
 #include "protocol.hpp"
 #include <iostream>
 
-LobbyState::LobbyState(StateManager& manager, sf::RenderWindow& window, TextureManager& textures, sockets::Socket socket)
-	: State{ manager, window, textures }, socket(socket) {
+LobbyState::LobbyState(StateManager& manager, sf::RenderWindow& window, TextureManager& textures, sockets::Socket tcpSocket, sockets::Socket udpSocket)
+	: State{ manager, window, textures }, tcpSocket(tcpSocket), udpSocket(udpSocket) {
 	font.loadFromFile("C:/Windows/Fonts/Arial.ttf");
-	socket.setBlocking(false);
+	tcpSocket.setBlocking(false);
 }
 
 void LobbyState::update() {
@@ -15,13 +15,13 @@ void LobbyState::update() {
 
 	while (window.pollEvent(event)) {
 		if (event.type == sf::Event::Closed) {
-			socket.close();
+			tcpSocket.close();
 			manager.quit();
 		}
 	}
 
 	try {
-		auto [key, value] = protocol::receiveKeyValue(socket);
+		auto [key, value] = protocol::receiveKeyValue(tcpSocket);
 		if (key == "player") {
 			sf::Text text;
 			text.setFont(font);
@@ -32,7 +32,7 @@ void LobbyState::update() {
 			playerNamesTexts.push_back(text);
 		}
 		else if (key == "start") {
-			std::unique_ptr<GameState> gameState = std::make_unique<GameState>(manager, window, textures, socket);
+			std::unique_ptr<GameState> gameState = std::make_unique<GameState>(manager, window, textures, tcpSocket, udpSocket);
 			manager.setState(std::move(gameState));
 		}
 	}

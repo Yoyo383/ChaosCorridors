@@ -2,14 +2,15 @@
 #include "maze.hpp"
 #include "../util.hpp"
 #include "globals.hpp"
+#include "protocol.hpp"
 #include <iostream>
 
-GameState::GameState(StateManager& manager, sf::RenderWindow& window, TextureManager& textures, sockets::Socket socket)
-	: State{ manager, window, textures }, socket(socket), maze() {
+GameState::GameState(StateManager& manager, sf::RenderWindow& window, TextureManager& textures, sockets::Socket tcpSocket, sockets::Socket udpSocket)
+	: State{ manager, window, textures }, tcpSocket(tcpSocket), udpSocket(udpSocket), maze() {
 
-	socket.setBlocking(true);
-	std::vector<char> rawMaze = socket.recv(globals::WORLD_WIDTH * globals::WORLD_HEIGHT);
-	socket.setBlocking(false);
+	tcpSocket.setBlocking(true);
+	udpSocket.setBlocking(false);
+	std::vector<char> rawMaze = tcpSocket.recv(globals::WORLD_WIDTH * globals::WORLD_HEIGHT);
 
 	for (int i = 0; i < rawMaze.size(); i++) {
 		maze[i / globals::WORLD_WIDTH][i % globals::WORLD_WIDTH] = rawMaze[i];
@@ -48,7 +49,8 @@ void GameState::update() {
 	while (window.pollEvent(event)) {
 		if (event.type == sf::Event::Closed) {
 			manager.quit();
-			socket.close();
+			tcpSocket.send(protocol::keyValueMessage("close", ""));
+			tcpSocket.close();
 			paused = true;
 		}
 		else if (event.type == sf::Event::KeyPressed) {
@@ -61,6 +63,13 @@ void GameState::update() {
 			isFocused = true;
 	}
 
+	sockets::Address serverAddr = { "127.0.0.1", 54321 };
+	auto map = protocol::receivePlayerPositions(udpSocket, 2, serverAddr);
+
+	if (map.size() != 0) {
+
+	}
+
 	if (paused) {
 		window.setMouseCursorVisible(true);
 		return;
@@ -68,9 +77,9 @@ void GameState::update() {
 
 	// setting player's direction according to mouse
 	if (isFocused) {
-		window.setMouseCursorVisible(false);
-		player.setDirection(window, fixedMousePos);
-		resetMousePos();
+		//window.setMouseCursorVisible(false);
+		player.setDirection(window, fixedMousePos, dt);
+		//resetMousePos();
 	}
 	else
 		window.setMouseCursorVisible(true);

@@ -9,10 +9,14 @@ Player::Player() {
 	sensitivity = 0.01f;
 }
 
-void Player::setDirection(sf::RenderWindow& window, sf::Vector2i fixedMousePos) {
-	int currentMousePos = sf::Mouse::getPosition(window).x;
+void Player::setDirection(sf::RenderWindow& window, sf::Vector2i fixedMousePos, float dt) {
+	/*int currentMousePos = sf::Mouse::getPosition(window).x;
 	float deltaMousePos = (currentMousePos - fixedMousePos.x) * sensitivity;
-	direction += deltaMousePos;
+	direction += deltaMousePos;*/
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
+		direction -= 2 * dt;
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
+		direction += 2 * dt;
 }
 
 void Player::calculateVelocity(sf::Vector2f wasd, float dt) {

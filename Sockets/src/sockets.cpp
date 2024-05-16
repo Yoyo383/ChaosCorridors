@@ -37,8 +37,8 @@ static sockets::Address rawAddressToAddress(sockaddr_in rawAddress) {
 
 namespace sockets {
 
-	bool operator <(const sockets::Address& addr1, const sockets::Address& addr2) {
-		return addr1.port < addr2.port;
+	bool operator ==(const sockets::Address& addr1, const sockets::Address& addr2) {
+		return addr1.port == addr2.port && addr1.ip == addr2.ip;
 	}
 
 	bool initialize() {

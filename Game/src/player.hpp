@@ -11,7 +11,7 @@ public:
 	float getDirection() const { return direction; }
 	float getFOV() const { return fov; }
 
-	void setDirection(sf::RenderWindow& window, sf::Vector2i fixedMousePos);
+	void setDirection(sf::RenderWindow& window, sf::Vector2i fixedMousePos, float dt);
 	void calculateVelocity(sf::Vector2f wasd, float dt);
 	void checkCollision(globals::MazeArr & maze);
 	void move();

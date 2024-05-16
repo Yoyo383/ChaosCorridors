@@ -2,7 +2,7 @@
 #include <iostream>
 #include "LobbyState.hpp"
 #include "sockets.hpp"
-#include <thread>
+#include "protocol.hpp"
 
 MainMenuState::MainMenuState(StateManager& manager, sf::RenderWindow& window, TextureManager& textures)
 	: State{ manager, window, textures },
@@ -30,8 +30,15 @@ void MainMenuState::update() {
 				sockets::Socket socket(sockets::Protocol::TCP);
 				try {
 					socket.connect({ "127.0.0.1", 12345 });
-					socket.send("player:" + nameField.getText() + "\n");
-					std::unique_ptr<LobbyState> lobbyState = std::make_unique<LobbyState>(manager, window, textures, socket);
+					socket.send(protocol::keyValueMessage("player", nameField.getText()));
+
+					unsigned short udpPort = (rand() % 1000) + 20000;
+					sockets::Socket udpSocket(sockets::Protocol::UDP);
+					udpSocket.bind({ "0.0.0.0", udpPort });
+
+					socket.send(protocol::keyValueMessage("udp", std::to_string(udpPort)));
+
+					std::unique_ptr<LobbyState> lobbyState = std::make_unique<LobbyState>(manager, window, textures, socket, udpSocket);
 					manager.addState(std::move(lobbyState));
 				}
 				catch (std::exception& err) {

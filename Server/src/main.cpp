@@ -8,7 +8,9 @@
 
 constexpr unsigned short PORT = 12345;
 static int count = 0;
-std::vector<sockets::Socket> clientSockets;
+std::vector<sockets::Socket> tcpSockets;
+std::vector<sockets::Address> addresses;
+
 std::vector<std::string> names;
 
 template<typename T>
@@ -17,33 +19,56 @@ void deleteElement(std::vector<T> vector, T element) {
 }
 
 static void broadcast(std::string message) {
-	for (auto& socket : clientSockets)
+	for (auto& socket : tcpSockets)
 		socket.send(message);
 }
 static void broadcast(std::vector<char> message) {
-	for (auto& socket : clientSockets)
+	for (auto& socket : tcpSockets)
 		socket.send(message);
 }
 
+static void broadcastUDP(sockets::Socket socket, std::string message) {
+	for (auto& address : addresses)
+		socket.sendTo(message, address);
+}
+static void broadcastUDP(sockets::Socket socket, std::vector<char> message) {
+	for (auto& address : addresses)
+		socket.sendTo(message, address);
+}
+
 static void handleClient(sockets::Socket socket, sockets::Address address) {
-	clientSockets.push_back(socket);
+	tcpSockets.push_back(socket);
+
+	sockets::Address udpAddress;
 
 	std::cout << address.ip << " " << address.port << std::endl;
-	auto [key, value] = protocol::receiveKeyValue(socket);
 
 	for (auto& name : names)
 		socket.send("player:" + name + "\n");
 
-	if (key == "player") {
-		broadcast("player:" + value + "\n");
-		names.push_back(value);
-	}
+	bool closed = false;
 
-	if (socket.recvString(1024) == "") {
-		deleteElement(clientSockets, socket);
-		deleteElement(names, value);
-		socket.close();
-		count--;
+	while (!closed) {
+		auto [key, value] = protocol::receiveKeyValue(socket);
+
+		if (key == "player") {
+			broadcast(protocol::keyValueMessage("player", value));
+			names.push_back(value);
+		}
+
+		if (key == "udp") {
+			udpAddress = { address.ip, (unsigned short)std::stoul(value.c_str()) };
+			addresses.push_back(udpAddress);
+		}
+
+		if (key == "close") {
+			deleteElement(tcpSockets, socket);
+			deleteElement(names, value);
+			deleteElement(addresses, udpAddress);
+			socket.close();
+			count--;
+			closed = true;
+		}
 	}
 }
 
@@ -61,6 +86,9 @@ void main() {
 	sockets::initialize();
 
 	sockets::Socket serverSocket(sockets::Protocol::TCP);
+	sockets::Socket udpSocket(sockets::Protocol::UDP);
+	udpSocket.bind({ "0.0.0.0", 54321 });
+
 	try {
 		serverSocket.bind({ "0.0.0.0", PORT });
 		serverSocket.listen(4);
@@ -75,9 +103,13 @@ void main() {
 
 		std::this_thread::sleep_for(std::chrono::seconds(2));
 		std::cout << "start!" << std::endl;
-		broadcast("start:\n");
+		broadcast(protocol::keyValueMessage("start", ""));
 		std::vector<char> maze = mazeToVector(globals::generateMaze());
 		broadcast(maze);
+		broadcastUDP(udpSocket, "hello");
+		broadcastUDP(udpSocket, std::vector<char>{10, 20});
+		broadcastUDP(udpSocket, "there");
+		broadcastUDP(udpSocket, std::vector<char>{32, 1});
 		while (count > 0) {
 
 		}

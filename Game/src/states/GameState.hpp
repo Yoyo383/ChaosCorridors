@@ -7,7 +7,7 @@
 
 class GameState : public State {
 public:
-	GameState(StateManager& manager, sf::RenderWindow& window, TextureManager& textures, sockets::Socket socket);
+	GameState(StateManager& manager, sf::RenderWindow& window, TextureManager& textures, sockets::Socket tcpSocket, sockets::Socket udpSocket);
 	~GameState();
 
 	void update() override;
@@ -21,7 +21,8 @@ public:
 	void drawCharacter(const sf::Vector2f& characterPos);
 
 private:
-	sockets::Socket socket;
+	sockets::Socket tcpSocket;
+	sockets::Socket udpSocket;
 
 	globals::MazeArr maze;
 
@@ -36,4 +37,6 @@ private:
 	bool paused;
 
 	float* zBuffer;
+
+	std::unordered_map<std::string, sf::Vector2f> players;
 };
