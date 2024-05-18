@@ -41,6 +41,10 @@ namespace sockets {
 		return addr1.port == addr2.port && addr1.ip == addr2.ip;
 	}
 
+	bool operator==(const Socket& sock1, const Socket& sock2) {
+		return sock1.getID() == sock2.getID();
+	}
+
 	bool initialize() {
 		// initializing WSA
 		WSADATA wsaData;
@@ -48,7 +52,7 @@ namespace sockets {
 		return result == 0;
 	}
 
-	void terminate() {
+	void shutdown() {
 		WSACleanup();
 	}
 
@@ -77,8 +81,8 @@ namespace sockets {
 		setTimeout(2);
 	}
 
-	bool Socket::operator==(const Socket& other) {
-		return socketId == other.socketId;
+	SOCKET Socket::getID() const {
+		return socketId;
 	}
 
 	void Socket::bind(Address address) {

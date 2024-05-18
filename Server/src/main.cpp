@@ -7,17 +7,24 @@
 #include "maze.hpp"
 
 constexpr unsigned short PORT = 12345;
+constexpr unsigned short UDP_PORT = 54321;
+
 static int count = 0;
+
 std::vector<sockets::Socket> tcpSockets;
 std::vector<sockets::Address> addresses;
 
 std::vector<std::string> names;
+std::unordered_map<char, protocol::Position> players;
 
-template<typename T>
-void deleteElement(std::vector<T> vector, T element) {
+template<typename T> void deleteElement(std::vector<T>& vector, T element) {
 	vector.erase(std::remove(vector.begin(), vector.end(), element), vector.end());
 }
 
+template<typename T> void broadcast(T data) {
+	for (auto& socket : tcpSockets)
+		socket.send(data);
+}
 static void broadcast(std::string message) {
 	for (auto& socket : tcpSockets)
 		socket.send(message);
@@ -27,6 +34,10 @@ static void broadcast(std::vector<char> message) {
 		socket.send(message);
 }
 
+template<typename T> void broadcastUDP(sockets::Socket socket, T data) {
+	for (auto& address : addresses)
+		socket.sendTo<T>(data, address);
+}
 static void broadcastUDP(sockets::Socket socket, std::string message) {
 	for (auto& address : addresses)
 		socket.sendTo(message, address);
@@ -52,8 +63,10 @@ static void handleClient(sockets::Socket socket, sockets::Address address) {
 		auto [key, value] = protocol::receiveKeyValue(socket);
 
 		if (key == "player") {
-			broadcast(protocol::keyValueMessage("player", value));
 			names.push_back(value);
+			broadcast(protocol::keyValueMessage("player", value));
+			socket.send(protocol::keyValueMessage("index", std::to_string(count)));
+			players[count] = { 1.5f, 1.5f };
 		}
 
 		if (key == "udp") {
@@ -63,11 +76,11 @@ static void handleClient(sockets::Socket socket, sockets::Address address) {
 
 		if (key == "close") {
 			deleteElement(tcpSockets, socket);
-			deleteElement(names, value);
+			players.erase(std::stoi(value));
 			deleteElement(addresses, udpAddress);
 			socket.close();
-			count--;
 			closed = true;
+			count--;
 		}
 	}
 }
@@ -83,13 +96,15 @@ static std::vector<char> mazeToVector(const globals::MazeArr& maze) {
 }
 
 void main() {
+	srand(time(NULL));
 	sockets::initialize();
 
 	sockets::Socket serverSocket(sockets::Protocol::TCP);
 	sockets::Socket udpSocket(sockets::Protocol::UDP);
-	udpSocket.bind({ "0.0.0.0", 54321 });
+	udpSocket.setBlocking(false);
 
 	try {
+		udpSocket.bind({ "0.0.0.0", UDP_PORT });
 		serverSocket.bind({ "0.0.0.0", PORT });
 		serverSocket.listen(4);
 
@@ -104,22 +119,41 @@ void main() {
 		std::this_thread::sleep_for(std::chrono::seconds(2));
 		std::cout << "start!" << std::endl;
 		broadcast(protocol::keyValueMessage("start", ""));
-		std::vector<char> maze = mazeToVector(globals::generateMaze());
-		broadcast(maze);
-		broadcastUDP(udpSocket, "hello");
-		broadcastUDP(udpSocket, std::vector<char>{10, 20});
-		broadcastUDP(udpSocket, "there");
-		broadcastUDP(udpSocket, std::vector<char>{32, 1});
-		while (count > 0) {
+		broadcast(globals::generateMaze());
 
+		// send initial starting positions
+		for (auto& address : addresses) {
+			for (auto& [index, position] : players) {
+				protocol::sendPlayerPosition(udpSocket, address, { index, position });
+			}
 		}
+
+		while (count > 0) {
+			try {
+				auto packet = protocol::receivePlayer(udpSocket);
+
+				if (packet.playerIndex != -1) {
+					players[packet.playerIndex] = packet.position;
+
+					for (auto& address : addresses) {
+						protocol::sendPlayerPosition(udpSocket, address, packet);
+					}
+				}
+
+			}
+			catch (std::exception& err) {
+				if (err.what() != std::to_string(WSAEWOULDBLOCK))
+					std::cout << "UDP recv error: " << err.what() << std::endl;
+			}
+		}
+
 		std::cout << "bye bye" << std::endl;
 	}
 	catch (std::exception& err) {
-		std::cout << "Server client error: " << err.what() << std::endl;
+		std::cout << "Server error: " << err.what() << std::endl;
 	}
 
 	serverSocket.close();
 
-	sockets::terminate();
+	sockets::shutdown();
 }

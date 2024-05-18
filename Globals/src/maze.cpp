@@ -7,7 +7,21 @@ struct Cell {
 };
 
 namespace globals {
+#if 1
+	MazeArr generateMaze() {
+		MazeArr maze = MazeArr();
+		for (int i = 0; i < WORLD_HEIGHT; i++) {
+			for (int j = 0; j < WORLD_WIDTH; j++) {
+				if (i == 0 || i == WORLD_HEIGHT - 1 || j == 0 || j == WORLD_WIDTH - 1)
+					maze[i][j] = CELL_WALL;
+				else
+					maze[i][j] = CELL_EMPTY;
+			}
+		}
 
+		return maze;
+	}
+#else
 	MazeArr generateMaze() {
 		std::stack<Cell> stack;
 		MazeArr maze = MazeArr();
@@ -94,4 +108,5 @@ namespace globals {
 
 		return maze;
 	}
+#endif
 }

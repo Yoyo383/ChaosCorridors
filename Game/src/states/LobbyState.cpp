@@ -3,25 +3,27 @@
 #include "protocol.hpp"
 #include <iostream>
 
-LobbyState::LobbyState(StateManager& manager, sf::RenderWindow& window, TextureManager& textures, sockets::Socket tcpSocket, sockets::Socket udpSocket)
-	: State{ manager, window, textures }, tcpSocket(tcpSocket), udpSocket(udpSocket) {
+LobbyState::LobbyState(Members& members)
+	: members(members) {
 	font.loadFromFile("C:/Windows/Fonts/Arial.ttf");
-	tcpSocket.setBlocking(false);
+	members.tcpSocket.setBlocking(false);
 }
 
 void LobbyState::update() {
 
 	sf::Event event;
 
-	while (window.pollEvent(event)) {
+	while (members.window.pollEvent(event)) {
 		if (event.type == sf::Event::Closed) {
-			tcpSocket.close();
-			manager.quit();
+			members.tcpSocket.send(protocol::keyValueMessage("close", std::to_string(members.playerIndex)));
+			members.tcpSocket.close();
+			members.manager.quit();
+			return;
 		}
 	}
 
 	try {
-		auto [key, value] = protocol::receiveKeyValue(tcpSocket);
+		auto [key, value] = protocol::receiveKeyValue(members.tcpSocket);
 		if (key == "player") {
 			sf::Text text;
 			text.setFont(font);
@@ -31,20 +33,22 @@ void LobbyState::update() {
 			text.setFillColor(sf::Color::Black);
 			playerNamesTexts.push_back(text);
 		}
+		else if (key == "index")
+			members.playerIndex = std::stoi(value);
 		else if (key == "start") {
-			std::unique_ptr<GameState> gameState = std::make_unique<GameState>(manager, window, textures, tcpSocket, udpSocket);
-			manager.setState(std::move(gameState));
+			std::unique_ptr<GameState> gameState = std::make_unique<GameState>(members);
+			members.manager.setState(std::move(gameState));
 		}
 	}
-	catch (...) {
-
+	catch (std::exception& err) {
+		std::cout << err.what() << std::endl;
 	}
 }
 
 void LobbyState::draw() {
-	window.clear(sf::Color::White);
+	members.window.clear(sf::Color::White);
 	for (auto& text : playerNamesTexts) {
-		window.draw(text);
+		members.window.draw(text);
 	}
-	window.display();
+	members.window.display();
 }

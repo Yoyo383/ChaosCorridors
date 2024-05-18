@@ -5,32 +5,34 @@
 #include "protocol.hpp"
 #include <iostream>
 
-GameState::GameState(StateManager& manager, sf::RenderWindow& window, TextureManager& textures, sockets::Socket tcpSocket, sockets::Socket udpSocket)
-	: State{ manager, window, textures }, tcpSocket(tcpSocket), udpSocket(udpSocket), maze() {
+GameState::GameState(Members& members)
+	: members(members), maze() {
 
-	tcpSocket.setBlocking(true);
-	udpSocket.setBlocking(false);
-	std::vector<char> rawMaze = tcpSocket.recv(globals::WORLD_WIDTH * globals::WORLD_HEIGHT);
+	members.tcpSocket.setBlocking(true);
+	members.udpSocket.setBlocking(false);
 
+	std::vector<char> rawMaze = members.tcpSocket.recv(globals::WORLD_WIDTH * globals::WORLD_HEIGHT);
 	for (int i = 0; i < rawMaze.size(); i++) {
 		maze[i / globals::WORLD_WIDTH][i % globals::WORLD_WIDTH] = rawMaze[i];
 	}
 
-	fixedMousePos = { (int)window.getSize().x / 2, (int)window.getSize().y / 2 };
+	serverAddress = { "127.0.0.1", 54321 };
+
+	fixedMousePos = { (int)members.window.getSize().x / 2, (int)members.window.getSize().y / 2 };
 	isFocused = true;
 	paused = false;
 	dt = 0;
-	zBuffer = new float[window.getSize().x + 1];
+	zBuffer = new float[members.window.getSize().x + 1];
 
 }
 
 GameState::~GameState() {
-	window.setMouseCursorVisible(true);
+	members.window.setMouseCursorVisible(true);
 	delete[] zBuffer;
 }
 
 void GameState::resetMousePos() {
-	sf::Mouse::setPosition(fixedMousePos, window);
+	sf::Mouse::setPosition(fixedMousePos, members.window);
 }
 
 sf::Vector2f GameState::wasdInput() {
@@ -44,14 +46,14 @@ void GameState::update() {
 	dt = deltaClock.restart().asSeconds();
 	sf::Event event;
 
-	window.setTitle(std::to_string(1 / dt));
+	members.window.setTitle(std::to_string(1 / dt));
 
-	while (window.pollEvent(event)) {
+	while (members.window.pollEvent(event)) {
 		if (event.type == sf::Event::Closed) {
-			manager.quit();
-			tcpSocket.send(protocol::keyValueMessage("close", ""));
-			tcpSocket.close();
-			paused = true;
+			members.manager.quit();
+			members.tcpSocket.send(protocol::keyValueMessage("close", std::to_string(members.playerIndex)));
+			members.tcpSocket.close();
+			return;
 		}
 		else if (event.type == sf::Event::KeyPressed) {
 			if (event.key.code == sf::Keyboard::Escape)
@@ -63,26 +65,29 @@ void GameState::update() {
 			isFocused = true;
 	}
 
-	sockets::Address serverAddr = { "127.0.0.1", 54321 };
-	auto map = protocol::receivePlayerPositions(udpSocket, 2, serverAddr);
+	int receivedIndex = -1;
+	do {
+		auto [index, position] = protocol::receivePlayer(members.udpSocket);
+		receivedIndex = index;
+		if (index != -1)
+			players[index] = { position.x, position.y };
 
-	if (map.size() != 0) {
+	} while (receivedIndex != -1);
 
-	}
 
 	if (paused) {
-		window.setMouseCursorVisible(true);
+		members.window.setMouseCursorVisible(true);
 		return;
 	}
 
 	// setting player's direction according to mouse
 	if (isFocused) {
 		//window.setMouseCursorVisible(false);
-		player.setDirection(window, fixedMousePos, dt);
+		player.setDirection(members.window, fixedMousePos, dt);
 		//resetMousePos();
 	}
 	else
-		window.setMouseCursorVisible(true);
+		members.window.setMouseCursorVisible(true);
 
 	// getting input
 	sf::Vector2f wasd;
@@ -92,17 +97,26 @@ void GameState::update() {
 
 	player.calculateVelocity(wasd, dt);
 	player.checkCollision(maze);
-	player.move();
+	bool moved = player.move();
+
+	if (moved)
+		protocol::sendPlayerPosition(members.udpSocket, serverAddress, { members.playerIndex, { player.getPos().x, player.getPos().y } });
 }
 
 void GameState::draw() {
-	window.clear(sf::Color::Black);
+	members.window.clear(sf::Color::Black);
 
 	drawFloorAndCeiling();
 	drawWalls();
-	drawCharacter({ 1.5f, 1.5f });
+	
+	for (auto& [index, position] : players) {
+		if (index == 1)
+			drawCharacter(position, "character");
+		else
+			drawCharacter(position, "floor");
+	}
 
-	window.display();
+	members.window.display();
 }
 
 void GameState::drawFloorAndCeiling() {
@@ -112,10 +126,10 @@ void GameState::drawFloorAndCeiling() {
 	// for doing floor/ceiling things
 	float cos = cosf(player.getDirection()), sin = sinf(player.getDirection());
 
-	for (int y = 0; y <= window.getSize().y / 2; y++) {
+	for (int y = 0; y <= members.window.getSize().y / 2; y++) {
 		// the distance of the current row
 		// floor and ceiling texture have the same size so it doesn't matter which size is in the formula
-		int d = textures["floor"].getSize().x * window.getSize().y / 2 / (y + 1);
+		int d = members.textures["floor"].getSize().x * members.window.getSize().y / 2 / (y + 1);
 
 		sf::Vector2f startPos = {
 			d * cos - d * tan * sin,
@@ -128,7 +142,7 @@ void GameState::drawFloorAndCeiling() {
 
 		// calculating shading based on distance
 		sf::Color color = sf::Color::White;
-		float brightness = 1.0f - (float)d / window.getSize().y;
+		float brightness = 1.0f - (float)d / members.window.getSize().y;
 		if (brightness < 0)
 			brightness = 0;
 		color.r *= brightness;
@@ -139,25 +153,25 @@ void GameState::drawFloorAndCeiling() {
 		sf::VertexArray scanLine(sf::Lines, 2);
 
 		// texturing the floor/ceiling according to the start and end sample positions and the player position
-		scanLine[0].texCoords = endPos + player.getPos() * textures["floor"].getSize().x;
-		scanLine[1].texCoords = startPos + player.getPos() * textures["floor"].getSize().x;
+		scanLine[0].texCoords = endPos + player.getPos() * members.textures["floor"].getSize().x;
+		scanLine[1].texCoords = startPos + player.getPos() * members.textures["floor"].getSize().x;
 		// shading
 		scanLine[0].color = color;
 		scanLine[1].color = color;
 
 
 		// setting floor position
-		scanLine[0].position = { 0, (float)y + window.getSize().y / 2 };
-		scanLine[1].position = { (float)window.getSize().x, (float)y + window.getSize().y / 2 };
+		scanLine[0].position = { 0, (float)y + members.window.getSize().y / 2 };
+		scanLine[1].position = { (float)members.window.getSize().x, (float)y + members.window.getSize().y / 2 };
 
-		window.draw(scanLine, &textures["floor"]);
+		members.window.draw(scanLine, &members.textures["floor"]);
 
 
 		// setting ceiling position
-		scanLine[0].position = { 0, window.getSize().y / 2 - (float)y };
-		scanLine[1].position = { (float)window.getSize().x, window.getSize().y / 2 - (float)y };
+		scanLine[0].position = { 0, members.window.getSize().y / 2 - (float)y };
+		scanLine[1].position = { (float)members.window.getSize().x, members.window.getSize().y / 2 - (float)y };
 
-		window.draw(scanLine, &textures["ceiling"]);
+		members.window.draw(scanLine, &members.textures["ceiling"]);
 	}
 }
 
@@ -166,10 +180,10 @@ void GameState::drawWalls() {
 	// math taken from here:
 	// https://stackoverflow.com/questions/24173966/raycasting-engine-rendering-creating-slight-distortion-increasing-towards-edges
 	float screenHalfLen = tanf(player.getFOV() / 2);
-	float segLen = 2 * screenHalfLen / window.getSize().x;
+	float segLen = 2 * screenHalfLen / members.window.getSize().x;
 
 	float angle;
-	for (int x = 0; x <= window.getSize().x; x++) {
+	for (int x = 0; x <= members.window.getSize().x; x++) {
 		// angle calculation such that the walls aren't distorted
 		angle = player.getDirection() + atanf(segLen * x - screenHalfLen);
 
@@ -182,11 +196,11 @@ void GameState::drawWalls() {
 		if (!ray.isHit)
 			continue;
 
-		float wallHeight = (float)window.getSize().y / ray.distance;
+		float wallHeight = (float)members.window.getSize().y / ray.distance;
 
 		// calculating floor and ceiling y values
-		float ceiling = (window.getSize().y - wallHeight) / 2.0f;
-		float floor = window.getSize().y - ceiling;
+		float ceiling = (members.window.getSize().y - wallHeight) / 2.0f;
+		float floor = members.window.getSize().y - ceiling;
 
 		// calculating shading
 		sf::Color color = sf::Color::White;
@@ -205,9 +219,9 @@ void GameState::drawWalls() {
 		color.b *= brightness;
 
 		// making sure the texture is the right aspect ration
-		float xMultiplier = (float)window.getSize().x / window.getSize().y;
+		float xMultiplier = (float)members.window.getSize().x / members.window.getSize().y;
 		// the x coord to sample from in the texture
-		float textureX = (int)(textures["wall"].getSize().x * ray.hitCoord * xMultiplier) % textures["wall"].getSize().x;
+		float textureX = (int)(members.textures["wall"].getSize().x * ray.hitCoord * xMultiplier) % members.textures["wall"].getSize().x;
 
 
 		sf::VertexArray wall(sf::Lines, 2);
@@ -222,13 +236,13 @@ void GameState::drawWalls() {
 
 		// texturing the wall according to the hit coordinate
 		wall[0].texCoords = { textureX, 0 };
-		wall[1].texCoords = { textureX, (float)textures["wall"].getSize().y };
+		wall[1].texCoords = { textureX, (float)members.textures["wall"].getSize().y };
 
-		window.draw(wall, &textures["wall"]);
+		members.window.draw(wall, &members.textures["wall"]);
 	}
 }
 
-void GameState::drawCharacter(const sf::Vector2f& characterPos) {
+void GameState::drawCharacter(const sf::Vector2f& characterPos, std::string texture) {
 	float angleFromPlayer = vecAngle(characterPos - player.getPos());
 	float relativeAngle = player.getDirection() - angleFromPlayer;
 
@@ -241,24 +255,24 @@ void GameState::drawCharacter(const sf::Vector2f& characterPos) {
 	distance *= cosf(relativeAngle);
 
 	if (distance >= 0.5f) {
-		float height = (float)window.getSize().y / distance;
+		float height = (float)members.window.getSize().y / distance;
 
 		// calculating floor and ceiling y values
-		float ceiling = (window.getSize().y - height) / 2.0f;
-		float floor = window.getSize().y - ceiling;
+		float ceiling = (members.window.getSize().y - height) / 2.0f;
+		float floor = members.window.getSize().y - ceiling;
 
 		// getting width of texture
-		float aspectRatio = (float)textures["character"].getSize().x / textures["character"].getSize().y;
+		float aspectRatio = (float)members.textures[texture].getSize().x / members.textures[texture].getSize().y;
 		float width = height * aspectRatio;
 
 		// calculating middle of texture
-		float middle = window.getSize().x - (relativeAngle / player.getFOV() + 0.5f) * window.getSize().x;
+		float middle = members.window.getSize().x - (relativeAngle / player.getFOV() + 0.5f) * members.window.getSize().x;
 
 		for (int x = 0; x <= width; x++) {
 			float posX = middle + (float)x - (width / 2.0f);
 
 			// if outside window or behind walls then don't draw
-			if (posX < 0 || posX > window.getSize().x || zBuffer[(int)posX] < distance)
+			if (posX < 0 || posX > members.window.getSize().x || zBuffer[(int)posX] < distance)
 				continue;
 
 			sf::VertexArray character(sf::Lines, 2);
@@ -283,11 +297,11 @@ void GameState::drawCharacter(const sf::Vector2f& characterPos) {
 			character[1].color = color;
 
 			// texturing
-			float textureX = textures["character"].getSize().x * (float)x / width;
+			float textureX = members.textures[texture].getSize().x * (float)x / width;
 			character[0].texCoords = { textureX, 0 };
-			character[1].texCoords = { textureX, (float)textures["character"].getSize().y };
+			character[1].texCoords = { textureX, (float)members.textures[texture].getSize().y };
 
-			window.draw(character, &textures["character"]);
+			members.window.draw(character, &members.textures[texture]);
 		}
 	}
 }

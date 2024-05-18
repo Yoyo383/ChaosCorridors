@@ -54,6 +54,7 @@ void Player::checkCollision(globals::MazeArr& maze)
 		velocity.x = 0;
 }
 
-void Player::move() {
+bool Player::move() {
 	pos += velocity;
+	return velocity.x != 0 || velocity.y != 0;
 }

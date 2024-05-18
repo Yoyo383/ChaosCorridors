@@ -4,6 +4,7 @@
 #include "states/GameState.hpp"
 #include "states/MainMenuState.hpp"
 #include "states/StateManager.hpp"
+#include "Members.hpp"
 
 constexpr unsigned short PORT = 12345;
 
@@ -11,28 +12,27 @@ int main() {
 	srand(time(NULL));
 	sockets::initialize();
 
-	sf::RenderWindow window(sf::VideoMode(1000, 800), "Yay window!", sf::Style::Titlebar | sf::Style::Close);
+	Members members;
 
-	TextureManager textures;
-	textures.addTexture("floor", "assets/wood.png");
-	textures["floor"].setRepeated(true);
-	textures.addTexture("ceiling", "assets/colorstone.png");
-	textures["ceiling"].setRepeated(true);
-	textures.addTexture("wall", "assets/redbrick.png");
-	textures.addTexture("character", "assets/character.png");
-	textures.addTexture("hostButton", "assets/hostButton.png");
-	textures.addTexture("buttonNormal", "assets/buttonNormal.png");
+	members.window.create(sf::VideoMode(800, 600), "Yay window!", sf::Style::Titlebar | sf::Style::Close);
 
-	StateManager stateManager;
+	members.textures.addTexture("floor", "assets/wood.png");
+	members.textures["floor"].setRepeated(true);
+	members.textures.addTexture("ceiling", "assets/colorstone.png");
+	members.textures["ceiling"].setRepeated(true);
+	members.textures.addTexture("wall", "assets/redbrick.png");
+	members.textures.addTexture("character", "assets/character.png");
+	members.textures.addTexture("hostButton", "assets/hostButton.png");
+	members.textures.addTexture("buttonNormal", "assets/buttonNormal.png");
 	
-	std::unique_ptr<MainMenuState> mainMenuState = std::make_unique<MainMenuState>(stateManager, window, textures);
-	stateManager.addState(std::move(mainMenuState));
+	std::unique_ptr<MainMenuState> mainMenuState = std::make_unique<MainMenuState>(members);
+	members.manager.addState(std::move(mainMenuState));
 
-	while (stateManager.isRunning()) {
-		stateManager.changeState();
-		stateManager.update();
-		stateManager.draw();
+	while (members.manager.isRunning()) {
+		members.manager.changeState();
+		members.manager.update();
+		members.manager.draw();
 	}
 
-	sockets::terminate();
+	sockets::shutdown();
 }

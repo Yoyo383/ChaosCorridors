@@ -4,10 +4,11 @@
 #include "../player.hpp"
 #include "../graphics.hpp"
 #include "sockets.hpp"
+#include "../Members.hpp"
 
 class GameState : public State {
 public:
-	GameState(StateManager& manager, sf::RenderWindow& window, TextureManager& textures, sockets::Socket tcpSocket, sockets::Socket udpSocket);
+	GameState(Members& members);
 	~GameState();
 
 	void update() override;
@@ -18,11 +19,12 @@ public:
 
 	void drawFloorAndCeiling();
 	void drawWalls();
-	void drawCharacter(const sf::Vector2f& characterPos);
+	void drawCharacter(const sf::Vector2f& characterPos, std::string texture);
 
 private:
-	sockets::Socket tcpSocket;
-	sockets::Socket udpSocket;
+	Members& members;
+
+	sockets::Address serverAddress;
 
 	globals::MazeArr maze;
 
@@ -38,5 +40,5 @@ private:
 
 	float* zBuffer;
 
-	std::unordered_map<std::string, sf::Vector2f> players;
+	std::unordered_map<int, sf::Vector2f> players;
 };

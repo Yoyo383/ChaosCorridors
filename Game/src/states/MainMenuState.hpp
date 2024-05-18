@@ -4,15 +4,18 @@
 #include "../ui/Button.hpp"
 #include "../graphics.hpp"
 #include "../ui/TextField.hpp"
+#include "../Members.hpp"
 
 class MainMenuState : public State {
 public:
-	MainMenuState(StateManager& manager, sf::RenderWindow& window, TextureManager& textures);
+	MainMenuState(Members& members);
 
 	void update() override;
 	void draw() override;
 
 private:
+	Members& members;
+
 	Button hostButton;
 	TextField nameField;
 };

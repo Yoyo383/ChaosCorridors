@@ -77,5 +77,8 @@
     <ClInclude Include="src\states\LobbyState.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\Members.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

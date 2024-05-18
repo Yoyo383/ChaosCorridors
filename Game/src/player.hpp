@@ -14,7 +14,7 @@ public:
 	void setDirection(sf::RenderWindow& window, sf::Vector2i fixedMousePos, float dt);
 	void calculateVelocity(sf::Vector2f wasd, float dt);
 	void checkCollision(globals::MazeArr & maze);
-	void move();
+	bool move();
 
 private:
 	sf::Vector2f pos, velocity;

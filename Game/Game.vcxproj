@@ -147,6 +147,7 @@
     <ClCompile Include="src\ui\TextField.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Members.hpp" />
     <ClInclude Include="src\states\LobbyState.hpp" />
     <ClInclude Include="src\ui\Button.hpp" />
     <ClInclude Include="src\states\MainMenuState.hpp" />

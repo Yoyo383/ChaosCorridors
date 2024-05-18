@@ -36,34 +36,19 @@ namespace protocol {
 		return key + ":" + value + "\n";
 	}
 
-	std::unordered_map<std::string, Position> receivePlayerPositions(sockets::Socket& socket, int playerCount, sockets::Address& serverAddress) {
-		float x = 0, y = 0;
-		std::string name;
-		sockets::Address address;
-
-		std::unordered_map<std::string, Position> map;
-
+	PacketInformation receivePlayer(sockets::Socket& socket) {
 		try {
-			for (int i = 0; i < playerCount; i++) {
-				name = "";
-				auto rawData = socket.recvFromString(1024);
-				name = rawData.first;
-				address = rawData.second;
-
-				if (address == serverAddress) {
-					auto [position, address] = socket.recvFrom(2);
-					if (address == serverAddress)
-						map[name] = { (float)position[0], (float)position[1] };
-				}
-			}
+			auto [packet, address] = socket.recvFrom<PacketInformation>();
+			return packet;
 		}
 		catch (std::exception& err) {
-			if (err.what() == std::to_string(WSAEWOULDBLOCK))
-				return std::unordered_map<std::string, Position>{};
-			std::cout << err.what() << std::endl;
-			return std::unordered_map<std::string, Position>{};
+			if (err.what() != std::to_string(WSAEWOULDBLOCK))
+				std::cout << "Error: " << err.what() << std::endl;
+			return { -1, { 0, 0} };
 		}
+	}
 
-		return map;
+	void sendPlayerPosition(sockets::Socket& socket, sockets::Address& address, PacketInformation packet) {
+		socket.sendTo(packet, address);
 	}
 }

@@ -7,6 +7,28 @@
 #include <string>
 #include <vector>
 
+/**
+ * @brief Turns an variable to a byte vector.
+ * @tparam T The variable type.
+ * @param obj The variable.
+ * @return A byte vector of the variable's data.
+*/
+template<typename T> std::vector<char> toBytes(T obj) {
+	char* ptr = reinterpret_cast<char*>(&obj);
+	return std::vector<char>(ptr, ptr + sizeof(obj));
+}
+
+/**
+ * @brief Turns a vector of bytes to a variable.
+ * @tparam T The variable type.
+ * @param bytes The byte vector.
+ * @return A variable of type T that has the data of the bytes.
+*/
+template<typename T> T toVariable(std::vector<char> bytes) {
+	return *reinterpret_cast<T*>(&bytes[0]);
+}
+
+
 namespace sockets {
 
 	/**
@@ -38,10 +60,11 @@ namespace sockets {
 	 * @return Whether the initialization was successful.
 	*/
 	bool initialize();
+
 	/**
-	 * @brief Terminates the library. Should be called at the end of the code.
+	 * @brief Shuts down the library. Should be called at the end of the code.
 	*/
-	void terminate();
+	void shutdown();
 
 	/**
 	 * @brief Socket class.
@@ -67,11 +90,10 @@ namespace sockets {
 		Socket(Protocol protocol);
 
 		/**
-		 * @brief Checks if two sockets are equal.
-		 * @param other The other socket.
-		 * @return Whether the current and other socket are equal.
+		 * @brief Returns the ID of the socket.
+		 * @return The ID of the socket.
 		*/
-		bool operator ==(const Socket& other);
+		SOCKET getID() const;
 
 		/**
 		 * @brief Binds the socket to an address.
@@ -116,7 +138,16 @@ namespace sockets {
 		void setBlocking(bool blocking);
 		
 #pragma region TCP send/recv
-		
+		/**
+		 * @brief Sends a variable to the socket.
+		 * @tparam T The type of the variable.
+		 * @param obj The variable.
+		 * @return The number of bytes sent.
+		*/
+		template<typename T> int send(T obj) {
+			std::vector<char> bytes = toBytes<T>(obj);
+			return send(bytes);
+		}
 		/**
 		 * @brief Sends data to the socket.
 		 * @param data The data to send.
@@ -137,6 +168,16 @@ namespace sockets {
 		*/
 		int send(std::string data);
 
+
+		/**
+		 * @brief Receives a variable from the socket.
+		 * @tparam T The type of the variable.
+		 * @return The variable.
+		*/
+		template<typename T> T recv() {
+			std::vector<char> data = recv(sizeof(T));
+			return toVariable<T>(data);
+		}
 		/**
 		 * @brief Receives data from the socket.
 		 * @param size The maximum amount of data to be received.
@@ -153,7 +194,17 @@ namespace sockets {
 #pragma endregion
 
 #pragma region UDP send/recv
-
+		/**
+		 * @brief Sends a variable to an address.
+		 * @tparam T The type of the variable.
+		 * @param obj The variable.
+		 * @param address The address to send to.
+		 * @return The number of bytes sent.
+		*/
+		template<typename T> int sendTo(T obj, Address address) {
+			std::vector<char> data = toBytes<T>(obj);
+			return sendTo(data, address);
+		}
 		/**
 		 * @brief Sends data to an address.
 		 * @param data The data to send.
@@ -177,6 +228,16 @@ namespace sockets {
 		*/
 		int sendTo(std::string data, Address address);
 
+
+		/**
+		 * @brief Receives a variable from the socket.
+		 * @tparam T The type of the variable.
+		 * @return A pair of the variable received and the address it was sent from.
+		*/
+		template<typename T> std::pair<T, Address> recvFrom() {
+			auto [data, address] = recvFrom(sizeof(T));
+			return std::make_pair(toVariable<T>(data), address);
+		}
 		/**
 		 * @brief Receives data from the socket.
 		 * @param size The maximum amount of data to be received.
@@ -193,4 +254,12 @@ namespace sockets {
 #pragma endregion
 
 	};
+
+	/**
+	 * @brief Checks if two sockets are equal.
+	 * @param other The other socket.
+	 * @return Whether the current and other socket are equal.
+	*/
+	bool operator ==(const Socket& sock1, const Socket& sock2);
+
 }
