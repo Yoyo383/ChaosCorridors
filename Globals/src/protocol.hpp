@@ -12,7 +12,7 @@ namespace protocol {
 		float y;
 	};
 
-	struct PacketInformation {
+	struct PlayerPositionInfo {
 		char playerIndex;
 		Position position;
 	};
@@ -20,7 +20,7 @@ namespace protocol {
 	std::tuple<std::string, std::string> receiveKeyValue(sockets::Socket& socket);
 	std::string keyValueMessage(std::string key, std::string value);
 
-	PacketInformation receivePlayer(sockets::Socket& socket);
+	PlayerPositionInfo receivePlayer(sockets::Socket& socket);
 
-	void sendPlayerPosition(sockets::Socket& socket, sockets::Address& address, PacketInformation packet);
+	void sendPlayerPosition(sockets::Socket& socket, sockets::Address& address, PlayerPositionInfo packet);
 }

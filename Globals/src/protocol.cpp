@@ -36,9 +36,9 @@ namespace protocol {
 		return key + ":" + value + "\n";
 	}
 
-	PacketInformation receivePlayer(sockets::Socket& socket) {
+	PlayerPositionInfo receivePlayer(sockets::Socket& socket) {
 		try {
-			auto [packet, address] = socket.recvFrom<PacketInformation>();
+			auto [packet, address] = socket.recvFrom<PlayerPositionInfo>();
 			return packet;
 		}
 		catch (std::exception& err) {
@@ -48,7 +48,7 @@ namespace protocol {
 		}
 	}
 
-	void sendPlayerPosition(sockets::Socket& socket, sockets::Address& address, PacketInformation packet) {
+	void sendPlayerPosition(sockets::Socket& socket, sockets::Address& address, PlayerPositionInfo packet) {
 		socket.sendTo(packet, address);
 	}
 }

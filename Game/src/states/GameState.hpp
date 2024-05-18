@@ -6,6 +6,11 @@
 #include "sockets.hpp"
 #include "../Members.hpp"
 
+struct Bullet {
+	sf::Vector2f position;
+	sf::Vector2f direction;
+};
+
 class GameState : public State {
 public:
 	GameState(Members& members);
@@ -19,7 +24,7 @@ public:
 
 	void drawFloorAndCeiling();
 	void drawWalls();
-	void drawCharacter(const sf::Vector2f& characterPos, std::string texture);
+	void drawSprite(const sf::Vector2f& characterPos, std::string texture);
 
 private:
 	Members& members;
@@ -39,6 +44,8 @@ private:
 	bool paused;
 
 	float* zBuffer;
+
+	std::vector<Bullet> bullets; // position, direction
 
 	std::unordered_map<int, sf::Vector2f> players;
 };

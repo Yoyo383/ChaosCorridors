@@ -24,6 +24,7 @@ int main() {
 	members.textures.addTexture("character", "assets/character.png");
 	members.textures.addTexture("hostButton", "assets/hostButton.png");
 	members.textures.addTexture("buttonNormal", "assets/buttonNormal.png");
+	members.textures.addTexture("bullet", "assets/bullet.png");
 	
 	std::unique_ptr<MainMenuState> mainMenuState = std::make_unique<MainMenuState>(members);
 	members.manager.addState(std::move(mainMenuState));

@@ -9,7 +9,7 @@
 constexpr unsigned short PORT = 12345;
 constexpr unsigned short UDP_PORT = 54321;
 
-constexpr int NUMBER_OF_PLAYERS = 3;
+constexpr int NUMBER_OF_PLAYERS = 1;
 
 static int count = 0;
 

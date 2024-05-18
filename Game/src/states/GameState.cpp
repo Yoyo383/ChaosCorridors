@@ -58,6 +58,8 @@ void GameState::update() {
 		else if (event.type == sf::Event::KeyPressed) {
 			if (event.key.code == sf::Keyboard::Escape)
 				paused = !paused;
+			else if (event.key.code == sf::Keyboard::Space)
+				bullets.push_back({ player.getPos(), sf::Vector2f{ cosf(player.getDirection()), sinf(player.getDirection()) } });
 		}
 		else if (event.type == sf::Event::LostFocus)
 			isFocused = false;
@@ -101,6 +103,21 @@ void GameState::update() {
 
 	if (moved)
 		protocol::sendPlayerPosition(members.udpSocket, serverAddress, { members.playerIndex, { player.getPos().x, player.getPos().y } });
+
+	for (auto& bullet : bullets) {
+		bullet.position += bullet.direction * 6.0f * dt;
+	}
+	
+	bullets.erase(std::remove_if(bullets.begin(), bullets.end(),
+		[this](const Bullet& bullet) {
+			if (
+				bullet.position.x < 0 || bullet.position.x >= globals::WORLD_WIDTH || 
+				bullet.position.y < 0 || bullet.position.y >= globals::WORLD_HEIGHT
+			)
+				return false;
+			return maze[(int)bullet.position.y][(int)bullet.position.x] == globals::CELL_WALL;
+		}
+	), bullets.end());
 }
 
 void GameState::draw() {
@@ -122,7 +139,11 @@ void GameState::draw() {
 	);
 	
 	for (auto& position : playerPositions) {
-		drawCharacter(position, "character");
+		drawSprite(position, "character");
+	}
+
+	for (auto& bullet : bullets) {
+		drawSprite(bullet.position, "bullet");
 	}
 
 	members.window.display();
@@ -251,7 +272,7 @@ void GameState::drawWalls() {
 	}
 }
 
-void GameState::drawCharacter(const sf::Vector2f& characterPos, std::string texture) {
+void GameState::drawSprite(const sf::Vector2f& characterPos, std::string texture) {
 	float angleFromPlayer = vecAngle(characterPos - player.getPos());
 	float relativeAngle = player.getDirection() - angleFromPlayer;
 
@@ -263,7 +284,7 @@ void GameState::drawCharacter(const sf::Vector2f& characterPos, std::string text
 	float distance = vecMagnitude(characterPos - player.getPos());
 	distance *= cosf(relativeAngle);
 
-	if (distance >= 0.5f) {
+	if (distance >= 0.2f) {
 		float height = (float)members.window.getSize().y / distance;
 
 		// calculating floor and ceiling y values
