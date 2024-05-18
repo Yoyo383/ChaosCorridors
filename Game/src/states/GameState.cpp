@@ -5,6 +5,11 @@
 #include "protocol.hpp"
 #include <iostream>
 
+struct Sprite {
+	std::string texture;
+	sf::Vector2f position;
+};
+
 GameState::GameState(Members& members)
 	: members(members), maze() {
 
@@ -122,24 +127,24 @@ void GameState::draw() {
 	drawFloorAndCeiling();
 	drawWalls();
 
-	std::vector<sf::Vector2f> playerPositions;
+	std::vector<Sprite> sprites;
 
 	for (auto& [index, position] : players) {
-		playerPositions.push_back(position);
+		sprites.push_back({ "character", position });
 	}
 
-	std::sort(playerPositions.begin(), playerPositions.end(), 
-		[this](sf::Vector2f pos1, sf::Vector2f pos2) {
-			return vecMagnitude(pos1 - player.getPos()) > vecMagnitude(pos2 - player.getPos());
+	for (auto& [index, position] : bullets) {
+		sprites.push_back({ "bullet", position });
+	}
+
+	std::sort(sprites.begin(), sprites.end(), 
+		[this](Sprite pos1, Sprite pos2) {
+			return vecMagnitude(pos1.position - player.getPos()) > vecMagnitude(pos2.position - player.getPos());
 		}
 	);
 	
-	for (auto& position : playerPositions) {
-		drawSprite(position, "character");
-	}
-
-	for (auto& [index, bullet] : bullets) {
-		drawSprite(bullet, "bullet");
+	for (auto& sprite : sprites) {
+		drawSprite(sprite.position, sprite.texture);
 	}
 
 	members.window.display();
