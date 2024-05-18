@@ -36,19 +36,19 @@ namespace protocol {
 		return key + ":" + value + "\n";
 	}
 
-	PlayerPositionInfo receivePlayer(sockets::Socket& socket) {
+	PositionInfoPacket receivePositionInfo(sockets::Socket& socket) {
 		try {
-			auto [packet, address] = socket.recvFrom<PlayerPositionInfo>();
+			auto [packet, address] = socket.recvFrom<PositionInfoPacket>();
 			return packet;
 		}
 		catch (std::exception& err) {
 			if (err.what() != std::to_string(WSAEWOULDBLOCK))
 				std::cout << "Error: " << err.what() << std::endl;
-			return { -1, { 0, 0} };
+			return { -1, 0, { 0, 0 } };
 		}
 	}
 
-	void sendPlayerPosition(sockets::Socket& socket, sockets::Address& address, PlayerPositionInfo packet) {
+	void sendPositionInfo(sockets::Socket& socket, sockets::Address& address, PositionInfoPacket packet) {
 		socket.sendTo(packet, address);
 	}
 }

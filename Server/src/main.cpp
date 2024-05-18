@@ -1,6 +1,7 @@
 #include <iostream>
 #include <unordered_map>
 #include <thread>
+#include <chrono>
 #include "sockets.hpp"
 #include "protocol.hpp"
 #include "globals.hpp"
@@ -9,15 +10,25 @@
 constexpr unsigned short PORT = 12345;
 constexpr unsigned short UDP_PORT = 54321;
 
-constexpr int NUMBER_OF_PLAYERS = 1;
+constexpr int NUMBER_OF_PLAYERS = 2;
 
 static int count = 0;
+
+constexpr int NUMBER_OF_TICKS = 60;
+
+struct Bullet {
+	protocol::Vector2 position;
+	protocol::Vector2 direction;
+};
 
 std::vector<sockets::Socket> tcpSockets;
 std::vector<sockets::Address> addresses;
 
 std::vector<std::string> names;
-std::unordered_map<char, protocol::Position> players;
+std::unordered_map<char, protocol::Vector2> players;
+std::vector<Bullet> bullets;
+
+globals::MazeArr maze;
 
 template<typename T> void deleteElement(std::vector<T>& vector, T element) {
 	vector.erase(std::remove(vector.begin(), vector.end(), element), vector.end());
@@ -87,6 +98,24 @@ static void handleClient(sockets::Socket socket, sockets::Address address) {
 	}
 }
 
+static void updateBullets() {
+	for (auto& bullet : bullets) {
+		bullet.position.x += bullet.direction.x * 6.0f * (1.0f / NUMBER_OF_TICKS);
+		bullet.position.y += bullet.direction.y * 6.0f * (1.0f / NUMBER_OF_TICKS);
+	}
+
+	bullets.erase(std::remove_if(bullets.begin(), bullets.end(),
+		[](const Bullet& bullet) {
+			if (
+				bullet.position.x < 0 || bullet.position.x >= globals::WORLD_WIDTH ||
+				bullet.position.y < 0 || bullet.position.y >= globals::WORLD_HEIGHT
+				)
+				return false;
+			return maze[(int)bullet.position.y][(int)bullet.position.x] == globals::CELL_WALL;
+		}
+	), bullets.end());
+}
+
 static std::vector<char> mazeToVector(const globals::MazeArr& maze) {
 	std::vector<char> vector;
 	for (int i = 0; i < globals::WORLD_HEIGHT; i++) {
@@ -100,6 +129,9 @@ static std::vector<char> mazeToVector(const globals::MazeArr& maze) {
 void main() {
 	srand(time(NULL));
 	sockets::initialize();
+
+	long elapsedTime = 0;
+	auto lastTime = std::chrono::steady_clock::now();
 
 	sockets::Socket serverSocket(sockets::Protocol::TCP);
 	sockets::Socket udpSocket(sockets::Protocol::UDP);
@@ -121,32 +153,52 @@ void main() {
 		std::this_thread::sleep_for(std::chrono::seconds(2));
 		std::cout << "start!" << std::endl;
 		broadcast(protocol::keyValueMessage("start", ""));
-		broadcast(globals::generateMaze());
+		maze = globals::generateMaze();
+		broadcast(maze);
 
 		// send initial starting positions
 		for (auto& address : addresses) {
 			for (auto& [index, position] : players) {
-				protocol::sendPlayerPosition(udpSocket, address, { index, position });
+				protocol::sendPositionInfo(udpSocket, address, { 0, index, position });
 			}
 		}
 
 		while (count > 0) {
-			try {
-				auto packet = protocol::receivePlayer(udpSocket);
+			auto now = std::chrono::steady_clock::now();
+			elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastTime).count();
 
-				if (packet.playerIndex != -1) {
-					players[packet.playerIndex] = packet.position;
+			if (elapsedTime < (1000 / NUMBER_OF_TICKS))
+				continue;
+
+			lastTime = now;
+			elapsedTime = 0;
+
+
+			int receivedType = -1;
+			do {
+				auto packet = protocol::receivePositionInfo(udpSocket);
+				receivedType = packet.type;
+
+				if (packet.type == 0) {
+					players[packet.index] = packet.position;
 
 					for (auto& address : addresses) {
-						protocol::sendPlayerPosition(udpSocket, address, packet);
+						protocol::sendPositionInfo(udpSocket, address, packet);
 					}
 				}
+				else if (packet.type == 1) {
+					bullets.push_back({ packet.position, { cosf(packet.direction), sinf(packet.direction) } });
+				}
+			} while (receivedType != -1);
 
+			updateBullets();
+
+			for (auto& address : addresses) {
+				protocol::sendPositionInfo(udpSocket, address, { 2, 0, { 0, 0 }, 0 });
+				for (int i = 0; i < bullets.size(); i++)
+					protocol::sendPositionInfo(udpSocket, address, { 1, i, bullets[i].position, 0 }); // direction is 0 because client ignores it
 			}
-			catch (std::exception& err) {
-				if (err.what() != std::to_string(WSAEWOULDBLOCK))
-					std::cout << "UDP recv error: " << err.what() << std::endl;
-			}
+
 		}
 
 		std::cout << "bye bye" << std::endl;

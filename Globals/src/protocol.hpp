@@ -7,20 +7,22 @@
 
 namespace protocol {
 
-	struct Position {
+	struct Vector2 {
 		float x;
 		float y;
 	};
 
-	struct PlayerPositionInfo {
-		char playerIndex;
-		Position position;
+	struct PositionInfoPacket {
+		char type; // 0 for player, 1 for bullet, 2 for clearing bullets
+		int index;
+		Vector2 position;
+		float direction; // not used for players
 	};
 
 	std::tuple<std::string, std::string> receiveKeyValue(sockets::Socket& socket);
 	std::string keyValueMessage(std::string key, std::string value);
 
-	PlayerPositionInfo receivePlayer(sockets::Socket& socket);
+	PositionInfoPacket receivePositionInfo(sockets::Socket& socket);
 
-	void sendPlayerPosition(sockets::Socket& socket, sockets::Address& address, PlayerPositionInfo packet);
+	void sendPositionInfo(sockets::Socket& socket, sockets::Address& address, PositionInfoPacket packet);
 }

@@ -22,6 +22,7 @@ GameState::GameState(Members& members)
 	isFocused = true;
 	paused = false;
 	dt = 0;
+	elapsedTime = 0;
 	zBuffer = new float[members.window.getSize().x + 1];
 
 }
@@ -44,6 +45,7 @@ sf::Vector2f GameState::wasdInput() {
 
 void GameState::update() {
 	dt = deltaClock.restart().asSeconds();
+	elapsedTime += dt;
 	sf::Event event;
 
 	members.window.setTitle(std::to_string(1 / dt));
@@ -58,8 +60,13 @@ void GameState::update() {
 		else if (event.type == sf::Event::KeyPressed) {
 			if (event.key.code == sf::Keyboard::Escape)
 				paused = !paused;
-			else if (event.key.code == sf::Keyboard::Space)
-				bullets.push_back({ player.getPos(), sf::Vector2f{ cosf(player.getDirection()), sinf(player.getDirection()) } });
+		}
+		else if (event.type == sf::Event::KeyReleased) {
+			if (event.key.code == sf::Keyboard::Space) {
+				sf::Vector2f bulletPosition = player.getPos() + 0.3f * sf::Vector2f{ cosf(player.getDirection()), sinf(player.getDirection()) };
+				protocol::Vector2 position = { bulletPosition.x, bulletPosition.y };
+				protocol::sendPositionInfo(members.udpSocket, serverAddress, { 1, 0, position, player.getDirection() });
+			}
 		}
 		else if (event.type == sf::Event::LostFocus)
 			isFocused = false;
@@ -67,14 +74,18 @@ void GameState::update() {
 			isFocused = true;
 	}
 
-	int receivedIndex = -1;
+	int receivedType = -1;
 	do {
-		auto [index, position] = protocol::receivePlayer(members.udpSocket);
-		receivedIndex = index;
-		if (index != -1)
+		auto [type, index, position, direction] = protocol::receivePositionInfo(members.udpSocket);
+		receivedType = type;
+		if (type == 0 && index != members.playerIndex)
 			players[index] = { position.x, position.y };
+		else if (type == 1)
+			bullets[index] = { position.x, position.y };
+		else if (type == 2)
+			bullets.clear();
 
-	} while (receivedIndex != -1);
+	} while (receivedType != -1);
 
 
 	if (paused) {
@@ -102,22 +113,7 @@ void GameState::update() {
 	bool moved = player.move();
 
 	if (moved)
-		protocol::sendPlayerPosition(members.udpSocket, serverAddress, { members.playerIndex, { player.getPos().x, player.getPos().y } });
-
-	for (auto& bullet : bullets) {
-		bullet.position += bullet.direction * 6.0f * dt;
-	}
-	
-	bullets.erase(std::remove_if(bullets.begin(), bullets.end(),
-		[this](const Bullet& bullet) {
-			if (
-				bullet.position.x < 0 || bullet.position.x >= globals::WORLD_WIDTH || 
-				bullet.position.y < 0 || bullet.position.y >= globals::WORLD_HEIGHT
-			)
-				return false;
-			return maze[(int)bullet.position.y][(int)bullet.position.x] == globals::CELL_WALL;
-		}
-	), bullets.end());
+		protocol::sendPositionInfo(members.udpSocket, serverAddress, { 0, members.playerIndex, { player.getPos().x, player.getPos().y } });
 }
 
 void GameState::draw() {
@@ -142,8 +138,8 @@ void GameState::draw() {
 		drawSprite(position, "character");
 	}
 
-	for (auto& bullet : bullets) {
-		drawSprite(bullet.position, "bullet");
+	for (auto& [index, bullet] : bullets) {
+		drawSprite(bullet, "bullet");
 	}
 
 	members.window.display();
