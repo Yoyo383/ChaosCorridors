@@ -9,6 +9,8 @@
 constexpr unsigned short PORT = 12345;
 constexpr unsigned short UDP_PORT = 54321;
 
+constexpr int NUMBER_OF_PLAYERS = 3;
+
 static int count = 0;
 
 std::vector<sockets::Socket> tcpSockets;
@@ -108,7 +110,7 @@ void main() {
 		serverSocket.bind({ "0.0.0.0", PORT });
 		serverSocket.listen(4);
 
-		while (count < 2) {
+		while (count < NUMBER_OF_PLAYERS) {
 			auto [clientSocket, clientAddress] = serverSocket.accept();
 			clientSocket.setTimeout(0);
 			std::thread thread(handleClient, clientSocket, clientAddress);

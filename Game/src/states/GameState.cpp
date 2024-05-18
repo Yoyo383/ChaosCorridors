@@ -108,12 +108,21 @@ void GameState::draw() {
 
 	drawFloorAndCeiling();
 	drawWalls();
-	
+
+	std::vector<sf::Vector2f> playerPositions;
+
 	for (auto& [index, position] : players) {
-		if (index == 1)
-			drawCharacter(position, "character");
-		else
-			drawCharacter(position, "floor");
+		playerPositions.push_back(position);
+	}
+
+	std::sort(playerPositions.begin(), playerPositions.end(), 
+		[this](sf::Vector2f pos1, sf::Vector2f pos2) {
+			return vecMagnitude(pos1 - player.getPos()) > vecMagnitude(pos2 - player.getPos());
+		}
+	);
+	
+	for (auto& position : playerPositions) {
+		drawCharacter(position, "character");
 	}
 
 	members.window.display();
