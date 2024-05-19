@@ -1,6 +1,5 @@
 #include "util.hpp"
 #include <math.h>
-#include <iostream>
 
 float degToRad(float degrees) {
 	return degrees * (M_PI / 180);
@@ -18,7 +17,6 @@ sf::Vector2f vecNormalize(const sf::Vector2f& vec) {
 	float magnitude = vecMagnitude(vec);
 	return { vec.x / magnitude, vec.y / magnitude };
 }
-
 
 sf::Vector2f operator+(const sf::Vector2f& vec1, const sf::Vector2f& vec2) {
 	return { vec1.x + vec2.x, vec1.y + vec2.y };

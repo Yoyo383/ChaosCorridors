@@ -159,7 +159,7 @@ void main() {
 		// send initial starting positions
 		for (auto& address : addresses) {
 			for (auto& [index, position] : players) {
-				protocol::sendPositionInfo(udpSocket, address, { 0, index, position });
+				protocol::sendPositionInfo(udpSocket, address, { 0, index, position, 0 });
 			}
 		}
 
@@ -181,6 +181,8 @@ void main() {
 
 				if (packet.type == 0) {
 					players[packet.index] = packet.position;
+					// setting the type to update player position
+					packet.type = 3;
 
 					for (auto& address : addresses) {
 						protocol::sendPositionInfo(udpSocket, address, packet);
@@ -194,9 +196,12 @@ void main() {
 			updateBullets();
 
 			for (auto& address : addresses) {
+				// clear the bullets
 				protocol::sendPositionInfo(udpSocket, address, { 2, 0, { 0, 0 }, 0 });
+
+				// send new bullet information
 				for (int i = 0; i < bullets.size(); i++)
-					protocol::sendPositionInfo(udpSocket, address, { 1, i, bullets[i].position, 0 }); // direction is 0 because client ignores it
+					protocol::sendPositionInfo(udpSocket, address, { 1, (char)i, bullets[i].position, 0 }); // direction is 0 because client ignores it
 			}
 
 		}

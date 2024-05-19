@@ -2,6 +2,7 @@
 #include "sockets.hpp"
 #include "SFML/Graphics.hpp"
 #include "states/StateManager.hpp"
+#include "TextureManager.hpp"
 
 // A struct to manage all global members between states.
 struct Members {

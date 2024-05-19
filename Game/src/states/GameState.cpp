@@ -89,9 +89,18 @@ void GameState::update() {
 			bullets[index] = { position.x, position.y };
 		else if (type == 2)
 			bullets.clear();
+		else if (type == 3 && index != members.playerIndex)
+			targetPlayerPositions[index] = { position.x, position.y };
 
 	} while (receivedType != -1);
 
+	for (auto& [index, targetPosition] : targetPlayerPositions) {
+		sf::Vector2f actualPosition = players[index];
+		sf::Vector2f direction = targetPosition - actualPosition;
+		if (vecMagnitude(direction) <= 0.05f)
+			continue;
+		players[index] += vecNormalize(direction) * dt * 2;
+	}
 
 	if (paused) {
 		members.window.setMouseCursorVisible(true);
@@ -117,8 +126,86 @@ void GameState::update() {
 	player.checkCollision(maze);
 	bool moved = player.move();
 
-	if (moved)
+	if (elapsedTime >= 1 / 30.0f) {
 		protocol::sendPositionInfo(members.udpSocket, serverAddress, { 0, members.playerIndex, { player.getPos().x, player.getPos().y } });
+		elapsedTime = 0;
+	}
+}
+
+Ray GameState::raycast(float angle) {
+	// the result
+	sf::Vector2f hit(-1, -1);
+
+	// ray direction
+	sf::Vector2f rayDir = { cosf(angle), sinf(angle) };
+
+	// the unit step size
+	sf::Vector2f rayUnitStepSize = {
+		sqrt(1 + (rayDir.y / rayDir.x) * (rayDir.y / rayDir.x)),
+		sqrt(1 + (rayDir.x / rayDir.y) * (rayDir.x / rayDir.y))
+	};
+
+	sf::Vector2i currentCell = { (int)player.getPos().x, (int)player.getPos().y};
+	sf::Vector2f rayLength1D;
+	sf::Vector2i step;
+
+	// set step and initial ray length
+	if (rayDir.x < 0) {
+		step.x = -1;
+		rayLength1D.x = (player.getPos().x - float(currentCell.x)) * rayUnitStepSize.x;
+	}
+	else {
+		step.x = 1;
+		rayLength1D.x = (float(currentCell.x + 1) - player.getPos().x) * rayUnitStepSize.x;
+	}
+
+	if (rayDir.y < 0) {
+		step.y = -1;
+		rayLength1D.y = (player.getPos().y - float(currentCell.y)) * rayUnitStepSize.y;
+	}
+	else {
+		step.y = 1;
+		rayLength1D.y = (float(currentCell.y + 1) - player.getPos().y) * rayUnitStepSize.y;
+	}
+
+	bool foundCell = false;
+	bool verticalHit = false;
+	float maxDistance = globals::WORLD_WIDTH;
+	float distance = 0;
+	float hitCoord = 0;
+
+	// walk on the ray until collision (or distance is bigger than maxDistance)
+	while (!foundCell && distance < maxDistance) {
+		if (rayLength1D.x < rayLength1D.y) {
+			currentCell.x += step.x;
+			distance = rayLength1D.x;
+			rayLength1D.x += rayUnitStepSize.x;
+			verticalHit = true;
+		}
+		else {
+			currentCell.y += step.y;
+			distance = rayLength1D.y;
+			rayLength1D.y += rayUnitStepSize.y;
+			verticalHit = false;
+		}
+
+		if (currentCell.x >= 0 && currentCell.x < globals::WORLD_WIDTH && currentCell.y >= 0 && currentCell.y < globals::WORLD_HEIGHT)
+		{
+			if (maze[currentCell.y][currentCell.x] == globals::CELL_WALL)
+			{
+				foundCell = true;
+			}
+		}
+	}
+
+	sf::Vector2f hitPos = player.getPos() + rayDir * distance;
+
+	if (verticalHit)
+		hitCoord = hitPos.y;
+	else
+		hitCoord = hitPos.x;
+
+	return { foundCell, verticalHit, distance, hitCoord - int(hitCoord) };
 }
 
 void GameState::draw() {
@@ -228,7 +315,7 @@ void GameState::drawWalls() {
 		angle = player.getDirection() + atanf(segLen * x - screenHalfLen);
 
 		// casting ray and fixing the fisheye problem
-		Ray ray = raycast(player.getPos(), angle, maze);
+		Ray ray = raycast(angle);
 		ray.distance *= cosf(player.getDirection() - angle);
 
 		zBuffer[x] = ray.distance;

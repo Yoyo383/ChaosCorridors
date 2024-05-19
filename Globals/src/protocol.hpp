@@ -13,8 +13,8 @@ namespace protocol {
 	};
 
 	struct PositionInfoPacket {
-		char type; // 0 for player, 1 for bullet, 2 for clearing bullets
-		int index;
+		char type; // 0 for new player, 1 for bullet, 2 for clearing bullets, 3 for player target position
+		char index;
 		Vector2 position;
 		float direction; // not used for players
 	};

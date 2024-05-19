@@ -139,8 +139,8 @@
     <ClCompile Include="src\ui\Button.cpp" />
     <ClCompile Include="src\states\MainMenuState.cpp" />
     <ClCompile Include="src\states\GameState.cpp" />
-    <ClCompile Include="src\graphics.cpp" />
-    <ClCompile Include="src\player.cpp" />
+    <ClCompile Include="src\TextureManager.cpp" />
+    <ClCompile Include="src\Player.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\states\StateManager.cpp" />
     <ClCompile Include="src\util.cpp" />
@@ -152,8 +152,8 @@
     <ClInclude Include="src\ui\Button.hpp" />
     <ClInclude Include="src\states\MainMenuState.hpp" />
     <ClInclude Include="src\states\GameState.hpp" />
-    <ClInclude Include="src\graphics.hpp" />
-    <ClInclude Include="src\player.hpp" />
+    <ClInclude Include="src\TextureManager.hpp" />
+    <ClInclude Include="src\Player.hpp" />
     <ClInclude Include="src\states\StateManager.hpp" />
     <ClInclude Include="src\util.hpp" />
     <ClInclude Include="src\states\State.hpp" />

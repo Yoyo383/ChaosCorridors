@@ -1,10 +1,17 @@
 #pragma once
 #include "SFML/Graphics.hpp"
 #include "StateManager.hpp"
-#include "../player.hpp"
-#include "../graphics.hpp"
+#include "../Player.hpp"
+#include "../TextureManager.hpp"
 #include "sockets.hpp"
 #include "../Members.hpp"
+
+struct Ray {
+	bool isHit;
+	bool verticalHit;
+	float distance;
+	float hitCoord;
+};
 
 class GameState : public State {
 public:
@@ -13,6 +20,14 @@ public:
 
 	void update() override;
 	void draw() override;
+
+	/**
+	* @brief The function raycasts from the player in a certain direction and finds a collision with the world.
+	* It uses the DDA algorithm from this video: https://youtu.be/NbSee-XM7WA
+	* @param angle The angle of the ray.
+	* @return A Ray object representing the ray.
+	*/
+	Ray raycast(float angle);
 
 	void resetMousePos();
 	sf::Vector2f wasdInput();
@@ -45,4 +60,5 @@ private:
 	std::unordered_map<int, sf::Vector2f> bullets;
 
 	std::unordered_map<int, sf::Vector2f> players;
+	std::unordered_map<int, sf::Vector2f> targetPlayerPositions;
 };

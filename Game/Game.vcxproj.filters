@@ -21,10 +21,10 @@
     <ClCompile Include="src\util.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\player.cpp">
+    <ClCompile Include="src\Player.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\graphics.cpp">
+    <ClCompile Include="src\TextureManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\states\GameState.cpp">
@@ -50,10 +50,10 @@
     <ClInclude Include="src\util.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\player.hpp">
+    <ClInclude Include="src\Player.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\graphics.hpp">
+    <ClInclude Include="src\TextureManager.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\states\State.hpp">
