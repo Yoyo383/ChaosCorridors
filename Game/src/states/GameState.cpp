@@ -157,6 +157,9 @@ void GameState::drawFloorAndCeiling() {
 	// for doing floor/ceiling things
 	float cos = cosf(player.getDirection()), sin = sinf(player.getDirection());
 
+	sf::VertexArray floorLines(sf::Lines, members.window.getSize().y + 2);
+	sf::VertexArray ceilingLines(sf::Lines, members.window.getSize().y + 2);
+
 	for (int y = 0; y <= members.window.getSize().y / 2; y++) {
 		// the distance of the current row
 		// floor and ceiling texture have the same size so it doesn't matter which size is in the formula
@@ -180,30 +183,34 @@ void GameState::drawFloorAndCeiling() {
 		color.g *= brightness;
 		color.b *= brightness;
 
+		// floor
 
-		sf::VertexArray scanLine(sf::Lines, 2);
-
-		// texturing the floor/ceiling according to the start and end sample positions and the player position
-		scanLine[0].texCoords = endPos + player.getPos() * members.textures["floor"].getSize().x;
-		scanLine[1].texCoords = startPos + player.getPos() * members.textures["floor"].getSize().x;
+		// texturing the floor according to the start and end sample positions and the player position
+		floorLines[2 * y].texCoords = endPos + player.getPos() * members.textures["floor"].getSize().x;
+		floorLines[2 * y + 1].texCoords = startPos + player.getPos() * members.textures["floor"].getSize().x;
 		// shading
-		scanLine[0].color = color;
-		scanLine[1].color = color;
-
-
+		floorLines[2 * y].color = color;
+		floorLines[2 * y + 1].color = color;
 		// setting floor position
-		scanLine[0].position = { 0, (float)y + members.window.getSize().y / 2 };
-		scanLine[1].position = { (float)members.window.getSize().x, (float)y + members.window.getSize().y / 2 };
-
-		members.window.draw(scanLine, &members.textures["floor"]);
+		floorLines[2 * y].position = { 0, (float)y + members.window.getSize().y / 2 };
+		floorLines[2 * y + 1].position = { (float)members.window.getSize().x, (float)y + members.window.getSize().y / 2 };
 
 
+		// ceiling
+
+		// texturing the ceiling according to the start and end sample positions and the player position
+		ceilingLines[2 * y].texCoords = endPos + player.getPos() * members.textures["ceiling"].getSize().x;
+		ceilingLines[2 * y + 1].texCoords = startPos + player.getPos() * members.textures["ceiling"].getSize().x;
+		// shading
+		ceilingLines[2 * y].color = color;
+		ceilingLines[2 * y + 1].color = color;
 		// setting ceiling position
-		scanLine[0].position = { 0, members.window.getSize().y / 2 - (float)y };
-		scanLine[1].position = { (float)members.window.getSize().x, members.window.getSize().y / 2 - (float)y };
-
-		members.window.draw(scanLine, &members.textures["ceiling"]);
+		ceilingLines[2 * y].position = { 0, members.window.getSize().y / 2 - (float)y };
+		ceilingLines[2 * y + 1].position = { (float)members.window.getSize().x, members.window.getSize().y / 2 - (float)y };
 	}
+
+	members.window.draw(floorLines, &members.textures["floor"]);
+	members.window.draw(ceilingLines, &members.textures["ceiling"]);
 }
 
 void GameState::drawWalls() {
@@ -212,6 +219,8 @@ void GameState::drawWalls() {
 	// https://stackoverflow.com/questions/24173966/raycasting-engine-rendering-creating-slight-distortion-increasing-towards-edges
 	float screenHalfLen = tanf(player.getFOV() / 2);
 	float segLen = 2 * screenHalfLen / members.window.getSize().x;
+
+	sf::VertexArray wallLines(sf::Lines, 2 * (members.window.getSize().x + 1));
 
 	float angle;
 	for (int x = 0; x <= members.window.getSize().x; x++) {
@@ -252,25 +261,23 @@ void GameState::drawWalls() {
 		// making sure the texture is the right aspect ration
 		float xMultiplier = (float)members.window.getSize().x / members.window.getSize().y;
 		// the x coord to sample from in the texture
-		float textureX = (int)(members.textures["wall"].getSize().x * ray.hitCoord * xMultiplier) % members.textures["wall"].getSize().x;
-
-
-		sf::VertexArray wall(sf::Lines, 2);
+		int textureSizeX = members.textures["wall"].getSize().x;
+		float textureX = (int)(textureSizeX * ray.hitCoord * xMultiplier) % textureSizeX;
 
 		// setting wall position and height
-		wall[0].position = { (float)x, ceiling };
-		wall[1].position = { (float)x, floor };
+		wallLines[2 * x].position = { (float)x, ceiling };
+		wallLines[2 * x + 1].position = { (float)x, floor };
 
 		// shading the wall
-		wall[0].color = color;
-		wall[1].color = color;
+		wallLines[2 * x].color = color;
+		wallLines[2 * x + 1].color = color;
 
 		// texturing the wall according to the hit coordinate
-		wall[0].texCoords = { textureX, 0 };
-		wall[1].texCoords = { textureX, (float)members.textures["wall"].getSize().y };
-
-		members.window.draw(wall, &members.textures["wall"]);
+		wallLines[2 * x].texCoords = { textureX, 0 };
+		wallLines[2 * x + 1].texCoords = { textureX, (float)members.textures["wall"].getSize().y };
 	}
+
+	members.window.draw(wallLines, &members.textures["wall"]);
 }
 
 void GameState::drawSprite(const sf::Vector2f& characterPos, std::string texture) {
