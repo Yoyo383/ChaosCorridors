@@ -2,6 +2,7 @@
 #include "util.hpp"
 
 Player::Player(sf::Vector2f pos) : pos(pos), direction(0), velocity(0, 0) {}
+Player::Player(float x, float y) : pos(x, y), direction(0), velocity(0, 0) {}
 Player::Player() : pos(1.5f, 1.5f), direction(0), velocity(0, 0) {}
 
 void Player::calculateVelocity(sf::Vector2f wasd, float dt)

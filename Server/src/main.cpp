@@ -91,7 +91,10 @@ static void handleClient(sockets::Socket socket, sockets::Address address)
 			names.push_back(value);
 			broadcast(protocol::keyValueMessage("player", value));
 			socket.send(protocol::keyValueMessage("index", std::to_string(count)));
-			players[count] = Player({ randInt(1, globals::WORLD_WIDTH - 2) + 0.5f, randInt(1, globals::WORLD_HEIGHT - 2) + 0.5f });
+			players[count] = Player(
+				randInt(1, globals::WORLD_WIDTH - 2) + 0.5f, 
+				randInt(1, globals::WORLD_HEIGHT - 2) + 0.5f
+			);
 		}
 
 		if (key == "udp")

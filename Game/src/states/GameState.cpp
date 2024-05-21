@@ -12,7 +12,7 @@ struct Sprite
 };
 
 GameState::GameState(Members& members)
-	: members(members), maze(), player({ 1.5f, 1.5f })
+	: members(members), maze()
 {
 
 	members.tcpSocket.setBlocking(true);

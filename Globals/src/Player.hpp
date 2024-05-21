@@ -7,6 +7,7 @@
 struct Player
 {
 	Player(sf::Vector2f pos);
+	Player(float x, float y);
 	Player();
 
 	void calculateVelocity(sf::Vector2f wasd, float dt);
