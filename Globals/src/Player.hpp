@@ -4,7 +4,8 @@
 #include "util.hpp"
 #include "SFML/System/Vector2.hpp"
 
-struct Player {
+struct Player
+{
 	Player(sf::Vector2f pos);
 	Player();
 

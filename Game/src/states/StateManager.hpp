@@ -3,7 +3,8 @@
 #include "State.hpp"
 #include <memory>
 
-class StateManager {
+class StateManager
+{
 public:
 	StateManager();
 	~StateManager();

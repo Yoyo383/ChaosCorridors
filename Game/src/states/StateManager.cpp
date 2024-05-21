@@ -1,35 +1,42 @@
 #include "StateManager.hpp"
 
-StateManager::StateManager() {
+StateManager::StateManager()
+{
 	running = true;
 	shouldChangeState = false;
 	shouldRemoveState = false;
 	nextState = nullptr;
 }
 
-StateManager::~StateManager() {
+StateManager::~StateManager()
+{
 	while (!states.empty())
 		removeState();
 }
 
-void StateManager::addState(std::unique_ptr<State> state) {
+void StateManager::addState(std::unique_ptr<State> state)
+{
 	nextState = std::move(state);
 	shouldChangeState = true;
 	shouldRemoveState = false;
 }
 
-void StateManager::removeState() {
+void StateManager::removeState()
+{
 	states.pop();
 }
 
-void StateManager::setState(std::unique_ptr<State> state) {
+void StateManager::setState(std::unique_ptr<State> state)
+{
 	nextState = std::move(state);
 	shouldChangeState = true;
 	shouldRemoveState = true;
 }
 
-void StateManager::changeState() {
-	if (shouldChangeState) {
+void StateManager::changeState()
+{
+	if (shouldChangeState)
+	{
 		if (!states.empty() && shouldRemoveState)
 			removeState();
 		states.push(std::move(nextState));
@@ -38,24 +45,29 @@ void StateManager::changeState() {
 	}
 }
 
-void StateManager::update() {
+void StateManager::update()
+{
 	if (running)
 		states.top()->update();
 }
 
-void StateManager::draw() {
+void StateManager::draw()
+{
 	if (running)
 		states.top()->draw();
 }
 
-std::unique_ptr<State> StateManager::getCurrentState() {
+std::unique_ptr<State> StateManager::getCurrentState()
+{
 	return std::move(states.top());
 }
 
-bool StateManager::isRunning() const {
+bool StateManager::isRunning() const
+{
 	return running;
 }
 
-void StateManager::quit() {
+void StateManager::quit()
+{
 	running = false;
 }

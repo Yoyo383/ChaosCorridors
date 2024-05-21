@@ -6,14 +6,16 @@
 #include "sockets.hpp"
 #include "../Members.hpp"
 
-struct Ray {
+struct Ray
+{
 	bool isHit;
 	bool verticalHit;
 	float distance;
 	float hitCoord;
 };
 
-class GameState : public State {
+class GameState : public State
+{
 public:
 	GameState(Members& members);
 	~GameState();

@@ -4,7 +4,8 @@
 #include <string>
 #include "SFML/Graphics.hpp"
 
-class TextureManager {
+class TextureManager
+{
 private:
 	std::unordered_map<std::string, sf::Texture> map;
 public:

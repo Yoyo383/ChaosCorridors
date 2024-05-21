@@ -4,7 +4,8 @@
 #include "sockets.hpp"
 #include "../Members.hpp"
 
-class LobbyState : public State {
+class LobbyState : public State
+{
 public:
 	LobbyState(Members& members);
 

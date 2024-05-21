@@ -3,7 +3,8 @@
 #include <array>
 
 // global constants
-namespace globals {
+namespace globals
+{
 	// maze size
 	inline const int MAZE_WIDTH = 4;
 	inline const int MAZE_HEIGHT = 4;
@@ -15,9 +16,9 @@ namespace globals {
 	// cell state
 	enum
 	{
-		CELL_EMPTY =	0,
-		CELL_WALL =		1,
-		CELL_VISITED =	2
+		CELL_EMPTY = 0,
+		CELL_WALL = 1,
+		CELL_VISITED = 2
 	};
 
 	// type for the maze array (2d array of bytes)

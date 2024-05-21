@@ -13,13 +13,15 @@ Button::Button(sf::Vector2f position, TextureManager& textures, std::string norm
 	isClicked = false;
 }
 
-void Button::setSizeRelativeToWindow(sf::RenderWindow& window, float percentage) {
+void Button::setSizeRelativeToWindow(sf::RenderWindow& window, float percentage)
+{
 	float scale = window.getSize().x / (1 / percentage * currentSprite->getGlobalBounds().width);
 	normalSprite.setScale(scale, scale);
 	clickedSprite.setScale(scale, scale);
 }
 
-void Button::setClicked(bool clicked) {
+void Button::setClicked(bool clicked)
+{
 	isClicked = clicked;
 	if (isClicked)
 		currentSprite = &clickedSprite;
@@ -27,12 +29,14 @@ void Button::setClicked(bool clicked) {
 		currentSprite = &normalSprite;
 }
 
-bool Button::isButtonClicked(sf::Vector2f pos) {
+bool Button::isButtonClicked(sf::Vector2f pos)
+{
 	sf::FloatRect buttonRect = currentSprite->getGlobalBounds();
 	setClicked(buttonRect.contains(pos));
 	return isClicked;
 }
 
-void Button::draw(sf::RenderWindow& window) const {
+void Button::draw(sf::RenderWindow& window) const
+{
 	window.draw(*currentSprite);
 }

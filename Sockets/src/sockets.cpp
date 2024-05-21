@@ -3,7 +3,8 @@
 #include <memory>
 #include <iostream>
 
-static sockaddr_in addressToRawAddress(sockets::Address address) {
+static sockaddr_in addressToRawAddress(sockets::Address address)
+{
 	int result;
 	// getting ip from string
 	unsigned long ip;
@@ -21,7 +22,8 @@ static sockaddr_in addressToRawAddress(sockets::Address address) {
 
 	return rawAddress;
 }
-static sockets::Address rawAddressToAddress(sockaddr_in rawAddress) {
+static sockets::Address rawAddressToAddress(sockaddr_in rawAddress)
+{
 	char ipBuffer[16];
 
 	PCSTR result = inet_ntop(AF_INET, &rawAddress.sin_addr.s_addr, ipBuffer, 16);
@@ -35,35 +37,42 @@ static sockets::Address rawAddressToAddress(sockaddr_in rawAddress) {
 	return resultAddr;
 }
 
-namespace sockets {
+namespace sockets
+{
 
-	bool operator ==(const sockets::Address& addr1, const sockets::Address& addr2) {
+	bool operator ==(const sockets::Address& addr1, const sockets::Address& addr2)
+	{
 		return addr1.port == addr2.port && addr1.ip == addr2.ip;
 	}
 
-	bool operator==(const Socket& sock1, const Socket& sock2) {
+	bool operator==(const Socket& sock1, const Socket& sock2)
+	{
 		return sock1.getID() == sock2.getID();
 	}
 
-	bool initialize() {
+	bool initialize()
+	{
 		// initializing WSA
 		WSADATA wsaData;
 		int result = WSAStartup(MAKEWORD(2, 2), &wsaData);
 		return result == 0;
 	}
 
-	void shutdown() {
+	void shutdown()
+	{
 		WSACleanup();
 	}
 
-	Socket::Socket(SOCKET id, Protocol protocol) {
+	Socket::Socket(SOCKET id, Protocol protocol)
+	{
 		socketId = id;
 		protocol = protocol;
 
 		setTimeout(2);
 	}
 
-	Socket::Socket(Protocol protocol) {
+	Socket::Socket(Protocol protocol)
+	{
 		protocol = protocol;
 		int type = 0;
 
@@ -74,18 +83,21 @@ namespace sockets {
 
 		socketId = socket(AF_INET, type, 0);
 
-		if (socketId == INVALID_SOCKET) {
+		if (socketId == INVALID_SOCKET)
+		{
 			throw std::exception(std::to_string(WSAGetLastError()).c_str());
 		}
 
 		setTimeout(2);
 	}
 
-	SOCKET Socket::getID() const {
+	SOCKET Socket::getID() const
+	{
 		return socketId;
 	}
 
-	void Socket::bind(Address address) {
+	void Socket::bind(Address address)
+	{
 		sockaddr_in bindAddress = addressToRawAddress(address);
 
 		int result = ::bind(socketId, (sockaddr*)&bindAddress, sizeof(bindAddress));
@@ -93,13 +105,15 @@ namespace sockets {
 			throw std::exception(std::to_string(WSAGetLastError()).c_str());
 	}
 
-	void Socket::listen(int backlog) {
+	void Socket::listen(int backlog)
+	{
 		int result = ::listen(socketId, backlog);
 		if (result != 0)
 			throw std::exception(std::to_string(WSAGetLastError()).c_str());
 	}
 
-	std::pair<Socket, Address> Socket::accept() {
+	std::pair<Socket, Address> Socket::accept()
+	{
 		// address setup
 		sockaddr_in addr;
 		memset(&addr, 0, sizeof(addr));
@@ -113,17 +127,19 @@ namespace sockets {
 		Socket socket(newId, Protocol::TCP);
 
 		Address resultAddr = rawAddressToAddress(addr);
-		
+
 		return std::make_pair(socket, resultAddr);
 	}
 
-	void Socket::close() {
+	void Socket::close()
+	{
 		int result = ::closesocket(socketId);
 		if (result == SOCKET_ERROR)
 			throw std::exception(std::to_string(WSAGetLastError()).c_str());
 	}
 
-	void Socket::connect(Address address) {
+	void Socket::connect(Address address)
+	{
 		sockaddr_in connectAddress = addressToRawAddress(address);
 
 		int result = ::connect(socketId, (sockaddr*)&connectAddress, sizeof(connectAddress));
@@ -131,31 +147,37 @@ namespace sockets {
 			throw std::exception(std::to_string(WSAGetLastError()).c_str());
 	}
 
-	void Socket::setTimeout(float seconds) {
+	void Socket::setTimeout(float seconds)
+	{
 		unsigned long milliseconds = seconds * 1000;
 		setsockopt(socketId, SOL_SOCKET, SO_RCVTIMEO, (char*)&milliseconds, sizeof(milliseconds));
 	}
 
-	void Socket::setBlocking(bool blocking) {
+	void Socket::setBlocking(bool blocking)
+	{
 		unsigned long mode = !blocking;
 		ioctlsocket(socketId, FIONBIO, &mode);
 	}
 
 	// TCP send/recv
-	int Socket::send(const char* data, int size) {
+	int Socket::send(const char* data, int size)
+	{
 		int result = ::send(socketId, data, size, 0);
 		if (result == SOCKET_ERROR)
 			throw std::exception(std::to_string(WSAGetLastError()).c_str());
 		return result;
 	}
-	int Socket::send(std::vector<char> data) {
+	int Socket::send(std::vector<char> data)
+	{
 		return send(data.data(), data.size());
 	}
-	int Socket::send(std::string data) {
+	int Socket::send(std::string data)
+	{
 		return send(data.data(), data.size());
 	}
 
-	std::vector<char> Socket::recv(int size) {
+	std::vector<char> Socket::recv(int size)
+	{
 		std::vector<char> buf(size);
 		int bytes = ::recv(socketId, buf.data(), size, 0);
 
@@ -165,13 +187,15 @@ namespace sockets {
 		buf.resize(bytes);
 		return buf;
 	}
-	std::string Socket::recvString(int size) {
+	std::string Socket::recvString(int size)
+	{
 		std::vector<char> data = recv(size);
 		return std::string(data.begin(), data.end());
 	}
 
 	// UDP send/recv
-	int Socket::sendTo(const char* data, int size, Address address) {
+	int Socket::sendTo(const char* data, int size, Address address)
+	{
 		sockaddr_in sendAddress = addressToRawAddress(address);
 
 		int result = ::sendto(socketId, data, size, 0, (sockaddr*)&sendAddress, sizeof(sendAddress));
@@ -179,14 +203,17 @@ namespace sockets {
 			throw std::exception(std::to_string(WSAGetLastError()).c_str());
 		return result;
 	}
-	int Socket::sendTo(std::vector<char> data, Address address) {
+	int Socket::sendTo(std::vector<char> data, Address address)
+	{
 		return sendTo(data.data(), data.size(), address);
 	}
-	int Socket::sendTo(std::string data, Address address) {
+	int Socket::sendTo(std::string data, Address address)
+	{
 		return sendTo(data.data(), data.size(), address);
 	}
 
-	std::pair<std::vector<char>, Address> Socket::recvFrom(int size) {
+	std::pair<std::vector<char>, Address> Socket::recvFrom(int size)
+	{
 		std::vector<char> buf(size);
 
 		sockaddr_in addr;
@@ -202,7 +229,8 @@ namespace sockets {
 		buf.resize(bytes);
 		return std::make_pair(buf, resultAddress);
 	}
-	std::pair<std::string, Address> Socket::recvFromString(int size) {
+	std::pair<std::string, Address> Socket::recvFromString(int size)
+	{
 		auto [data, address] = recvFrom(size);
 		return std::make_pair(std::string(data.begin(), data.end()), address);
 	}

@@ -4,17 +4,20 @@
 #include <iostream>
 
 LobbyState::LobbyState(Members& members)
-	: members(members) {
+	: members(members)
+{
 	font.loadFromFile("C:/Windows/Fonts/Arial.ttf");
 	members.tcpSocket.setBlocking(false);
 }
 
-void LobbyState::update() {
-
+void LobbyState::update()
+{
 	sf::Event event;
 
-	while (members.window.pollEvent(event)) {
-		if (event.type == sf::Event::Closed) {
+	while (members.window.pollEvent(event))
+	{
+		if (event.type == sf::Event::Closed)
+		{
 			members.tcpSocket.send(protocol::keyValueMessage("close", std::to_string(members.playerIndex)));
 			members.tcpSocket.close();
 			members.manager.quit();
@@ -22,9 +25,11 @@ void LobbyState::update() {
 		}
 	}
 
-	try {
+	try
+	{
 		auto [key, value] = protocol::receiveKeyValue(members.tcpSocket);
-		if (key == "player") {
+		if (key == "player")
+		{
 			sf::Text text;
 			text.setFont(font);
 			text.setCharacterSize(90);
@@ -35,19 +40,23 @@ void LobbyState::update() {
 		}
 		else if (key == "index")
 			members.playerIndex = std::stoi(value);
-		else if (key == "start") {
+		else if (key == "start")
+		{
 			std::unique_ptr<GameState> gameState = std::make_unique<GameState>(members);
 			members.manager.setState(std::move(gameState));
 		}
 	}
-	catch (std::exception& err) {
+	catch (std::exception& err)
+	{
 		std::cout << err.what() << std::endl;
 	}
 }
 
-void LobbyState::draw() {
+void LobbyState::draw()
+{
 	members.window.clear(sf::Color::White);
-	for (auto& text : playerNamesTexts) {
+	for (auto& text : playerNamesTexts)
+	{
 		members.window.draw(text);
 	}
 	members.window.display();

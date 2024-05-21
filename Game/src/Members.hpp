@@ -5,8 +5,8 @@
 #include "TextureManager.hpp"
 
 // A struct to manage all global members between states.
-struct Members {
-
+struct Members
+{
 	Members() : tcpSocket(sockets::Protocol::TCP), udpSocket(sockets::Protocol::UDP), playerIndex(0) {}
 
 	// The SFML window.

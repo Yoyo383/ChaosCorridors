@@ -6,9 +6,11 @@
 #include "sockets.hpp"
 #include "SFML/System/Vector2.hpp"
 
-namespace protocol {
+namespace protocol
+{
 
-	enum class PacketType : char {
+	enum class PacketType : char
+	{
 		NO_PACKET,
 		NEW_PLAYER,
 		UPDATE_PLAYER,
@@ -16,7 +18,8 @@ namespace protocol {
 		CLEAR_BULLETS
 	};
 
-	struct PositionInfoPacket {
+	struct PositionInfoPacket
+	{
 		PacketType type; // 0 for new player, 1 for bullet, 2 for clearing bullets, 3 for player target position
 		char index;
 		sf::Vector2f position;

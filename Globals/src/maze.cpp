@@ -2,16 +2,21 @@
 #include <stack>
 #include <vector>
 
-struct Cell {
+struct Cell
+{
 	int x, y;
 };
 
-namespace globals {
+namespace globals
+{
 #if 1
-	MazeArr generateMaze() {
+	MazeArr generateMaze()
+	{
 		MazeArr maze = MazeArr();
-		for (int i = 0; i < WORLD_HEIGHT; i++) {
-			for (int j = 0; j < WORLD_WIDTH; j++) {
+		for (int i = 0; i < WORLD_HEIGHT; i++)
+		{
+			for (int j = 0; j < WORLD_WIDTH; j++)
+			{
 				if (i == 0 || i == WORLD_HEIGHT - 1 || j == 0 || j == WORLD_WIDTH - 1)
 					maze[i][j] = CELL_WALL;
 				else
@@ -22,14 +27,17 @@ namespace globals {
 		return maze;
 	}
 #else
-	MazeArr generateMaze() {
+	MazeArr generateMaze()
+	{
 		std::stack<Cell> stack;
 		MazeArr maze = MazeArr();
 		int visitedCells = 0;
 
 		// reset the maze
-		for (int i = 0; i < WORLD_HEIGHT; i++) {
-			for (int j = 0; j < WORLD_WIDTH; j++) {
+		for (int i = 0; i < WORLD_HEIGHT; i++)
+		{
+			for (int j = 0; j < WORLD_WIDTH; j++)
+			{
 				if (i % 2 == 0 || j % 2 == 0)
 					maze[i][j] = CELL_WALL;
 				else
@@ -45,7 +53,8 @@ namespace globals {
 		visitedCells = 1;
 
 		// loop until every cell is visited
-		while (visitedCells < MAZE_HEIGHT * MAZE_WIDTH) {
+		while (visitedCells < MAZE_HEIGHT * MAZE_WIDTH)
+		{
 			std::vector<int> neighbors;
 			Cell top = stack.top();
 			maze[top.y][top.x] = CELL_VISITED;
@@ -60,11 +69,13 @@ namespace globals {
 			if (top.x < WORLD_WIDTH - 2 && maze[top.y][top.x + 2] != CELL_VISITED) // east
 				neighbors.push_back(3);
 
-			if (!neighbors.empty()) {
+			if (!neighbors.empty())
+			{
 				int nextCellDir = neighbors[rand() % neighbors.size()];
 
 				// delete the wall of the chosen neighbor
-				switch (nextCellDir) {
+				switch (nextCellDir)
+				{
 				case 0: // north
 					maze[top.y - 1][top.x] = CELL_EMPTY;
 					stack.push({ top.x, top.y - 2 });
@@ -96,8 +107,10 @@ namespace globals {
 		}
 
 		// set all visited cells to 0 for ease of use
-		for (int i = 0; i < WORLD_HEIGHT; i++) {
-			for (int j = 0; j < WORLD_WIDTH; j++) {
+		for (int i = 0; i < WORLD_HEIGHT; i++)
+		{
+			for (int j = 0; j < WORLD_WIDTH; j++)
+			{
 				if (maze[i][j] == CELL_VISITED)
 					maze[i][j] = CELL_EMPTY;
 			}

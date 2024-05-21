@@ -2,6 +2,7 @@
 * A library to simplify networking and pack it in classes and structs.
 */
 #pragma once
+
 #include <WinSock2.h>
 #include <WS2tcpip.h>
 #include <string>
@@ -13,7 +14,8 @@
  * @param obj The variable.
  * @return A byte vector of the variable's data.
 */
-template<typename T> std::vector<char> toBytes(T obj) {
+template<typename T> std::vector<char> toBytes(T obj)
+{
 	char* ptr = reinterpret_cast<char*>(&obj);
 	return std::vector<char>(ptr, ptr + sizeof(obj));
 }
@@ -24,17 +26,20 @@ template<typename T> std::vector<char> toBytes(T obj) {
  * @param bytes The byte vector.
  * @return A variable of type T that has the data of the bytes.
 */
-template<typename T> T toVariable(std::vector<char> bytes) {
+template<typename T> T toVariable(std::vector<char> bytes)
+{
 	return *reinterpret_cast<T*>(&bytes[0]);
 }
 
 
-namespace sockets {
+namespace sockets
+{
 
 	/**
 	 * @brief An enum that represents the protocol of the socket - TCP or UDP.
 	*/
-	enum class Protocol {
+	enum class Protocol
+	{
 		TCP,
 		UDP
 	};
@@ -42,7 +47,8 @@ namespace sockets {
 	/**
 	 * @brief A struct that represents an address (IP and port).
 	*/
-	struct Address {
+	struct Address
+	{
 		std::string ip;
 		unsigned short port;
 	};
@@ -69,7 +75,8 @@ namespace sockets {
 	/**
 	 * @brief Socket class.
 	*/
-	class Socket {
+	class Socket
+	{
 	private:
 		// The ID of the socket, used for windows functions.
 		SOCKET socketId;
@@ -124,7 +131,7 @@ namespace sockets {
 		 * @param address The address to connect to.
 		*/
 		void connect(Address address);
-		
+
 		/**
 		 * @brief Sets the timeout of the socket.
 		 * @param seconds Timeout in seconds.
@@ -136,7 +143,7 @@ namespace sockets {
 		 * @param blocking Blocking or non-blocking mode.
 		*/
 		void setBlocking(bool blocking);
-		
+
 #pragma region TCP send/recv
 		/**
 		 * @brief Sends a variable to the socket.
@@ -144,7 +151,8 @@ namespace sockets {
 		 * @param obj The variable.
 		 * @return The number of bytes sent.
 		*/
-		template<typename T> int send(T obj) {
+		template<typename T> int send(T obj)
+		{
 			std::vector<char> bytes = toBytes<T>(obj);
 			return send(bytes);
 		}
@@ -174,7 +182,8 @@ namespace sockets {
 		 * @tparam T The type of the variable.
 		 * @return The variable.
 		*/
-		template<typename T> T recv() {
+		template<typename T> T recv()
+		{
 			std::vector<char> data = recv(sizeof(T));
 			return toVariable<T>(data);
 		}
@@ -201,7 +210,8 @@ namespace sockets {
 		 * @param address The address to send to.
 		 * @return The number of bytes sent.
 		*/
-		template<typename T> int sendTo(T obj, Address address) {
+		template<typename T> int sendTo(T obj, Address address)
+		{
 			std::vector<char> data = toBytes<T>(obj);
 			return sendTo(data, address);
 		}
@@ -234,7 +244,8 @@ namespace sockets {
 		 * @tparam T The type of the variable.
 		 * @return A pair of the variable received and the address it was sent from.
 		*/
-		template<typename T> std::pair<T, Address> recvFrom() {
+		template<typename T> std::pair<T, Address> recvFrom()
+		{
 			auto [data, address] = recvFrom(sizeof(T));
 			return std::make_pair(toVariable<T>(data), address);
 		}

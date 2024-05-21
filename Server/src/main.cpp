@@ -17,7 +17,8 @@ static int count = 0;
 
 constexpr int NUMBER_OF_TICKS = 60;
 
-struct Bullet {
+struct Bullet
+{
 	sf::Vector2f position;
 	sf::Vector2f direction;
 };
@@ -31,37 +32,45 @@ std::vector<Bullet> bullets;
 
 globals::MazeArr maze;
 
-template<typename T> void deleteElement(std::vector<T>& vector, T element) {
+template<typename T> void deleteElement(std::vector<T>& vector, T element)
+{
 	vector.erase(std::remove(vector.begin(), vector.end(), element), vector.end());
 }
 
-template<typename T> void broadcast(T data) {
+template<typename T> void broadcast(T data)
+{
 	for (auto& socket : tcpSockets)
 		socket.send(data);
 }
-static void broadcast(std::string message) {
+static void broadcast(std::string message)
+{
 	for (auto& socket : tcpSockets)
 		socket.send(message);
 }
-static void broadcast(std::vector<char> message) {
+static void broadcast(std::vector<char> message)
+{
 	for (auto& socket : tcpSockets)
 		socket.send(message);
 }
 
-template<typename T> void broadcastUDP(sockets::Socket socket, T data) {
+template<typename T> void broadcastUDP(sockets::Socket socket, T data)
+{
 	for (auto& address : addresses)
 		socket.sendTo<T>(data, address);
 }
-static void broadcastUDP(sockets::Socket socket, std::string message) {
+static void broadcastUDP(sockets::Socket socket, std::string message)
+{
 	for (auto& address : addresses)
 		socket.sendTo(message, address);
 }
-static void broadcastUDP(sockets::Socket socket, std::vector<char> message) {
+static void broadcastUDP(sockets::Socket socket, std::vector<char> message)
+{
 	for (auto& address : addresses)
 		socket.sendTo(message, address);
 }
 
-static void handleClient(sockets::Socket socket, sockets::Address address) {
+static void handleClient(sockets::Socket socket, sockets::Address address)
+{
 	tcpSockets.push_back(socket);
 
 	sockets::Address udpAddress;
@@ -73,22 +82,26 @@ static void handleClient(sockets::Socket socket, sockets::Address address) {
 
 	bool closed = false;
 
-	while (!closed) {
+	while (!closed)
+	{
 		auto [key, value] = protocol::receiveKeyValue(socket);
 
-		if (key == "player") {
+		if (key == "player")
+		{
 			names.push_back(value);
 			broadcast(protocol::keyValueMessage("player", value));
 			socket.send(protocol::keyValueMessage("index", std::to_string(count)));
 			players[count] = Player({ 1.5f, 1.5f });
 		}
 
-		if (key == "udp") {
+		if (key == "udp")
+		{
 			udpAddress = { address.ip, (unsigned short)std::stoul(value.c_str()) };
 			addresses.push_back(udpAddress);
 		}
 
-		if (key == "close") {
+		if (key == "close")
+		{
 			deleteElement(tcpSockets, socket);
 			players.erase(std::stoi(value));
 			deleteElement(addresses, udpAddress);
@@ -99,14 +112,17 @@ static void handleClient(sockets::Socket socket, sockets::Address address) {
 	}
 }
 
-static void updateBullets() {
-	for (auto& bullet : bullets) {
+static void updateBullets()
+{
+	for (auto& bullet : bullets)
+	{
 		bullet.position.x += bullet.direction.x * 6.0f * (1.0f / NUMBER_OF_TICKS);
 		bullet.position.y += bullet.direction.y * 6.0f * (1.0f / NUMBER_OF_TICKS);
 	}
 
 	bullets.erase(std::remove_if(bullets.begin(), bullets.end(),
-		[](const Bullet& bullet) {
+		[](const Bullet& bullet)
+		{
 			if (
 				bullet.position.x < 0 || bullet.position.x >= globals::WORLD_WIDTH ||
 				bullet.position.y < 0 || bullet.position.y >= globals::WORLD_HEIGHT
@@ -117,17 +133,21 @@ static void updateBullets() {
 	), bullets.end());
 }
 
-static std::vector<char> mazeToVector(const globals::MazeArr& maze) {
+static std::vector<char> mazeToVector(const globals::MazeArr& maze)
+{
 	std::vector<char> vector;
-	for (int i = 0; i < globals::WORLD_HEIGHT; i++) {
-		for (int j = 0; j < globals::WORLD_WIDTH; j++) {
+	for (int i = 0; i < globals::WORLD_HEIGHT; i++)
+	{
+		for (int j = 0; j < globals::WORLD_WIDTH; j++)
+		{
 			vector.push_back(maze[i][j]);
 		}
 	}
 	return vector;
 }
 
-void main() {
+void main()
+{
 	srand(time(NULL));
 	sockets::initialize();
 
@@ -138,12 +158,14 @@ void main() {
 	sockets::Socket udpSocket(sockets::Protocol::UDP);
 	udpSocket.setBlocking(false);
 
-	try {
+	try
+	{
 		udpSocket.bind({ "0.0.0.0", UDP_PORT });
 		serverSocket.bind({ "0.0.0.0", PORT });
 		serverSocket.listen(4);
 
-		while (count < NUMBER_OF_PLAYERS) {
+		while (count < NUMBER_OF_PLAYERS)
+		{
 			auto [clientSocket, clientAddress] = serverSocket.accept();
 			clientSocket.setTimeout(0);
 			std::thread thread(handleClient, clientSocket, clientAddress);
@@ -158,8 +180,10 @@ void main() {
 		broadcast(maze);
 
 		// send initial starting positions
-		for (auto& address : addresses) {
-			for (auto& [index, player] : players) {
+		for (auto& address : addresses)
+		{
+			for (auto& [index, player] : players)
+			{
 				protocol::PositionInfoPacket packet;
 				packet.type = protocol::PacketType::NEW_PLAYER;
 				packet.index = index;
@@ -169,7 +193,8 @@ void main() {
 			}
 		}
 
-		while (count > 0) {
+		while (count > 0)
+		{
 			auto now = std::chrono::steady_clock::now();
 			elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastTime).count();
 
@@ -181,32 +206,38 @@ void main() {
 
 
 			protocol::PacketType receivedType = protocol::PacketType::NO_PACKET;
-			do {
+			do
+			{
 				auto packet = protocol::receivePositionInfo(udpSocket);
 				receivedType = packet.type;
 
-				if (packet.type == protocol::PacketType::UPDATE_PLAYER) {
+				if (packet.type == protocol::PacketType::UPDATE_PLAYER)
+				{
 					players[packet.index].pos = packet.position;
 
-					for (auto& address : addresses) {
+					for (auto& address : addresses)
+					{
 						protocol::sendPositionInfo(udpSocket, address, packet);
 					}
 				}
-				else if (packet.type == protocol::PacketType::UPDATE_BULLET) {
+				else if (packet.type == protocol::PacketType::UPDATE_BULLET)
+				{
 					bullets.push_back({ packet.position, { cosf(packet.direction), sinf(packet.direction) } });
 				}
 			} while (receivedType != protocol::PacketType::NO_PACKET);
 
 			updateBullets();
 
-			for (auto& address : addresses) {
+			for (auto& address : addresses)
+			{
 				// clear the bullets
 				protocol::PositionInfoPacket packet;
 				packet.type = protocol::PacketType::CLEAR_BULLETS;
 				protocol::sendPositionInfo(udpSocket, address, packet);
 
 				// send new bullet information
-				for (int i = 0; i < bullets.size(); i++) {
+				for (int i = 0; i < bullets.size(); i++)
+				{
 					protocol::PositionInfoPacket packet;
 					packet.type = protocol::PacketType::UPDATE_BULLET;
 					packet.index = (char)i;
@@ -220,7 +251,8 @@ void main() {
 
 		std::cout << "bye bye" << std::endl;
 	}
-	catch (std::exception& err) {
+	catch (std::exception& err)
+	{
 		std::cout << "Server error: " << err.what() << std::endl;
 	}
 

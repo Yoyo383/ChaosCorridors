@@ -8,7 +8,8 @@
 
 constexpr unsigned short PORT = 12345;
 
-int main() {
+int main()
+{
 	srand(time(NULL));
 	sockets::initialize();
 
@@ -25,11 +26,12 @@ int main() {
 	members.textures.addTexture("hostButton", "assets/hostButton.png");
 	members.textures.addTexture("buttonNormal", "assets/buttonNormal.png");
 	members.textures.addTexture("bullet", "assets/bullet.png");
-	
+
 	std::unique_ptr<MainMenuState> mainMenuState = std::make_unique<MainMenuState>(members);
 	members.manager.addState(std::move(mainMenuState));
 
-	while (members.manager.isRunning()) {
+	while (members.manager.isRunning())
+	{
 		members.manager.changeState();
 		members.manager.update();
 		members.manager.draw();

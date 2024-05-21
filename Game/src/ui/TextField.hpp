@@ -1,7 +1,8 @@
 #pragma once
 #include "SFML/Graphics.hpp"
 
-class TextField {
+class TextField
+{
 public:
 	TextField(sf::Vector2f position, std::string fontFilename);
 	std::string getText() const;

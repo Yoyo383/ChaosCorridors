@@ -4,9 +4,11 @@
 Player::Player(sf::Vector2f pos) : pos(pos), direction(0), velocity(0, 0) {}
 Player::Player() : pos(1.5f, 1.5f), direction(0), velocity(0, 0) {}
 
-void Player::calculateVelocity(sf::Vector2f wasd, float dt) {
+void Player::calculateVelocity(sf::Vector2f wasd, float dt)
+{
 	// if there isn't input then velocity is 0
-	if (wasd != sf::Vector2f()) {
+	if (wasd != sf::Vector2f())
+	{
 		float movementAngle = vecAngle(wasd);
 		float cos = cosf(movementAngle), sin = sinf(movementAngle);
 
@@ -41,6 +43,7 @@ void Player::checkCollision(const globals::MazeArr& maze)
 		velocity.x = 0;
 }
 
-void Player::move() {
+void Player::move()
+{
 	pos += velocity;
 }

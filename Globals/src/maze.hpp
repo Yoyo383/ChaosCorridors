@@ -2,6 +2,7 @@
 
 #include "globals.hpp"
 
-namespace globals {
+namespace globals
+{
 	MazeArr generateMaze();
 }

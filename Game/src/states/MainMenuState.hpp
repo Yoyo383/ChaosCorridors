@@ -6,7 +6,8 @@
 #include "../ui/TextField.hpp"
 #include "../Members.hpp"
 
-class MainMenuState : public State {
+class MainMenuState : public State
+{
 public:
 	MainMenuState(Members& members);
 

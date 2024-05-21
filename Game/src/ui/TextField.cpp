@@ -1,6 +1,7 @@
 #include "TextField.hpp"
 
-TextField::TextField(sf::Vector2f position, std::string fontFilename) : isFocused(false) {
+TextField::TextField(sf::Vector2f position, std::string fontFilename) : isFocused(false)
+{
 	if (!font.loadFromFile(fontFilename))
 		throw std::exception(("ERROR: Can't load " + fontFilename).c_str());
 
@@ -14,15 +15,18 @@ TextField::TextField(sf::Vector2f position, std::string fontFilename) : isFocuse
 	rect.setOutlineColor(sf::Color::Black);
 }
 
-std::string TextField::getText() const {
+std::string TextField::getText() const
+{
 	return text.getString();
 }
 
-bool TextField::contains(sf::Vector2f pos) {
+bool TextField::contains(sf::Vector2f pos)
+{
 	return rect.getGlobalBounds().contains(pos);
 }
 
-void TextField::setFocus(bool focus) {
+void TextField::setFocus(bool focus)
+{
 	isFocused = focus;
 	if (isFocused)
 		rect.setOutlineColor(sf::Color::Red);
@@ -30,14 +34,16 @@ void TextField::setFocus(bool focus) {
 		rect.setOutlineColor(sf::Color::Black);
 }
 
-void TextField::handleInput(sf::Event event) {
+void TextField::handleInput(sf::Event event)
+{
 	if (!isFocused || event.type != sf::Event::TextEntered)
 		return;
 
 	std::string string = text.getString();
 	unsigned char code = static_cast<unsigned char>(event.text.unicode);
 
-	if (code == '\b') {
+	if (code == '\b')
+	{
 		if (!string.empty())
 			string.pop_back(); // remove last character
 	}
@@ -48,7 +54,8 @@ void TextField::handleInput(sf::Event event) {
 
 }
 
-void TextField::draw(sf::RenderWindow& window) const {
+void TextField::draw(sf::RenderWindow& window) const
+{
 	window.draw(rect);
 	window.draw(text);
 }

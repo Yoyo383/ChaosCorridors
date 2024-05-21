@@ -2,7 +2,8 @@
 #include "SFML/Graphics.hpp"
 #include "../TextureManager.hpp"
 
-class Button {
+class Button
+{
 private:
 	sf::Sprite normalSprite;
 	sf::Sprite clickedSprite;

@@ -12,22 +12,27 @@ MainMenuState::MainMenuState(Members& members)
 	hostButton.setSizeRelativeToWindow(members.window, 0.5f);
 }
 
-void MainMenuState::update() {
+void MainMenuState::update()
+{
 	sf::Event event;
 
-	while (members.window.pollEvent(event)) {
+	while (members.window.pollEvent(event))
+	{
 		if (event.type == sf::Event::Closed)
 			members.manager.quit();
 		else if (event.type == sf::Event::MouseButtonPressed)
 			hostButton.isButtonClicked(sf::Vector2f(sf::Mouse::getPosition(members.window)));
 
-		else if (event.type == sf::Event::MouseButtonReleased) {
+		else if (event.type == sf::Event::MouseButtonReleased)
+		{
 			sf::Vector2f pos = sf::Vector2f(sf::Mouse::getPosition(members.window));
 			nameField.setFocus(nameField.contains(pos));
 
-			if (hostButton.isButtonClicked(pos)) {
+			if (hostButton.isButtonClicked(pos))
+			{
 				hostButton.setClicked(false);
-				try {
+				try
+				{
 					members.tcpSocket.connect({ "127.0.0.1", 12345 });
 					members.tcpSocket.send(protocol::keyValueMessage("player", nameField.getText()));
 
@@ -39,18 +44,21 @@ void MainMenuState::update() {
 					std::unique_ptr<LobbyState> lobbyState = std::make_unique<LobbyState>(members);
 					members.manager.addState(std::move(lobbyState));
 				}
-				catch (std::exception& err) {
+				catch (std::exception& err)
+				{
 					std::cout << "Can't connect to server." << std::endl;
 				}
 			}
 		}
-		else {
+		else
+		{
 			nameField.handleInput(event);
 		}
 	}
 }
 
-void MainMenuState::draw() {
+void MainMenuState::draw()
+{
 	members.window.clear(sf::Color::White);
 
 	hostButton.draw(members.window);
