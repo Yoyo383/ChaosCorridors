@@ -1,6 +1,8 @@
 #pragma once
-#include "player.hpp"
+#include "Player.hpp"
 #include <unordered_map>
+#include <string>
+#include "SFML/Graphics.hpp"
 
 class TextureManager {
 private:

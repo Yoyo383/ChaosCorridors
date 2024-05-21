@@ -5,12 +5,12 @@
 // global constants
 namespace globals {
 	// maze size
-	const int MAZE_WIDTH = 4;
-	const int MAZE_HEIGHT = 4;
+	inline const int MAZE_WIDTH = 4;
+	inline const int MAZE_HEIGHT = 4;
 
 	// the world array size (with walls)
-	const int WORLD_WIDTH = MAZE_WIDTH * 2 + 1;
-	const int WORLD_HEIGHT = MAZE_HEIGHT * 2 + 1;
+	inline const int WORLD_WIDTH = MAZE_WIDTH * 2 + 1;
+	inline const int WORLD_HEIGHT = MAZE_HEIGHT * 2 + 1;
 
 	// cell state
 	enum

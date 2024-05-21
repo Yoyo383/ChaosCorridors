@@ -1,6 +1,6 @@
 #include "GameState.hpp"
 #include "maze.hpp"
-#include "../util.hpp"
+#include "util.hpp"
 #include "globals.hpp"
 #include "protocol.hpp"
 #include <iostream>
@@ -11,7 +11,7 @@ struct Sprite {
 };
 
 GameState::GameState(Members& members)
-	: members(members), maze() {
+	: members(members), maze(), player({ 1.5f, 1.5f }) {
 
 	members.tcpSocket.setBlocking(true);
 	members.udpSocket.setBlocking(false);
@@ -48,6 +48,16 @@ sf::Vector2f GameState::wasdInput() {
 	};
 }
 
+void GameState::setPlayerDirection() {
+	/*int currentMousePos = sf::Mouse::position(window).x;
+	float deltaMousePos = (currentMousePos - fixedMousePos.x) * sensitivity;
+	direction += deltaMousePos;*/
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
+		player.direction -= 2 * dt;
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
+		player.direction += 2 * dt;
+}
+
 void GameState::update() {
 	dt = deltaClock.restart().asSeconds();
 	elapsedTime += dt;
@@ -68,9 +78,8 @@ void GameState::update() {
 		}
 		else if (event.type == sf::Event::KeyReleased) {
 			if (event.key.code == sf::Keyboard::Space) {
-				sf::Vector2f bulletPosition = player.getPos() + 0.3f * sf::Vector2f{ cosf(player.getDirection()), sinf(player.getDirection()) };
-				protocol::Vector2 position = { bulletPosition.x, bulletPosition.y };
-				protocol::sendPositionInfo(members.udpSocket, serverAddress, { 1, 0, position, player.getDirection() });
+				sf::Vector2f bulletPosition = player.pos + 0.3f * sf::Vector2f{ cosf(player.direction), sinf(player.direction) };
+				protocol::sendPositionInfo(members.udpSocket, serverAddress, { 1, 0, bulletPosition, player.direction });
 			}
 		}
 		else if (event.type == sf::Event::LostFocus)
@@ -84,19 +93,19 @@ void GameState::update() {
 		auto [type, index, position, direction] = protocol::receivePositionInfo(members.udpSocket);
 		receivedType = type;
 		if (type == 0 && index != members.playerIndex)
-			players[index] = { position.x, position.y };
+			players[index] = position;
 		else if (type == 1)
-			bullets[index] = { position.x, position.y };
+			bullets[index] = position;
 		else if (type == 2)
 			bullets.clear();
 		else if (type == 3 && index != members.playerIndex)
-			targetPlayerPositions[index] = { position.x, position.y };
+			targetPlayerPositions[index] = position;
 
 	} while (receivedType != -1);
 
-	for (auto& [index, targetPosition] : targetPlayerPositions) {
+	for (auto& [index, tarposition] : targetPlayerPositions) {
 		sf::Vector2f actualPosition = players[index];
-		sf::Vector2f direction = targetPosition - actualPosition;
+		sf::Vector2f direction = tarposition - actualPosition;
 		if (vecMagnitude(direction) <= 0.05f)
 			continue;
 		players[index] += vecNormalize(direction) * dt * 2;
@@ -110,7 +119,7 @@ void GameState::update() {
 	// setting player's direction according to mouse
 	if (isFocused) {
 		//window.setMouseCursorVisible(false);
-		player.setDirection(members.window, fixedMousePos, dt);
+		setPlayerDirection();
 		//resetMousePos();
 	}
 	else
@@ -124,10 +133,10 @@ void GameState::update() {
 
 	player.calculateVelocity(wasd, dt);
 	player.checkCollision(maze);
-	bool moved = player.move();
+	player.move();
 
 	if (elapsedTime >= 1 / 30.0f) {
-		protocol::sendPositionInfo(members.udpSocket, serverAddress, { 0, members.playerIndex, { player.getPos().x, player.getPos().y } });
+		protocol::sendPositionInfo(members.udpSocket, serverAddress, { 0, members.playerIndex, { player.pos.x, player.pos.y }, 0 });
 		elapsedTime = 0;
 	}
 }
@@ -145,27 +154,27 @@ Ray GameState::raycast(float angle) {
 		sqrt(1 + (rayDir.x / rayDir.y) * (rayDir.x / rayDir.y))
 	};
 
-	sf::Vector2i currentCell = { (int)player.getPos().x, (int)player.getPos().y};
+	sf::Vector2i currentCell = { (int)player.pos.x, (int)player.pos.y};
 	sf::Vector2f rayLength1D;
 	sf::Vector2i step;
 
 	// set step and initial ray length
 	if (rayDir.x < 0) {
 		step.x = -1;
-		rayLength1D.x = (player.getPos().x - float(currentCell.x)) * rayUnitStepSize.x;
+		rayLength1D.x = (player.pos.x - float(currentCell.x)) * rayUnitStepSize.x;
 	}
 	else {
 		step.x = 1;
-		rayLength1D.x = (float(currentCell.x + 1) - player.getPos().x) * rayUnitStepSize.x;
+		rayLength1D.x = (float(currentCell.x + 1) - player.pos.x) * rayUnitStepSize.x;
 	}
 
 	if (rayDir.y < 0) {
 		step.y = -1;
-		rayLength1D.y = (player.getPos().y - float(currentCell.y)) * rayUnitStepSize.y;
+		rayLength1D.y = (player.pos.y - float(currentCell.y)) * rayUnitStepSize.y;
 	}
 	else {
 		step.y = 1;
-		rayLength1D.y = (float(currentCell.y + 1) - player.getPos().y) * rayUnitStepSize.y;
+		rayLength1D.y = (float(currentCell.y + 1) - player.pos.y) * rayUnitStepSize.y;
 	}
 
 	bool foundCell = false;
@@ -198,7 +207,7 @@ Ray GameState::raycast(float angle) {
 		}
 	}
 
-	sf::Vector2f hitPos = player.getPos() + rayDir * distance;
+	sf::Vector2f hitPos = player.pos + rayDir * distance;
 
 	if (verticalHit)
 		hitCoord = hitPos.y;
@@ -226,7 +235,7 @@ void GameState::draw() {
 
 	std::sort(sprites.begin(), sprites.end(), 
 		[this](Sprite pos1, Sprite pos2) {
-			return vecMagnitude(pos1.position - player.getPos()) > vecMagnitude(pos2.position - player.getPos());
+			return vecMagnitude(pos1.position - player.pos) > vecMagnitude(pos2.position - player.pos);
 		}
 	);
 	
@@ -239,10 +248,10 @@ void GameState::draw() {
 
 void GameState::drawFloorAndCeiling() {
 	// scale factor for d (and other stuff)
-	float tan = tanf(player.getFOV() / 2);
+	float tan = tanf(Player::FOV / 2);
 
 	// for doing floor/ceiling things
-	float cos = cosf(player.getDirection()), sin = sinf(player.getDirection());
+	float cos = cosf(player.direction), sin = sinf(player.direction);
 
 	sf::VertexArray floorLines(sf::Lines, members.window.getSize().y + 2);
 	sf::VertexArray ceilingLines(sf::Lines, members.window.getSize().y + 2);
@@ -273,8 +282,8 @@ void GameState::drawFloorAndCeiling() {
 		// floor
 
 		// texturing the floor according to the start and end sample positions and the player position
-		floorLines[2 * y].texCoords = endPos + player.getPos() * members.textures["floor"].getSize().x;
-		floorLines[2 * y + 1].texCoords = startPos + player.getPos() * members.textures["floor"].getSize().x;
+		floorLines[2 * y].texCoords = endPos + player.pos * members.textures["floor"].getSize().x;
+		floorLines[2 * y + 1].texCoords = startPos + player.pos * members.textures["floor"].getSize().x;
 		// shading
 		floorLines[2 * y].color = color;
 		floorLines[2 * y + 1].color = color;
@@ -286,8 +295,8 @@ void GameState::drawFloorAndCeiling() {
 		// ceiling
 
 		// texturing the ceiling according to the start and end sample positions and the player position
-		ceilingLines[2 * y].texCoords = endPos + player.getPos() * members.textures["ceiling"].getSize().x;
-		ceilingLines[2 * y + 1].texCoords = startPos + player.getPos() * members.textures["ceiling"].getSize().x;
+		ceilingLines[2 * y].texCoords = endPos + player.pos * members.textures["ceiling"].getSize().x;
+		ceilingLines[2 * y + 1].texCoords = startPos + player.pos * members.textures["ceiling"].getSize().x;
 		// shading
 		ceilingLines[2 * y].color = color;
 		ceilingLines[2 * y + 1].color = color;
@@ -304,7 +313,7 @@ void GameState::drawWalls() {
 	// variables for angle increment
 	// math taken from here:
 	// https://stackoverflow.com/questions/24173966/raycasting-engine-rendering-creating-slight-distortion-increasing-towards-edges
-	float screenHalfLen = tanf(player.getFOV() / 2);
+	float screenHalfLen = tanf(Player::FOV / 2);
 	float segLen = 2 * screenHalfLen / members.window.getSize().x;
 
 	sf::VertexArray wallLines(sf::Lines, 2 * (members.window.getSize().x + 1));
@@ -312,11 +321,11 @@ void GameState::drawWalls() {
 	float angle;
 	for (int x = 0; x <= members.window.getSize().x; x++) {
 		// angle calculation such that the walls aren't distorted
-		angle = player.getDirection() + atanf(segLen * x - screenHalfLen);
+		angle = player.direction + atanf(segLen * x - screenHalfLen);
 
 		// casting ray and fixing the fisheye problem
 		Ray ray = raycast(angle);
-		ray.distance *= cosf(player.getDirection() - angle);
+		ray.distance *= cosf(player.direction - angle);
 
 		zBuffer[x] = ray.distance;
 
@@ -368,15 +377,15 @@ void GameState::drawWalls() {
 }
 
 void GameState::drawSprite(const sf::Vector2f& characterPos, std::string texture) {
-	float angleFromPlayer = vecAngle(characterPos - player.getPos());
-	float relativeAngle = player.getDirection() - angleFromPlayer;
+	float angleFromPlayer = vecAngle(characterPos - player.pos);
+	float relativeAngle = player.direction - angleFromPlayer;
 
 	if (relativeAngle > M_PI)
 		relativeAngle -= 2 * M_PI;
 	else if (relativeAngle < -M_PI)
 		relativeAngle += 2 * M_PI;
 
-	float distance = vecMagnitude(characterPos - player.getPos());
+	float distance = vecMagnitude(characterPos - player.pos);
 	distance *= cosf(relativeAngle);
 
 	if (distance >= 0.2f) {
@@ -391,7 +400,7 @@ void GameState::drawSprite(const sf::Vector2f& characterPos, std::string texture
 		float width = height * aspectRatio;
 
 		// calculating middle of texture
-		float middle = members.window.getSize().x - (relativeAngle / player.getFOV() + 0.5f) * members.window.getSize().x;
+		float middle = members.window.getSize().x - (relativeAngle / Player::FOV + 0.5f) * members.window.getSize().x;
 
 		for (int x = 0; x <= width; x++) {
 			float posX = middle + (float)x - (width / 2.0f);

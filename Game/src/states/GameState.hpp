@@ -1,7 +1,7 @@
 #pragma once
 #include "SFML/Graphics.hpp"
 #include "StateManager.hpp"
-#include "../Player.hpp"
+#include "Player.hpp"
 #include "../TextureManager.hpp"
 #include "sockets.hpp"
 #include "../Members.hpp"
@@ -31,6 +31,8 @@ public:
 
 	void resetMousePos();
 	sf::Vector2f wasdInput();
+
+	void setPlayerDirection();
 
 	void drawFloorAndCeiling();
 	void drawWalls();

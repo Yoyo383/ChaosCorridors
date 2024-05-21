@@ -4,18 +4,14 @@
 #include <vector>
 #include <unordered_map>
 #include "sockets.hpp"
+#include "SFML/System/Vector2.hpp"
 
 namespace protocol {
-
-	struct Vector2 {
-		float x;
-		float y;
-	};
 
 	struct PositionInfoPacket {
 		char type; // 0 for new player, 1 for bullet, 2 for clearing bullets, 3 for player target position
 		char index;
-		Vector2 position;
+		sf::Vector2f position;
 		float direction; // not used for players
 	};
 

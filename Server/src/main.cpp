@@ -10,22 +10,22 @@
 constexpr unsigned short PORT = 12345;
 constexpr unsigned short UDP_PORT = 54321;
 
-constexpr int NUMBER_OF_PLAYERS = 2;
+constexpr int NUMBER_OF_PLAYERS = 1;
 
 static int count = 0;
 
 constexpr int NUMBER_OF_TICKS = 60;
 
 struct Bullet {
-	protocol::Vector2 position;
-	protocol::Vector2 direction;
+	sf::Vector2f position;
+	sf::Vector2f direction;
 };
 
 std::vector<sockets::Socket> tcpSockets;
 std::vector<sockets::Address> addresses;
 
 std::vector<std::string> names;
-std::unordered_map<char, protocol::Vector2> players;
+std::unordered_map<char, sf::Vector2f> players;
 std::vector<Bullet> bullets;
 
 globals::MazeArr maze;
