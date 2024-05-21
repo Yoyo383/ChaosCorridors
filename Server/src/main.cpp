@@ -6,11 +6,12 @@
 #include "protocol.hpp"
 #include "globals.hpp"
 #include "maze.hpp"
+#include "Player.hpp"
 
 constexpr unsigned short PORT = 12345;
 constexpr unsigned short UDP_PORT = 54321;
 
-constexpr int NUMBER_OF_PLAYERS = 1;
+constexpr int NUMBER_OF_PLAYERS = 2;
 
 static int count = 0;
 
@@ -25,7 +26,7 @@ std::vector<sockets::Socket> tcpSockets;
 std::vector<sockets::Address> addresses;
 
 std::vector<std::string> names;
-std::unordered_map<char, sf::Vector2f> players;
+std::unordered_map<char, Player> players;
 std::vector<Bullet> bullets;
 
 globals::MazeArr maze;
@@ -79,7 +80,7 @@ static void handleClient(sockets::Socket socket, sockets::Address address) {
 			names.push_back(value);
 			broadcast(protocol::keyValueMessage("player", value));
 			socket.send(protocol::keyValueMessage("index", std::to_string(count)));
-			players[count] = { 1.5f, 1.5f };
+			players[count] = Player({ 1.5f, 1.5f });
 		}
 
 		if (key == "udp") {
@@ -158,8 +159,8 @@ void main() {
 
 		// send initial starting positions
 		for (auto& address : addresses) {
-			for (auto& [index, position] : players) {
-				protocol::sendPositionInfo(udpSocket, address, { 0, index, position, 0 });
+			for (auto& [index, player] : players) {
+				protocol::sendPositionInfo(udpSocket, address, { 0, index, player.pos, 0 });
 			}
 		}
 
@@ -179,10 +180,8 @@ void main() {
 				auto packet = protocol::receivePositionInfo(udpSocket);
 				receivedType = packet.type;
 
-				if (packet.type == 0) {
-					players[packet.index] = packet.position;
-					// setting the type to update player position
-					packet.type = 3;
+				if (packet.type == 3) {
+					players[packet.index].pos = packet.position;
 
 					for (auto& address : addresses) {
 						protocol::sendPositionInfo(udpSocket, address, packet);

@@ -61,6 +61,7 @@ void GameState::setPlayerDirection() {
 void GameState::update() {
 	dt = deltaClock.restart().asSeconds();
 	elapsedTime += dt;
+
 	sf::Event event;
 
 	members.window.setTitle(std::to_string(1 / dt));
@@ -108,7 +109,7 @@ void GameState::update() {
 		sf::Vector2f direction = tarposition - actualPosition;
 		if (vecMagnitude(direction) <= 0.05f)
 			continue;
-		players[index] += vecNormalize(direction) * dt * 2;
+		players[index] += vecNormalize(direction) * dt * Player::SPEED;
 	}
 
 	if (paused) {
@@ -136,7 +137,7 @@ void GameState::update() {
 	player.move();
 
 	if (elapsedTime >= 1 / 30.0f) {
-		protocol::sendPositionInfo(members.udpSocket, serverAddress, { 0, members.playerIndex, { player.pos.x, player.pos.y }, 0 });
+		protocol::sendPositionInfo(members.udpSocket, serverAddress, { 3, members.playerIndex, { player.pos.x, player.pos.y }, 0 });
 		elapsedTime = 0;
 	}
 }

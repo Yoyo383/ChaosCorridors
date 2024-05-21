@@ -6,6 +6,7 @@
 
 struct Player {
 	Player(sf::Vector2f pos);
+	Player();
 
 	void calculateVelocity(sf::Vector2f wasd, float dt);
 	void checkCollision(const globals::MazeArr& maze);
