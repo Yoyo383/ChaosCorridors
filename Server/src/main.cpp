@@ -160,7 +160,12 @@ void main() {
 		// send initial starting positions
 		for (auto& address : addresses) {
 			for (auto& [index, player] : players) {
-				protocol::sendPositionInfo(udpSocket, address, { 0, index, player.pos, 0 });
+				protocol::PositionInfoPacket packet;
+				packet.type = protocol::PacketType::NEW_PLAYER;
+				packet.index = index;
+				packet.position = player.pos;
+
+				protocol::sendPositionInfo(udpSocket, address, packet);
 			}
 		}
 
@@ -175,32 +180,40 @@ void main() {
 			elapsedTime = 0;
 
 
-			int receivedType = -1;
+			protocol::PacketType receivedType = protocol::PacketType::NO_PACKET;
 			do {
 				auto packet = protocol::receivePositionInfo(udpSocket);
 				receivedType = packet.type;
 
-				if (packet.type == 3) {
+				if (packet.type == protocol::PacketType::UPDATE_PLAYER) {
 					players[packet.index].pos = packet.position;
 
 					for (auto& address : addresses) {
 						protocol::sendPositionInfo(udpSocket, address, packet);
 					}
 				}
-				else if (packet.type == 1) {
+				else if (packet.type == protocol::PacketType::UPDATE_BULLET) {
 					bullets.push_back({ packet.position, { cosf(packet.direction), sinf(packet.direction) } });
 				}
-			} while (receivedType != -1);
+			} while (receivedType != protocol::PacketType::NO_PACKET);
 
 			updateBullets();
 
 			for (auto& address : addresses) {
 				// clear the bullets
-				protocol::sendPositionInfo(udpSocket, address, { 2, 0, { 0, 0 }, 0 });
+				protocol::PositionInfoPacket packet;
+				packet.type = protocol::PacketType::CLEAR_BULLETS;
+				protocol::sendPositionInfo(udpSocket, address, packet);
 
 				// send new bullet information
-				for (int i = 0; i < bullets.size(); i++)
-					protocol::sendPositionInfo(udpSocket, address, { 1, (char)i, bullets[i].position, 0 }); // direction is 0 because client ignores it
+				for (int i = 0; i < bullets.size(); i++) {
+					protocol::PositionInfoPacket packet;
+					packet.type = protocol::PacketType::UPDATE_BULLET;
+					packet.index = (char)i;
+					packet.position = bullets[i].position;
+
+					protocol::sendPositionInfo(udpSocket, address, packet);
+				}
 			}
 
 		}

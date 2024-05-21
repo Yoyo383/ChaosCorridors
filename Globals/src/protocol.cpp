@@ -44,7 +44,7 @@ namespace protocol {
 		catch (std::exception& err) {
 			if (err.what() != std::to_string(WSAEWOULDBLOCK))
 				std::cout << "Error: " << err.what() << std::endl;
-			return { -1, 0, { 0, 0 } };
+			return { PacketType::NO_PACKET, 0, { 0, 0 } };
 		}
 	}
 

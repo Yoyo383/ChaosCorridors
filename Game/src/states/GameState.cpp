@@ -80,7 +80,13 @@ void GameState::update() {
 		else if (event.type == sf::Event::KeyReleased) {
 			if (event.key.code == sf::Keyboard::Space) {
 				sf::Vector2f bulletPosition = player.pos + 0.3f * sf::Vector2f{ cosf(player.direction), sinf(player.direction) };
-				protocol::sendPositionInfo(members.udpSocket, serverAddress, { 1, 0, bulletPosition, player.direction });
+
+				protocol::PositionInfoPacket packet;
+				packet.type = protocol::PacketType::UPDATE_BULLET;
+				packet.position = bulletPosition;
+				packet.direction = player.direction;
+
+				protocol::sendPositionInfo(members.udpSocket, serverAddress, packet);
 			}
 		}
 		else if (event.type == sf::Event::LostFocus)
@@ -89,20 +95,23 @@ void GameState::update() {
 			isFocused = true;
 	}
 
-	int receivedType = -1;
+	protocol::PacketType receivedType = protocol::PacketType::NO_PACKET;
 	do {
-		auto [type, index, position, direction] = protocol::receivePositionInfo(members.udpSocket);
-		receivedType = type;
-		if (type == 0 && index != members.playerIndex)
-			players[index] = position;
-		else if (type == 1)
-			bullets[index] = position;
-		else if (type == 2)
-			bullets.clear();
-		else if (type == 3 && index != members.playerIndex)
-			targetPlayerPositions[index] = position;
+		protocol::PositionInfoPacket packet = protocol::receivePositionInfo(members.udpSocket);
+		receivedType = packet.type;
+		if (packet.type == protocol::PacketType::NEW_PLAYER && packet.index != members.playerIndex)
+			players[packet.index] = packet.position;
 
-	} while (receivedType != -1);
+		else if (packet.type == protocol::PacketType::UPDATE_BULLET)
+			bullets[packet.index] = packet.position;
+
+		else if (packet.type == protocol::PacketType::CLEAR_BULLETS)
+			bullets.clear();
+
+		else if (packet.type == protocol::PacketType::UPDATE_PLAYER && packet.index != members.playerIndex)
+			targetPlayerPositions[packet.index] = packet.position;
+
+	} while (receivedType != protocol::PacketType::NO_PACKET);
 
 	for (auto& [index, tarposition] : targetPlayerPositions) {
 		sf::Vector2f actualPosition = players[index];
@@ -137,7 +146,12 @@ void GameState::update() {
 	player.move();
 
 	if (elapsedTime >= 1 / 30.0f) {
-		protocol::sendPositionInfo(members.udpSocket, serverAddress, { 3, members.playerIndex, { player.pos.x, player.pos.y }, 0 });
+		protocol::PositionInfoPacket packet;
+		packet.type = protocol::PacketType::UPDATE_PLAYER;
+		packet.index = members.playerIndex;
+		packet.position = player.pos;
+
+		protocol::sendPositionInfo(members.udpSocket, serverAddress, packet);
 		elapsedTime = 0;
 	}
 }

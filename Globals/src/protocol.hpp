@@ -8,8 +8,16 @@
 
 namespace protocol {
 
+	enum class PacketType : char {
+		NO_PACKET,
+		NEW_PLAYER,
+		UPDATE_PLAYER,
+		UPDATE_BULLET,
+		CLEAR_BULLETS
+	};
+
 	struct PositionInfoPacket {
-		char type; // 0 for new player, 1 for bullet, 2 for clearing bullets, 3 for player target position
+		PacketType type; // 0 for new player, 1 for bullet, 2 for clearing bullets, 3 for player target position
 		char index;
 		sf::Vector2f position;
 		float direction; // not used for players
