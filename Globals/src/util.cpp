@@ -1,5 +1,13 @@
 #include "util.hpp"
 #include <math.h>
+#include <random>
+
+int randInt(int min, int max)
+{
+	static std::mt19937 generator;
+	std::uniform_int_distribution<int> distribution(min, max);
+	return distribution(generator);
+}
 
 float degToRad(float degrees)
 {

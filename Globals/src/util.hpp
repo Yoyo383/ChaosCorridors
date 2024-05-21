@@ -2,6 +2,8 @@
 
 #include "SFML/System/Vector2.hpp"
 
+int randInt(int min, int max);
+
 float degToRad(float degrees);
 
 float vecMagnitude(const sf::Vector2f& vec);

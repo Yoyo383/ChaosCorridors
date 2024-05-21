@@ -91,7 +91,7 @@ static void handleClient(sockets::Socket socket, sockets::Address address)
 			names.push_back(value);
 			broadcast(protocol::keyValueMessage("player", value));
 			socket.send(protocol::keyValueMessage("index", std::to_string(count)));
-			players[count] = Player({ 1.5f, 1.5f });
+			players[count] = Player({ randInt(1, globals::WORLD_WIDTH - 2) + 0.5f, randInt(1, globals::WORLD_HEIGHT - 2) + 0.5f });
 		}
 
 		if (key == "udp")
@@ -131,19 +131,6 @@ static void updateBullets()
 			return maze[(int)bullet.position.y][(int)bullet.position.x] == globals::CELL_WALL;
 		}
 	), bullets.end());
-}
-
-static std::vector<char> mazeToVector(const globals::MazeArr& maze)
-{
-	std::vector<char> vector;
-	for (int i = 0; i < globals::WORLD_HEIGHT; i++)
-	{
-		for (int j = 0; j < globals::WORLD_WIDTH; j++)
-		{
-			vector.push_back(maze[i][j]);
-		}
-	}
-	return vector;
 }
 
 void main()
