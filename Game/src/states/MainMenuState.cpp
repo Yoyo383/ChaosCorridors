@@ -36,10 +36,12 @@ void MainMenuState::update()
 					members.tcpSocket.connect({ "127.0.0.1", 12345 });
 					members.tcpSocket.send(protocol::keyValueMessage("player", nameField.getText()));
 
-					unsigned short udpPort = (rand() % 1000) + 20000;
-					members.udpSocket.bind({ "0.0.0.0", udpPort });
+					// get available port
+					members.udpSocket.bind({ "0.0.0.0", 0 });
+					sockets::Address udpAddress = members.udpSocket.getSocketName();
 
-					members.tcpSocket.send(protocol::keyValueMessage("udp", std::to_string(udpPort)));
+					// send UDP port
+					members.tcpSocket.send(protocol::keyValueMessage("udp", std::to_string(udpAddress.port)));
 
 					std::unique_ptr<LobbyState> lobbyState = std::make_unique<LobbyState>(members);
 					members.manager.addState(std::move(lobbyState));

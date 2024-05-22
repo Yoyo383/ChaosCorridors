@@ -96,6 +96,16 @@ namespace sockets
 		return socketId;
 	}
 
+	Address Socket::getSocketName() const
+	{
+		struct sockaddr_in sin {};
+		socklen_t len = sizeof(sin);
+		if (getsockname(socketId, (struct sockaddr*)&sin, &len) == -1)
+			throw std::exception(std::to_string(WSAGetLastError()).c_str());
+		
+		return rawAddressToAddress(sin);
+	}
+
 	void Socket::bind(Address address)
 	{
 		sockaddr_in bindAddress = addressToRawAddress(address);

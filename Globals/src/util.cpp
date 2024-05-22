@@ -4,7 +4,7 @@
 
 int randInt(int min, int max)
 {
-	static std::mt19937 generator;
+	thread_local std::mt19937 generator{ std::random_device{}() };
 	std::uniform_int_distribution<int> distribution(min, max);
 	return distribution(generator);
 }

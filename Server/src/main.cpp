@@ -42,38 +42,17 @@ template<typename T> void broadcast(T data)
 	for (auto& [index, socket] : tcpSockets)
 		socket.send(data);
 }
-static void broadcast(std::string message)
-{
-	for (auto& [index, socket] : tcpSockets)
-		socket.send(message);
-}
-static void broadcast(std::vector<char> message)
-{
-	for (auto& [index, socket] : tcpSockets)
-		socket.send(message);
-}
 
 template<typename T> void broadcastUDP(sockets::Socket socket, T data)
 {
 	for (auto& address : addresses)
-		socket.sendTo<T>(data, address);
-}
-static void broadcastUDP(sockets::Socket socket, std::string message)
-{
-	for (auto& address : addresses)
-		socket.sendTo(message, address);
-}
-static void broadcastUDP(sockets::Socket socket, std::vector<char> message)
-{
-	for (auto& address : addresses)
-		socket.sendTo(message, address);
+		socket.sendTo(data, address);
 }
 
 static void handleClient(sockets::Socket socket, sockets::Address address)
 {
-	tcpSockets[count] = socket;
-
 	sockets::Address udpAddress;
+	std::string name;
 
 	std::cout << address.ip << " " << address.port << std::endl;
 
@@ -88,13 +67,17 @@ static void handleClient(sockets::Socket socket, sockets::Address address)
 
 		if (key == "player")
 		{
+			name = value;
 			names.push_back(value);
-			broadcast(protocol::keyValueMessage("player", value));
 			socket.send(protocol::keyValueMessage("index", std::to_string(count)));
+
 			players[count] = Player(
 				randInt(1, globals::WORLD_WIDTH - 2) + 0.5f, 
 				randInt(1, globals::WORLD_HEIGHT - 2) + 0.5f
 			);
+			tcpSockets[count] = socket;
+
+			broadcast(protocol::keyValueMessage("player", value));
 		}
 
 		if (key == "udp")
@@ -108,6 +91,7 @@ static void handleClient(sockets::Socket socket, sockets::Address address)
 			tcpSockets.erase((char)std::stoi(value));
 			players.erase(std::stoi(value));
 			deleteElement(addresses, udpAddress);
+			deleteElement(names, name);
 			socket.close();
 			closed = true;
 			count--;

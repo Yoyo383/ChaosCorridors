@@ -82,9 +82,8 @@ namespace sockets
 		SOCKET socketId;
 
 		/**
-		 * @brief Creates a new socket with an ID and a protocol.
+		 * @brief Creates a new socket with an ID
 		 * @param id The ID of the socket.
-		 * @param protocol The protocol of the socket.
 		*/
 		Socket(SOCKET id);
 	public:
@@ -94,6 +93,9 @@ namespace sockets
 		*/
 		Socket(Protocol protocol);
 
+		/**
+		 * @brief Creates a socket that can't do anything.
+		*/
 		Socket();
 
 		/**
@@ -101,6 +103,8 @@ namespace sockets
 		 * @return The ID of the socket.
 		*/
 		SOCKET getID() const;
+
+		Address getSocketName() const;
 
 		/**
 		 * @brief Binds the socket to an address.
