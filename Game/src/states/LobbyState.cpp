@@ -6,7 +6,6 @@
 LobbyState::LobbyState(Members& members)
 	: members(members)
 {
-	font.loadFromFile("C:/Windows/Fonts/Arial.ttf");
 	members.tcpSocket.setBlocking(false);
 }
 
@@ -31,7 +30,7 @@ void LobbyState::update()
 		if (key == "player")
 		{
 			sf::Text text;
-			text.setFont(font);
+			text.setFont(members.font);
 			text.setCharacterSize(90);
 			text.setPosition(0, playerNamesTexts.size() * 90);
 			text.setString(value);

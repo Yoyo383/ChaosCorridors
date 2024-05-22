@@ -51,8 +51,12 @@ private:
 	float dt;
 
 	float elapsedTime;
+	int timer;
 
 	Player player;
+
+	sf::Sprite heartSprite;
+	sf::Text timerText;
 
 	sf::Vector2i fixedMousePos;
 	bool isFocused;

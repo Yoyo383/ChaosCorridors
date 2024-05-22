@@ -12,6 +12,9 @@ struct Members
 	// The SFML window.
 	sf::RenderWindow window;
 
+	// The font.
+	sf::Font font;
+
 	// The state manager.
 	StateManager manager;
 

@@ -1,10 +1,7 @@
 #include "TextField.hpp"
 
-TextField::TextField(sf::Vector2f position, std::string fontFilename) : isFocused(false)
+TextField::TextField(sf::Vector2f position, sf::Font& font) : isFocused(false), font(font)
 {
-	if (!font.loadFromFile(fontFilename))
-		throw std::exception(("ERROR: Can't load " + fontFilename).c_str());
-
 	text.setFont(font);
 	text.setPosition(position);
 	text.setFillColor(sf::Color::Black);
@@ -51,7 +48,6 @@ void TextField::handleInput(sf::Event event)
 		string += code;
 
 	text.setString(string);
-
 }
 
 void TextField::draw(sf::RenderWindow& window) const

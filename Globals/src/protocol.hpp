@@ -26,7 +26,7 @@ namespace protocol
 		float direction; // not used for players
 	};
 
-	std::tuple<std::string, std::string> receiveKeyValue(sockets::Socket& socket);
+	std::pair<std::string, std::string> receiveKeyValue(sockets::Socket& socket);
 	std::string keyValueMessage(std::string key, std::string value);
 
 	PositionInfoPacket receivePositionInfo(sockets::Socket& socket);

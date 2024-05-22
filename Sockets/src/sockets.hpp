@@ -80,21 +80,21 @@ namespace sockets
 	private:
 		// The ID of the socket, used for windows functions.
 		SOCKET socketId;
-		// The protocol of the socket.
-		Protocol protocol;
 
 		/**
 		 * @brief Creates a new socket with an ID and a protocol.
 		 * @param id The ID of the socket.
 		 * @param protocol The protocol of the socket.
 		*/
-		Socket(SOCKET id, Protocol protocol);
+		Socket(SOCKET id);
 	public:
 		/**
 		 * @brief Creates a new socket with a protocol.
 		 * @param protocol The protocol of the socket.
 		*/
 		Socket(Protocol protocol);
+
+		Socket();
 
 		/**
 		 * @brief Returns the ID of the socket.

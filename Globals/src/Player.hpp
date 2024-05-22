@@ -21,4 +21,5 @@ struct Player
 
 	sf::Vector2f pos, velocity;
 	float direction;
+	int lives;
 };

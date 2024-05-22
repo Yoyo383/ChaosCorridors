@@ -4,7 +4,7 @@
 class TextField
 {
 public:
-	TextField(sf::Vector2f position, std::string fontFilename);
+	TextField(sf::Vector2f position, sf::Font& font);
 	std::string getText() const;
 	bool contains(sf::Vector2f pos);
 	void setFocus(bool focus);
@@ -12,7 +12,7 @@ public:
 	void draw(sf::RenderWindow& window) const;
 
 private:
-	sf::Font font;
+	sf::Font& font;
 	sf::Text text;
 	sf::RectangleShape rect;
 	bool isFocused;

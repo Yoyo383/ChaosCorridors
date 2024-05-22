@@ -14,17 +14,22 @@ struct Sprite
 GameState::GameState(Members& members)
 	: members(members), maze()
 {
-
 	members.tcpSocket.setBlocking(true);
 	members.udpSocket.setBlocking(false);
 
-	std::vector<char> rawMaze = members.tcpSocket.recv(globals::WORLD_WIDTH * globals::WORLD_HEIGHT);
-	for (int i = 0; i < rawMaze.size(); i++)
-	{
-		maze[i / globals::WORLD_WIDTH][i % globals::WORLD_WIDTH] = rawMaze[i];
-	}
+	maze = members.tcpSocket.recv<globals::MazeArr>();
+
+	members.tcpSocket.setBlocking(false);
 
 	serverAddress = { "127.0.0.1", 54321 };
+
+	heartSprite.setTexture(members.textures["heart"]);
+
+	timer = 0;
+
+	timerText.setFont(members.font);
+	timerText.setPosition({ 0, heartSprite.getGlobalBounds().height });
+	timerText.setCharacterSize(heartSprite.getGlobalBounds().height);
 
 	fixedMousePos = { (int)members.window.getSize().x / 2, (int)members.window.getSize().y / 2 };
 	isFocused = true;
@@ -32,7 +37,6 @@ GameState::GameState(Members& members)
 	dt = 0;
 	elapsedTime = 0;
 	zBuffer = new float[members.window.getSize().x + 1];
-
 }
 
 GameState::~GameState()
@@ -107,6 +111,21 @@ void GameState::update()
 		else if (event.type == sf::Event::GainedFocus)
 			isFocused = true;
 	}
+
+	std::string receivedKey = "";
+	do
+	{
+		auto [key, value] = protocol::receiveKeyValue(members.tcpSocket);
+		receivedKey = key;
+
+		if (key == "hit")
+			player.lives--;
+
+		else if (key == "timer")
+			timer = std::stoi(value);
+
+	} while (receivedKey != "");
+
 
 	protocol::PacketType receivedType = protocol::PacketType::NO_PACKET;
 	do
@@ -294,6 +313,20 @@ void GameState::draw()
 	{
 		drawSprite(sprite.position, sprite.texture);
 	}
+
+	for (int i = 0; i < player.lives; i++)
+	{
+		heartSprite.setPosition({ i * heartSprite.getGlobalBounds().width, 0 });
+		members.window.draw(heartSprite);
+	}
+
+	std::string secondsString = std::to_string(timer % 60);
+	std::string leadingZeros = std::string(2 - std::min(2, (int)secondsString.length()), '0');
+	// pad seconds with zeros
+	std::string timerString = std::to_string(timer / 60) + ":" + leadingZeros + secondsString;
+	timerText.setString(timerString);
+
+	members.window.draw(timerText);
 
 	members.window.display();
 }

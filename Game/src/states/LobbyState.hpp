@@ -16,5 +16,4 @@ private:
 	Members& members;
 
 	std::vector<sf::Text> playerNamesTexts;
-	sf::Font font;
 };

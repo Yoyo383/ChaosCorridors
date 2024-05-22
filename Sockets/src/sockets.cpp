@@ -63,17 +63,17 @@ namespace sockets
 		WSACleanup();
 	}
 
-	Socket::Socket(SOCKET id, Protocol protocol)
+	Socket::Socket(SOCKET id)
 	{
 		socketId = id;
-		protocol = protocol;
 
 		setTimeout(2);
 	}
 
+	Socket::Socket() : socketId(0) {}
+
 	Socket::Socket(Protocol protocol)
 	{
-		protocol = protocol;
 		int type = 0;
 
 		if (protocol == Protocol::TCP)
@@ -124,7 +124,7 @@ namespace sockets
 		if (newId == INVALID_SOCKET)
 			throw std::exception(std::to_string(WSAGetLastError()).c_str());
 
-		Socket socket(newId, Protocol::TCP);
+		Socket socket(newId);
 
 		Address resultAddr = rawAddressToAddress(addr);
 

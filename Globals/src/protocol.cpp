@@ -4,7 +4,7 @@
 namespace protocol
 {
 
-	std::tuple<std::string, std::string> receiveKeyValue(sockets::Socket& socket)
+	std::pair<std::string, std::string> receiveKeyValue(sockets::Socket& socket)
 	{
 		std::string key = "", value = "";
 		std::string data;
@@ -28,14 +28,13 @@ namespace protocol
 			}
 			catch (std::exception& err)
 			{
-				if (err.what() == std::to_string(WSAEWOULDBLOCK))
-					return std::make_tuple("", "");
-				std::cout << "Error in key/value: " << err.what() << std::endl;
-				return std::make_tuple("", "");
+				if (err.what() != std::to_string(WSAEWOULDBLOCK))
+					std::cout << "Error in key/value: " << err.what() << std::endl;
+				return std::make_pair("", "");
 			}
 		}
 
-		return std::make_tuple(key, value);
+		return std::make_pair(key, value);
 	}
 
 	std::string keyValueMessage(std::string key, std::string value)

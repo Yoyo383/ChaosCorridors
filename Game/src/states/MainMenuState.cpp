@@ -7,7 +7,7 @@
 MainMenuState::MainMenuState(Members& members)
 	: members(members),
 	hostButton({ members.window.getSize().x / 2.0f, members.window.getSize().y / 2.0f }, members.textures, "hostButton", "buttonNormal"),
-	nameField({ 100, 100 }, "C:/Windows/Fonts/Arial.ttf")
+	nameField({ 100, 100 }, members.font)
 {
 	hostButton.setSizeRelativeToWindow(members.window, 0.5f);
 }
