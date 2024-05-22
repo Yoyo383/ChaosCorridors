@@ -15,5 +15,7 @@ public:
 private:
 	Members& members;
 
+	bool isFocused;
+
 	std::vector<sf::Text> playerNamesTexts;
 };

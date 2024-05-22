@@ -4,7 +4,7 @@
 #include <iostream>
 
 LobbyState::LobbyState(Members& members)
-	: members(members)
+	: members(members), isFocused(true)
 {
 	members.tcpSocket.setBlocking(false);
 }
@@ -22,6 +22,10 @@ void LobbyState::update()
 			members.manager.quit();
 			return;
 		}
+		else if (event.type == sf::Event::GainedFocus)
+			isFocused = true;
+		else if (event.type == sf::Event::LostFocus)
+			isFocused = false;
 	}
 
 	try
@@ -41,7 +45,7 @@ void LobbyState::update()
 			members.playerIndex = std::stoi(value);
 		else if (key == "start")
 		{
-			std::unique_ptr<GameState> gameState = std::make_unique<GameState>(members);
+			std::unique_ptr<GameState> gameState = std::make_unique<GameState>(members, isFocused);
 			members.manager.setState(std::move(gameState));
 		}
 	}

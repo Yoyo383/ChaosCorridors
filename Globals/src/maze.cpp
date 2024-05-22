@@ -9,7 +9,7 @@ struct Cell
 
 namespace globals
 {
-#if 1
+#if 0
 	MazeArr generateMaze()
 	{
 		MazeArr maze = MazeArr();
@@ -117,7 +117,7 @@ namespace globals
 		}
 
 		// make an exit
-		maze[WORLD_HEIGHT - 2][WORLD_WIDTH - 1] = CELL_EMPTY;
+		//maze[WORLD_HEIGHT - 2][WORLD_WIDTH - 1] = CELL_EMPTY;
 
 		return maze;
 	}

@@ -11,8 +11,8 @@ struct Sprite
 	sf::Vector2f position;
 };
 
-GameState::GameState(Members& members)
-	: members(members), maze()
+GameState::GameState(Members& members, bool isFocused)
+	: members(members), maze(), isFocused(isFocused)
 {
 	members.tcpSocket.setBlocking(true);
 	members.udpSocket.setBlocking(false);
@@ -38,7 +38,6 @@ GameState::GameState(Members& members)
 	scoreText.setPosition(0, 2 * heartSprite.getGlobalBounds().height);
 
 	fixedMousePos = { (int)members.window.getSize().x / 2, (int)members.window.getSize().y / 2 };
-	isFocused = true;
 	paused = false;
 	dt = 0;
 	elapsedTime = 0;
@@ -66,13 +65,15 @@ sf::Vector2f GameState::wasdInput()
 
 void GameState::setPlayerDirection()
 {
-	/*int currentMousePos = sf::Mouse::position(window).x;
-	float deltaMousePos = (currentMousePos - fixedMousePos.x) * sensitivity;
-	direction += deltaMousePos;*/
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
+	int currentMousePos = sf::Mouse::getPosition(members.window).x;
+	float deltaMousePos = (currentMousePos - fixedMousePos.x) * Player::SENSITIVITY;
+	player.direction += deltaMousePos;
+	/*if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
 		player.direction -= 2 * dt;
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
-		player.direction += 2 * dt;
+		player.direction += 2 * dt;*/
+
+	player.direction = fmodf(player.direction, 2 * M_PI);
 }
 
 void GameState::update()
@@ -176,6 +177,17 @@ void GameState::update()
 		players[index] += vecNormalize(direction) * dt * Player::SPEED;
 	}
 
+	if (elapsedTime >= 1 / 30.0f)
+	{
+		protocol::PositionInfoPacket packet;
+		packet.type = protocol::PacketType::UPDATE_PLAYER;
+		packet.index = members.playerIndex;
+		packet.position = player.pos;
+
+		protocol::sendPositionInfo(members.udpSocket, serverAddress, packet);
+		elapsedTime = 0;
+	}
+
 	if (paused)
 	{
 		members.window.setMouseCursorVisible(true);
@@ -185,9 +197,9 @@ void GameState::update()
 	// setting player's direction according to mouse
 	if (isFocused)
 	{
-		//window.setMouseCursorVisible(false);
+		members.window.setMouseCursorVisible(false);
 		setPlayerDirection();
-		//resetMousePos();
+		resetMousePos();
 	}
 	else
 		members.window.setMouseCursorVisible(true);
@@ -201,17 +213,6 @@ void GameState::update()
 	player.calculateVelocity(wasd, dt);
 	player.checkCollision(maze);
 	player.move();
-
-	if (elapsedTime >= 1 / 30.0f)
-	{
-		protocol::PositionInfoPacket packet;
-		packet.type = protocol::PacketType::UPDATE_PLAYER;
-		packet.index = members.playerIndex;
-		packet.position = player.pos;
-
-		protocol::sendPositionInfo(members.udpSocket, serverAddress, packet);
-		elapsedTime = 0;
-	}
 }
 
 Ray GameState::raycast(float angle)

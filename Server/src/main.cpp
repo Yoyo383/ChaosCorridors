@@ -64,10 +64,18 @@ template<typename T> void broadcastUDP(sockets::Socket socket, T data)
 
 static sf::Vector2f randomPosition()
 {
-	return { 
-		randInt(1, globals::WORLD_WIDTH - 2) + 0.5f, 
-		randInt(1, globals::WORLD_HEIGHT - 2) + 0.5f 
-	};
+	sf::Vector2f position;
+	do
+	{
+		position =
+		{
+			randInt(1, globals::WORLD_WIDTH - 2) + 0.5f,
+			randInt(1, globals::WORLD_HEIGHT - 2) + 0.5f
+		};
+	}
+	while (maze[(int)position.y][(int)position.x] != globals::CELL_EMPTY);
+
+	return position;
 }
 
 
@@ -182,7 +190,6 @@ static void initGame(sockets::Socket& udpSocket)
 	broadcast(protocol::keyValueMessage("start", ""));
 
 	// send maze
-	maze = globals::generateMaze();
 	broadcast(maze);
 
 	// send initial timer
@@ -279,6 +286,8 @@ static void sendBullets(sockets::Socket& udpSocket)
 void main()
 {
 	sockets::initialize();
+
+	maze = globals::generateMaze();
 
 	sockets::Socket serverSocket(sockets::Protocol::TCP);
 	sockets::Socket udpSocket(sockets::Protocol::UDP);

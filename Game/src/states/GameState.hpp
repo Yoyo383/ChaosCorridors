@@ -17,7 +17,7 @@ struct Ray
 class GameState : public State
 {
 public:
-	GameState(Members& members);
+	GameState(Members& members, bool isFocused);
 	~GameState();
 
 	void update() override;
