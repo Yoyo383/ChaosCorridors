@@ -27,9 +27,15 @@ GameState::GameState(Members& members)
 
 	timer = 0;
 
+	score = 0;
+
 	timerText.setFont(members.font);
-	timerText.setPosition({ 0, heartSprite.getGlobalBounds().height });
+	timerText.setPosition(0, heartSprite.getGlobalBounds().height);
 	timerText.setCharacterSize(heartSprite.getGlobalBounds().height);
+
+	scoreText.setFont(members.font);
+	scoreText.setCharacterSize(heartSprite.getGlobalBounds().height);
+	scoreText.setPosition(0, 2 * heartSprite.getGlobalBounds().height);
 
 	fixedMousePos = { (int)members.window.getSize().x / 2, (int)members.window.getSize().y / 2 };
 	isFocused = true;
@@ -100,6 +106,7 @@ void GameState::update()
 
 				protocol::PositionInfoPacket packet;
 				packet.type = protocol::PacketType::UPDATE_BULLET;
+				packet.index = members.playerIndex;
 				packet.position = bulletPosition;
 				packet.direction = player.direction;
 
@@ -124,6 +131,9 @@ void GameState::update()
 		else if (key == "timer")
 			timer = std::stoi(value);
 
+		else if (key == "score")
+			score += std::stoi(value);
+
 	}
 	while (receivedKey != "");
 
@@ -133,10 +143,13 @@ void GameState::update()
 	{
 		protocol::PositionInfoPacket packet = protocol::receivePositionInfo(members.udpSocket);
 		receivedType = packet.type;
-		if (packet.type == protocol::PacketType::NEW_PLAYER)
+		if (packet.type == protocol::PacketType::INIT_PLAYER)
 		{
 			if (packet.index == members.playerIndex)
+			{
 				player.pos = packet.position;
+				player.lives = 3;
+			}
 			else
 				players[packet.index] = packet.position;
 		}
@@ -154,11 +167,11 @@ void GameState::update()
 	while (receivedType != protocol::PacketType::NO_PACKET);
 
 
-	for (auto& [index, tarposition] : targetPlayerPositions)
+	for (auto& [index, targetPosition] : targetPlayerPositions)
 	{
 		sf::Vector2f actualPosition = players[index];
-		sf::Vector2f direction = tarposition - actualPosition;
-		if (vecMagnitude(direction) <= 0.05f)
+		sf::Vector2f direction = targetPosition - actualPosition;
+		if (vecMagnitude(direction) <= 0.01f)
 			continue;
 		players[index] += vecNormalize(direction) * dt * Player::SPEED;
 	}
@@ -328,7 +341,15 @@ void GameState::draw()
 	std::string timerString = std::to_string(timer / 60) + ":" + leadingZeros + secondsString;
 	timerText.setString(timerString);
 
+	sf::Color timerColor;
+	timerColor.g = (int)(2.55f * timer);
+	timerColor.r = 255 - timerColor.g;
+	timerText.setFillColor(timerColor);
+
 	members.window.draw(timerText);
+
+	scoreText.setString(std::to_string(score));
+	members.window.draw(scoreText);
 
 	members.window.display();
 }
@@ -467,9 +488,9 @@ void GameState::drawWalls()
 	members.window.draw(wallLines, &members.textures["wall"]);
 }
 
-void GameState::drawSprite(const sf::Vector2f& characterPos, std::string texture)
+void GameState::drawSprite(sf::Vector2f position, std::string texture)
 {
-	float angleFromPlayer = vecAngle(characterPos - player.pos);
+	float angleFromPlayer = vecAngle(position - player.pos);
 	float relativeAngle = player.direction - angleFromPlayer;
 
 	if (relativeAngle > M_PI)
@@ -477,7 +498,7 @@ void GameState::drawSprite(const sf::Vector2f& characterPos, std::string texture
 	else if (relativeAngle < -M_PI)
 		relativeAngle += 2 * M_PI;
 
-	float distance = vecMagnitude(characterPos - player.pos);
+	float distance = vecMagnitude(position - player.pos);
 	distance *= cosf(relativeAngle);
 
 	// check angle to prevent weird stretching

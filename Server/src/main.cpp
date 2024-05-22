@@ -12,17 +12,20 @@
 using time_point = std::chrono::steady_clock::time_point;
 
 
-constexpr unsigned short PORT = 12345;
-constexpr unsigned short UDP_PORT = 54321;
+const unsigned short PORT = 12345;
+const unsigned short UDP_PORT = 54321;
 
-constexpr int NUMBER_OF_PLAYERS = 2;
+const int NUMBER_OF_PLAYERS = 2;
 
 static int count = 0;
 
-constexpr int NUMBER_OF_TICKS = 60;
+const int NUMBER_OF_TICKS = 60;
+
+const int KILL_PLAYER_SCORE = 100;
 
 struct Bullet
 {
+	char playerIndex;
 	sf::Vector2f position;
 	sf::Vector2f direction;
 };
@@ -33,6 +36,8 @@ std::vector<sockets::Address> addresses;
 std::vector<std::string> names;
 std::unordered_map<char, Player> players;
 std::vector<Bullet> bullets;
+
+std::unordered_map<char, int> scores;
 
 globals::MazeArr maze;
 
@@ -57,6 +62,14 @@ template<typename T> void broadcastUDP(sockets::Socket socket, T data)
 		socket.sendTo(data, address);
 }
 
+static sf::Vector2f randomPosition()
+{
+	return { 
+		randInt(1, globals::WORLD_WIDTH - 2) + 0.5f, 
+		randInt(1, globals::WORLD_HEIGHT - 2) + 0.5f 
+	};
+}
+
 
 static void handleClient(sockets::Socket socket, sockets::Address address)
 {
@@ -78,13 +91,12 @@ static void handleClient(sockets::Socket socket, sockets::Address address)
 		{
 			name = value;
 			names.push_back(value);
-			socket.send(protocol::keyValueMessage("index", std::to_string(count)));
+			int index = count;
+			socket.send(protocol::keyValueMessage("index", std::to_string(index)));
 
-			players[count] = Player(
-				randInt(1, globals::WORLD_WIDTH - 2) + 0.5f,
-				randInt(1, globals::WORLD_HEIGHT - 2) + 0.5f
-			);
-			tcpSockets[count] = socket;
+			players[index] = Player(randomPosition());
+			tcpSockets[index] = socket;
+			scores[index] = 0;
 
 			broadcast(protocol::keyValueMessage("player", value));
 		}
@@ -97,8 +109,9 @@ static void handleClient(sockets::Socket socket, sockets::Address address)
 
 		if (key == "close")
 		{
-			tcpSockets.erase((char)std::stoi(value));
+			tcpSockets.erase(std::stoi(value));
 			players.erase(std::stoi(value));
+			scores.erase(std::stoi(value));
 			deleteElement(addresses, udpAddress);
 			deleteElement(names, name);
 			socket.close();
@@ -108,7 +121,7 @@ static void handleClient(sockets::Socket socket, sockets::Address address)
 	}
 }
 
-static void updateBullets()
+static void updateBullets(sockets::Socket& udpSocket)
 {
 	for (auto& bullet : bullets)
 	{
@@ -119,11 +132,27 @@ static void updateBullets()
 		for (auto& [index, player] : players)
 		{
 			sf::Vector2f distance = player.pos - bullet.position;
-			if (vecMagnitude(distance) <= 0.2f)
+			if (vecMagnitude(distance) <= 0.2f && index != bullet.playerIndex)
 			{
-				// if player got hit remove a life and notify the player
-				tcpSockets[index].send(protocol::keyValueMessage("hit", ""));
 				player.lives--;
+				if (player.lives == 0)
+				{
+					tcpSockets[bullet.playerIndex].send(protocol::keyValueMessage("score", std::to_string(KILL_PLAYER_SCORE)));
+					scores[bullet.playerIndex] += KILL_PLAYER_SCORE;
+
+					players[index].pos = randomPosition();
+					players[index].lives = 3;
+
+					protocol::PositionInfoPacket packet;
+					packet.type = protocol::PacketType::INIT_PLAYER;
+					packet.index = index;
+					packet.position = players[index].pos;
+
+					for (auto& address : addresses)
+						protocol::sendPositionInfo(udpSocket, address, packet);
+				}
+				else // if player got hit remove a life and notify the player
+					tcpSockets[index].send(protocol::keyValueMessage("hit", ""));
 
 				// set position to delete the bullet
 				bullet.position.x = -1;
@@ -165,7 +194,7 @@ static void initGame(sockets::Socket& udpSocket)
 		for (auto& [index, player] : players)
 		{
 			protocol::PositionInfoPacket packet;
-			packet.type = protocol::PacketType::NEW_PLAYER;
+			packet.type = protocol::PacketType::INIT_PLAYER;
 			packet.index = index;
 			packet.position = player.pos;
 
@@ -219,7 +248,7 @@ static void handleEvents(sockets::Socket& udpSocket)
 
 		}
 		else if (packet.type == protocol::PacketType::UPDATE_BULLET)
-			bullets.push_back({ packet.position, { cosf(packet.direction), sinf(packet.direction) } });
+			bullets.push_back({ packet.index, packet.position, { cosf(packet.direction), sinf(packet.direction) } });
 
 	}
 	while (receivedType != protocol::PacketType::NO_PACKET);
@@ -292,7 +321,7 @@ void main()
 
 			handleEvents(udpSocket);
 
-			updateBullets();
+			updateBullets(udpSocket);
 
 			sendBullets(udpSocket);
 		}

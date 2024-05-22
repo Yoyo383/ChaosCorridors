@@ -38,7 +38,7 @@ public:
 
 	void drawFloorAndCeiling();
 	void drawWalls();
-	void drawSprite(const sf::Vector2f& characterPos, std::string texture);
+	void drawSprite(sf::Vector2f position, std::string texture);
 
 private:
 	Members& members;
@@ -53,10 +53,13 @@ private:
 	float elapsedTime;
 	int timer;
 
+	int score;
+
 	Player player;
 
 	sf::Sprite heartSprite;
 	sf::Text timerText;
+	sf::Text scoreText;
 
 	sf::Vector2i fixedMousePos;
 	bool isFocused;

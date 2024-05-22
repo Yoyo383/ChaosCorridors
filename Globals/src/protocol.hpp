@@ -12,7 +12,7 @@ namespace protocol
 	enum class PacketType : char
 	{
 		NO_PACKET,
-		NEW_PLAYER,
+		INIT_PLAYER,
 		UPDATE_PLAYER,
 		UPDATE_BULLET,
 		CLEAR_BULLETS
