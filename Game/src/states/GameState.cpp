@@ -124,7 +124,8 @@ void GameState::update()
 		else if (key == "timer")
 			timer = std::stoi(value);
 
-	} while (receivedKey != "");
+	}
+	while (receivedKey != "");
 
 
 	protocol::PacketType receivedType = protocol::PacketType::NO_PACKET;
@@ -149,7 +150,8 @@ void GameState::update()
 		else if (packet.type == protocol::PacketType::UPDATE_PLAYER && packet.index != members.playerIndex)
 			targetPlayerPositions[packet.index] = packet.position;
 
-	} while (receivedType != protocol::PacketType::NO_PACKET);
+	}
+	while (receivedType != protocol::PacketType::NO_PACKET);
 
 
 	for (auto& [index, tarposition] : targetPlayerPositions)
@@ -478,7 +480,8 @@ void GameState::drawSprite(const sf::Vector2f& characterPos, std::string texture
 	float distance = vecMagnitude(characterPos - player.pos);
 	distance *= cosf(relativeAngle);
 
-	if (distance >= 0.2f)
+	// check angle to prevent weird stretching
+	if (distance >= 0.2f && abs(relativeAngle) < degToRad(45))
 	{
 		float height = (float)members.window.getSize().y / distance;
 
@@ -493,6 +496,8 @@ void GameState::drawSprite(const sf::Vector2f& characterPos, std::string texture
 		// calculating middle of texture
 		float middle = members.window.getSize().x - (relativeAngle / Player::FOV + 0.5f) * members.window.getSize().x;
 
+		sf::VertexArray sprite(sf::Lines, 2 * (width + 1));
+
 		for (int x = 0; x <= width; x++)
 		{
 			float posX = middle + (float)x - (width / 2.0f);
@@ -500,8 +505,6 @@ void GameState::drawSprite(const sf::Vector2f& characterPos, std::string texture
 			// if outside window or behind walls then don't draw
 			if (posX < 0 || posX > members.window.getSize().x || zBuffer[(int)posX] < distance)
 				continue;
-
-			sf::VertexArray character(sf::Lines, 2);
 
 			sf::Color color = sf::Color::White;
 			float brightness = 1.0f - (distance / 16);
@@ -515,19 +518,19 @@ void GameState::drawSprite(const sf::Vector2f& characterPos, std::string texture
 			color.b *= brightness;
 
 			// setting position and height
-			character[0].position = { posX, ceiling };
-			character[1].position = { posX, floor };
+			sprite[2 * x].position = { posX, ceiling };
+			sprite[2 * x + 1].position = { posX, floor };
 
 			// shading
-			character[0].color = color;
-			character[1].color = color;
+			sprite[2 * x].color = color;
+			sprite[2 * x + 1].color = color;
 
 			// texturing
 			float textureX = members.textures[texture].getSize().x * (float)x / width;
-			character[0].texCoords = { textureX, 0 };
-			character[1].texCoords = { textureX, (float)members.textures[texture].getSize().y };
-
-			members.window.draw(character, &members.textures[texture]);
+			sprite[2 * x].texCoords = { textureX, 0 };
+			sprite[2 * x + 1].texCoords = { textureX, (float)members.textures[texture].getSize().y };
 		}
+
+		members.window.draw(sprite, &members.textures[texture]);
 	}
 }

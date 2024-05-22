@@ -10,7 +10,6 @@ constexpr unsigned short PORT = 12345;
 
 int main()
 {
-	srand(time(NULL));
 	sockets::initialize();
 
 	Members members;
@@ -28,7 +27,8 @@ int main()
 	members.textures.addTexture("bullet", "assets/bullet.png");
 	members.textures.addTexture("heart", "assets/heart.png");
 
-	members.font.loadFromFile("C:/Windows/Fonts/Arial.ttf");
+	if (!members.font.loadFromFile("assets/retro.ttf"))
+		throw std::exception("Couldn't load font.");
 
 	std::unique_ptr<MainMenuState> mainMenuState = std::make_unique<MainMenuState>(members);
 	members.manager.addState(std::move(mainMenuState));

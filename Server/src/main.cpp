@@ -8,6 +8,10 @@
 #include "maze.hpp"
 #include "Player.hpp"
 
+// for easier use
+using time_point = std::chrono::steady_clock::time_point;
+
+
 constexpr unsigned short PORT = 12345;
 constexpr unsigned short UDP_PORT = 54321;
 
@@ -32,6 +36,11 @@ std::vector<Bullet> bullets;
 
 globals::MazeArr maze;
 
+// Number of seconds in the game.
+static int timer = 100;
+
+
+
 template<typename T> void deleteElement(std::vector<T>& vector, T element)
 {
 	vector.erase(std::remove(vector.begin(), vector.end(), element), vector.end());
@@ -42,12 +51,12 @@ template<typename T> void broadcast(T data)
 	for (auto& [index, socket] : tcpSockets)
 		socket.send(data);
 }
-
 template<typename T> void broadcastUDP(sockets::Socket socket, T data)
 {
 	for (auto& address : addresses)
 		socket.sendTo(data, address);
 }
+
 
 static void handleClient(sockets::Socket socket, sockets::Address address)
 {
@@ -72,7 +81,7 @@ static void handleClient(sockets::Socket socket, sockets::Address address)
 			socket.send(protocol::keyValueMessage("index", std::to_string(count)));
 
 			players[count] = Player(
-				randInt(1, globals::WORLD_WIDTH - 2) + 0.5f, 
+				randInt(1, globals::WORLD_WIDTH - 2) + 0.5f,
 				randInt(1, globals::WORLD_HEIGHT - 2) + 0.5f
 			);
 			tcpSockets[count] = socket;
@@ -103,6 +112,7 @@ static void updateBullets()
 {
 	for (auto& bullet : bullets)
 	{
+		// move the bullets
 		bullet.position.x += bullet.direction.x * 6.0f * (1.0f / NUMBER_OF_TICKS);
 		bullet.position.y += bullet.direction.y * 6.0f * (1.0f / NUMBER_OF_TICKS);
 
@@ -111,18 +121,17 @@ static void updateBullets()
 			sf::Vector2f distance = player.pos - bullet.position;
 			if (vecMagnitude(distance) <= 0.2f)
 			{
+				// if player got hit remove a life and notify the player
 				tcpSockets[index].send(protocol::keyValueMessage("hit", ""));
 				player.lives--;
 
 				// set position to delete the bullet
 				bullet.position.x = -1;
-
-				if (player.lives == 0)
-					std::cout << "oops dead" << std::endl;
 			}
 		}
 	}
 
+	// remove bullets that are outside the map or collide with the map
 	bullets.erase(std::remove_if(bullets.begin(), bullets.end(),
 		[](const Bullet& bullet)
 		{
@@ -136,13 +145,111 @@ static void updateBullets()
 	), bullets.end());
 }
 
+static void initGame(sockets::Socket& udpSocket)
+{
+	std::cout << "Game is starting!" << std::endl;
+
+	// sending to clients to notify them the game began
+	broadcast(protocol::keyValueMessage("start", ""));
+
+	// send maze
+	maze = globals::generateMaze();
+	broadcast(maze);
+
+	// send initial timer
+	broadcast(protocol::keyValueMessage("timer", std::to_string(timer)));
+
+	// send initial starting positions
+	for (auto& address : addresses)
+	{
+		for (auto& [index, player] : players)
+		{
+			protocol::PositionInfoPacket packet;
+			packet.type = protocol::PacketType::NEW_PLAYER;
+			packet.index = index;
+			packet.position = player.pos;
+
+			protocol::sendPositionInfo(udpSocket, address, packet);
+		}
+	}
+}
+
+static bool checkDelay(int& elapsedTime, time_point& lastTimeFrame, time_point now)
+{
+	elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastTimeFrame).count();
+
+	if (elapsedTime < (1000 / NUMBER_OF_TICKS))
+		return false;
+
+	lastTimeFrame = now;
+	elapsedTime = 0;
+
+	return true;
+}
+
+static void sendTimerUpdate(int& timerTime, time_point& lastTimeTimer, time_point now)
+{
+	timerTime = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastTimeTimer).count();
+	if (timerTime >= 1000)
+	{
+		lastTimeTimer = now;
+		timerTime = 0;
+
+		timer--;
+		broadcast(protocol::keyValueMessage("timer", std::to_string(timer)));
+	}
+}
+
+static void handleEvents(sockets::Socket& udpSocket)
+{
+	protocol::PacketType receivedType = protocol::PacketType::NO_PACKET;
+
+	// receive until received NO_PACKET
+	do
+	{
+		auto packet = protocol::receivePositionInfo(udpSocket);
+		receivedType = packet.type;
+
+		if (packet.type == protocol::PacketType::UPDATE_PLAYER)
+		{
+			players[packet.index].pos = packet.position;
+
+			for (auto& address : addresses)
+				protocol::sendPositionInfo(udpSocket, address, packet);
+
+		}
+		else if (packet.type == protocol::PacketType::UPDATE_BULLET)
+			bullets.push_back({ packet.position, { cosf(packet.direction), sinf(packet.direction) } });
+
+	}
+	while (receivedType != protocol::PacketType::NO_PACKET);
+}
+
+static void sendBullets(sockets::Socket& udpSocket)
+{
+	for (auto& address : addresses)
+	{
+		// clear the bullets
+		protocol::PositionInfoPacket packet;
+		packet.type = protocol::PacketType::CLEAR_BULLETS;
+		protocol::sendPositionInfo(udpSocket, address, packet);
+
+		// send new bullet information
+		for (int i = 0; i < bullets.size(); i++)
+		{
+			protocol::PositionInfoPacket packet;
+			packet.type = protocol::PacketType::UPDATE_BULLET;
+			packet.index = (char)i;
+			packet.position = bullets[i].position;
+
+			protocol::sendPositionInfo(udpSocket, address, packet);
+		}
+	}
+}
+
 void main()
 {
-	srand(time(NULL));
 	sockets::initialize();
-
-	// how many seconds for the game
-	int timer = 100;
 
 	sockets::Socket serverSocket(sockets::Protocol::TCP);
 	sockets::Socket udpSocket(sockets::Protocol::UDP);
@@ -164,102 +271,33 @@ void main()
 		}
 
 		std::this_thread::sleep_for(std::chrono::seconds(2));
-		std::cout << "start!" << std::endl;
-		broadcast(protocol::keyValueMessage("start", ""));
-
-		maze = globals::generateMaze();
-		broadcast(maze);
-
-		broadcast(protocol::keyValueMessage("timer", std::to_string(timer)));
-
-		// send initial starting positions
-		for (auto& address : addresses)
-		{
-			for (auto& [index, player] : players)
-			{
-				protocol::PositionInfoPacket packet;
-				packet.type = protocol::PacketType::NEW_PLAYER;
-				packet.index = index;
-				packet.position = player.pos;
-
-				protocol::sendPositionInfo(udpSocket, address, packet);
-			}
-		}
+		initGame(udpSocket);
 
 		// to do the loop 60 times per second
-		long elapsedTime = 0;
+		int elapsedTime = 0;
 		auto lastTimeFrame = std::chrono::steady_clock::now();
 
 		// to send every second an update for the timer
-		long timerTime = 0;
+		int timerTime = 0;
 		auto lastTimeTimer = std::chrono::steady_clock::now();
 
 		while (count > 0)
 		{
 			auto now = std::chrono::steady_clock::now();
-			elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastTimeFrame).count();
-			timerTime = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastTimeTimer).count();
 
-			if (elapsedTime < (1000 / NUMBER_OF_TICKS))
+			if (!checkDelay(elapsedTime, lastTimeFrame, now))
 				continue;
 
-			lastTimeFrame = now;
-			elapsedTime = 0;
+			sendTimerUpdate(timerTime, lastTimeTimer, now);
 
-			if (timerTime >= 1000)
-			{
-				lastTimeTimer = now;
-				timerTime = 0;
-
-				timer--;
-				broadcast(protocol::keyValueMessage("timer", std::to_string(timer)));
-			}
-
-			protocol::PacketType receivedType = protocol::PacketType::NO_PACKET;
-			do
-			{
-				auto packet = protocol::receivePositionInfo(udpSocket);
-				receivedType = packet.type;
-
-				if (packet.type == protocol::PacketType::UPDATE_PLAYER)
-				{
-					players[packet.index].pos = packet.position;
-
-					for (auto& address : addresses)
-					{
-						protocol::sendPositionInfo(udpSocket, address, packet);
-					}
-				}
-				else if (packet.type == protocol::PacketType::UPDATE_BULLET)
-				{
-					bullets.push_back({ packet.position, { cosf(packet.direction), sinf(packet.direction) } });
-				}
-			} while (receivedType != protocol::PacketType::NO_PACKET);
+			handleEvents(udpSocket);
 
 			updateBullets();
 
-			for (auto& address : addresses)
-			{
-				// clear the bullets
-				protocol::PositionInfoPacket packet;
-				packet.type = protocol::PacketType::CLEAR_BULLETS;
-				protocol::sendPositionInfo(udpSocket, address, packet);
-
-				// send new bullet information
-				for (int i = 0; i < bullets.size(); i++)
-				{
-					protocol::PositionInfoPacket packet;
-					packet.type = protocol::PacketType::UPDATE_BULLET;
-					packet.index = (char)i;
-					packet.position = bullets[i].position;
-
-					protocol::sendPositionInfo(udpSocket, address, packet);
-				}
-			}
-
+			sendBullets(udpSocket);
 		}
 
-		std::cout << "bye bye" << std::endl;
+		std::cout << "Game ended!" << std::endl;
 	}
 	catch (std::exception& err)
 	{
