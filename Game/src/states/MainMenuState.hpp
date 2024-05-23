@@ -22,10 +22,5 @@ private:
 	TextField nameField;
 	TextField ipField;
 
-	sf::Sprite background;
-
 	sf::Text errorText;
-
-	std::thread connectThread;
-	bool canConnect;
 };

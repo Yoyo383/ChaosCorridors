@@ -14,8 +14,8 @@ struct Sprite
 GameState::GameState(Members& members, bool isFocused, std::string ip)
 	: members(members), maze(), isFocused(isFocused)
 {
-	members.tcpSocket.setBlocking(true);
 	members.udpSocket.setBlocking(false);
+	members.tcpSocket.setBlocking(true);
 
 	maze = members.tcpSocket.recv<globals::MazeArr>();
 

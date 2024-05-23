@@ -11,18 +11,13 @@ MainMenuState::MainMenuState(Members& members)
 	: members(members),
 	hostButton({ members.window.getSize().x / 2.0f, members.window.getSize().y / 2.0f }, members.textures, "playButton", "playButtonPressed"),
 	nameField({ 100, 100 }, members.font),
-	ipField({ 100, 150 }, members.font),
-	connectThread{},
-	canConnect(true)
+	ipField({ 100, 150 }, members.font)
 {
 	hostButton.setSizeRelativeToWindow(members.window, 0.5f);
 	errorText.setFont(members.font);
 	errorText.setFillColor(sf::Color::Red);
 
-	background.setTexture(members.textures["ceiling"]);
-	background.setScale(2, 2);
-	background.setTextureRect(sf::IntRect({ 0, 0 }, { (int)members.window.getSize().x, (int)members.window.getSize().y }));
-	//float scale = (float)members.window.getSize().x / members.textures["ceiling"].getSize().x;
+	members.tcpSocket.setTimeout(0.5f);
 }
 
 void MainMenuState::update()
@@ -89,7 +84,6 @@ void MainMenuState::update()
 void MainMenuState::draw()
 {
 	members.window.clear(sf::Color(77, 77, 77));
-	//members.window.draw(background);
 
 	hostButton.draw(members.window);
 	nameField.draw(members.window);
