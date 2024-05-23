@@ -11,7 +11,7 @@
 // for easier use
 using time_point = std::chrono::steady_clock::time_point;
 
-const int NUMBER_OF_PLAYERS = 1;
+const int NUMBER_OF_PLAYERS = 2;
 
 static int count = 0;
 

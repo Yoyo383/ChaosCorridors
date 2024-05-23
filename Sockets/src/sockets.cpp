@@ -55,6 +55,8 @@ namespace sockets
 		std::string error(tempMessage.begin(), tempMessage.end());
 		error.pop_back();
 		errorMessage = "[WinError " + std::to_string(errorCode) + "] " + error;
+
+		delete[] message;
 	}
 
 	exception::exception(std::string errorMessage) : errorMessage(errorMessage), errorCode(0) { }
