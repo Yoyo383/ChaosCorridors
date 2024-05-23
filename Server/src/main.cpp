@@ -30,19 +30,24 @@ struct Bullet
 	sf::Vector2f direction;
 };
 
-std::unordered_map<char, sockets::Socket> tcpSockets;
+struct Client
+{
+	sockets::Socket tcpSocket;
+	Player player;
+	int score = 0;
+};
+
 std::vector<sockets::Address> addresses;
 
 std::vector<std::string> names;
-std::unordered_map<char, Player> players;
 std::vector<Bullet> bullets;
 
-std::unordered_map<char, int> scores;
+std::unordered_map<char, Client> clients;
 
 globals::MazeArr maze;
 
 // Number of seconds in the game.
-static int timer = 100;
+static int timer = globals::GAME_TIME;
 
 
 
@@ -53,8 +58,8 @@ template<typename T> void deleteElement(std::vector<T>& vector, T element)
 
 template<typename T> void broadcast(T data)
 {
-	for (auto& [index, socket] : tcpSockets)
-		socket.send(data);
+	for (auto& [index, client] : clients)
+		client.tcpSocket.send(data);
 }
 template<typename T> void broadcastUDP(sockets::Socket socket, T data)
 {
@@ -102,9 +107,7 @@ static void handleClient(sockets::Socket socket, sockets::Address address)
 			int index = count;
 			socket.send(protocol::keyValueMessage("index", std::to_string(index)));
 
-			players[index] = Player(randomPosition());
-			tcpSockets[index] = socket;
-			scores[index] = 0;
+			clients[index] = Client{ socket, Player(randomPosition()), 0 };
 
 			broadcast(protocol::keyValueMessage("player", value));
 		}
@@ -117,9 +120,7 @@ static void handleClient(sockets::Socket socket, sockets::Address address)
 
 		if (key == "close")
 		{
-			tcpSockets.erase(std::stoi(value));
-			players.erase(std::stoi(value));
-			scores.erase(std::stoi(value));
+			clients.erase(std::stoi(value));
 			deleteElement(addresses, udpAddress);
 			deleteElement(names, name);
 			socket.close();
@@ -137,30 +138,30 @@ static void updateBullets(sockets::Socket& udpSocket)
 		bullet.position.x += bullet.direction.x * 6.0f * (1.0f / NUMBER_OF_TICKS);
 		bullet.position.y += bullet.direction.y * 6.0f * (1.0f / NUMBER_OF_TICKS);
 
-		for (auto& [index, player] : players)
+		for (auto& [index, client] : clients)
 		{
-			sf::Vector2f distance = player.pos - bullet.position;
+			sf::Vector2f distance = client.player.pos - bullet.position;
 			if (vecMagnitude(distance) <= 0.2f && index != bullet.playerIndex)
 			{
-				player.lives--;
-				if (player.lives == 0)
+				client.player.lives--;
+				if (client.player.lives == 0)
 				{
-					tcpSockets[bullet.playerIndex].send(protocol::keyValueMessage("score", std::to_string(KILL_PLAYER_SCORE)));
-					scores[bullet.playerIndex] += KILL_PLAYER_SCORE;
+					clients[bullet.playerIndex].tcpSocket.send(protocol::keyValueMessage("score", std::to_string(KILL_PLAYER_SCORE)));
+					clients[bullet.playerIndex].score += KILL_PLAYER_SCORE;
 
-					players[index].pos = randomPosition();
-					players[index].lives = 3;
+					client.player.pos = randomPosition();
+					client.player.lives = 3;
 
 					protocol::PositionInfoPacket packet;
 					packet.type = protocol::PacketType::INIT_PLAYER;
 					packet.index = index;
-					packet.position = players[index].pos;
+					packet.position = client.player.pos;
 
 					for (auto& address : addresses)
 						protocol::sendPositionInfo(udpSocket, address, packet);
 				}
 				else // if player got hit remove a life and notify the player
-					tcpSockets[index].send(protocol::keyValueMessage("hit", ""));
+					client.tcpSocket.send(protocol::keyValueMessage("hit", ""));
 
 				// set position to delete the bullet
 				bullet.position.x = -1;
@@ -198,12 +199,12 @@ static void initGame(sockets::Socket& udpSocket)
 	// send initial starting positions
 	for (auto& address : addresses)
 	{
-		for (auto& [index, player] : players)
+		for (auto& [index, client] : clients)
 		{
 			protocol::PositionInfoPacket packet;
 			packet.type = protocol::PacketType::INIT_PLAYER;
 			packet.index = index;
-			packet.position = player.pos;
+			packet.position = client.player.pos;
 
 			protocol::sendPositionInfo(udpSocket, address, packet);
 		}
@@ -248,7 +249,7 @@ static void handleEvents(sockets::Socket& udpSocket)
 
 		if (packet.type == protocol::PacketType::UPDATE_PLAYER)
 		{
-			players[packet.index].pos = packet.position;
+			clients[packet.index].player.pos = packet.position;
 
 			for (auto& address : addresses)
 				protocol::sendPositionInfo(udpSocket, address, packet);

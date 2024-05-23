@@ -104,6 +104,9 @@ namespace sockets
 		*/
 		SOCKET getID() const;
 
+		/**
+		 * @brief Returns the socket's own address.
+		*/
 		Address getSocketName() const;
 
 		/**

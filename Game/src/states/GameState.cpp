@@ -343,7 +343,7 @@ void GameState::draw()
 	timerText.setString(timerString);
 
 	sf::Color timerColor;
-	timerColor.g = (int)(2.55f * timer);
+	timerColor.g = (int)((255.0f / globals::GAME_TIME) * timer);
 	timerColor.r = 255 - timerColor.g;
 	timerText.setFillColor(timerColor);
 

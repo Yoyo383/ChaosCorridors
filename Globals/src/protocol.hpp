@@ -20,10 +20,10 @@ namespace protocol
 
 	struct PositionInfoPacket
 	{
-		PacketType type; // 0 for new player, 1 for bullet, 2 for clearing bullets, 3 for player target position
-		char index;
+		PacketType type = PacketType::NO_PACKET;
+		char index = -1;
 		sf::Vector2f position;
-		float direction; // not used for players
+		float direction = 0;
 	};
 
 	std::pair<std::string, std::string> receiveKeyValue(sockets::Socket& socket);
