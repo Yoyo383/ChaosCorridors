@@ -34,6 +34,36 @@ template<typename T> T toVariable(std::vector<char> bytes)
 
 namespace sockets
 {
+	/**
+	 * @brief Custom exception class.
+	 */
+	class exception : public std::exception
+	{
+	private:
+		// Windows error code
+		int errorCode;
+		// Error message to display.
+		std::string errorMessage;
+
+	public:
+		/**
+		 * @brief Creates an exception with an error code and sets the message accordingly.
+		 * @param errorCode The error code.
+		 */
+		exception(int errorCode);
+
+		/**
+		 * @brief Returns a string that represents the error.
+		 * @return A string that represents the error.
+		 */
+		const char* what() const override;
+
+		/**
+		 * @brief Returns the error code.
+		 * @return The error code.
+		 */
+		const int getErrorCode() const;
+	};
 
 	/**
 	 * @brief An enum that represents the protocol of the socket - TCP or UDP.
@@ -50,7 +80,7 @@ namespace sockets
 	struct Address
 	{
 		std::string ip;
-		unsigned short port;
+		unsigned short port = 0;
 	};
 
 	/**
@@ -63,9 +93,8 @@ namespace sockets
 
 	/**
 	 * @brief Initializes the socket library. Should be called at the start of the code.
-	 * @return Whether the initialization was successful.
 	*/
-	bool initialize();
+	void initialize();
 
 	/**
 	 * @brief Shuts down the library. Should be called at the end of the code.
@@ -113,43 +142,43 @@ namespace sockets
 		 * @brief Binds the socket to an address.
 		 * @param address The address to bind.
 		*/
-		void bind(Address address);
+		void bind(Address address) const;
 
 		/**
 		 * @brief Enable a socket to accept connections.
 		 * @param The number of unaccepted connections that the system will allow before refusing new connections.
 		*/
-		void listen(int backlog);
+		void listen(int backlog) const;
 
 		/**
 		 * @brief Accepts a connection.
 		 * @return A pair with a new socket object usable to send and receive data on the connection,
 		 * and the address bound to the socket on the other end of the connection.
 		*/
-		std::pair<Socket, Address> accept();
+		std::pair<Socket, Address> accept() const;
 
 		/**
 		 * @brief Closes the socket.
 		*/
-		void close();
+		void close() const;
 
 		/**
 		 * @brief Connects to an address.
 		 * @param address The address to connect to.
 		*/
-		void connect(Address address);
+		void connect(Address address) const;
 
 		/**
 		 * @brief Sets the timeout of the socket.
 		 * @param seconds Timeout in seconds.
 		*/
-		void setTimeout(float seconds);
+		void setTimeout(float seconds) const;
 
 		/**
 		 * @brief Sets whether the socket is in blocking or non-blocking mode.
 		 * @param blocking Blocking or non-blocking mode.
 		*/
-		void setBlocking(bool blocking);
+		void setBlocking(bool blocking) const;
 
 #pragma region TCP send/recv
 		/**
@@ -158,7 +187,7 @@ namespace sockets
 		 * @param obj The variable.
 		 * @return The number of bytes sent.
 		*/
-		template<typename T> int send(T obj)
+		template<typename T> int send(T obj) const
 		{
 			std::vector<char> bytes = toBytes<T>(obj);
 			return send(bytes);
@@ -169,19 +198,19 @@ namespace sockets
 		 * @param size The size of the data.
 		 * @return The number of bytes sent.
 		*/
-		int send(const char* data, int size);
+		int send(const char* data, int size) const;
 		/**
 		 * @brief Sends data to the socket.
 		 * @param data The data to send.
 		 * @return The number of bytes sent.
 		*/
-		int send(std::vector<char> data);
+		int send(std::vector<char> data) const;
 		/**
 		 * @brief Sends data to the socket.
 		 * @param data The data to send.
 		 * @return The number of bytes sent.
 		*/
-		int send(std::string data);
+		int send(std::string data) const;
 
 
 		/**
@@ -189,7 +218,7 @@ namespace sockets
 		 * @tparam T The type of the variable.
 		 * @return The variable.
 		*/
-		template<typename T> T recv()
+		template<typename T> T recv() const
 		{
 			std::vector<char> data = recv(sizeof(T));
 			return toVariable<T>(data);
@@ -199,13 +228,13 @@ namespace sockets
 		 * @param size The maximum amount of data to be received.
 		 * @return A vector of bytes representing the data received.
 		*/
-		std::vector<char> recv(int size);
+		std::vector<char> recv(int size) const;
 		/**
 		 * @brief Receives data from the socket.
 		 * @param size The maximum amount of data to be received.
 		 * @return A string representing the data received.
 		*/
-		std::string recvString(int size);
+		std::string recvString(int size) const;
 
 #pragma endregion
 
@@ -217,7 +246,7 @@ namespace sockets
 		 * @param address The address to send to.
 		 * @return The number of bytes sent.
 		*/
-		template<typename T> int sendTo(T obj, Address address)
+		template<typename T> int sendTo(T obj, Address address) const
 		{
 			std::vector<char> data = toBytes<T>(obj);
 			return sendTo(data, address);
@@ -229,21 +258,21 @@ namespace sockets
 		 * @param address The address to send to.
 		 * @return The number of bytes sent.
 		*/
-		int sendTo(const char* data, int size, Address address);
+		int sendTo(const char* data, int size, Address address) const;
 		/**
 		 * @brief Sends data to an address.
 		 * @param data The data to send.
 		 * @param address The address to send to.
 		 * @return The number of bytes sent.
 		*/
-		int sendTo(std::vector<char> data, Address address);
+		int sendTo(std::vector<char> data, Address address) const;
 		/**
 		 * @brief Sends data to an address.
 		 * @param data The data to send.
 		 * @param address The address to send to.
 		 * @return The number of bytes sent.
 		*/
-		int sendTo(std::string data, Address address);
+		int sendTo(std::string data, Address address) const;
 
 
 		/**
@@ -251,7 +280,7 @@ namespace sockets
 		 * @tparam T The type of the variable.
 		 * @return A pair of the variable received and the address it was sent from.
 		*/
-		template<typename T> std::pair<T, Address> recvFrom()
+		template<typename T> std::pair<T, Address> recvFrom() const
 		{
 			auto [data, address] = recvFrom(sizeof(T));
 			return std::make_pair(toVariable<T>(data), address);
@@ -261,13 +290,13 @@ namespace sockets
 		 * @param size The maximum amount of data to be received.
 		 * @return A pair with a vector of bytes representing the data received, and the address it was sent from.
 		*/
-		std::pair<std::vector<char>, Address> recvFrom(int size);
+		std::pair<std::vector<char>, Address> recvFrom(int size) const;
 		/**
 		 * @brief Receives data from the socket.
 		 * @param size The maximum amount of data to be received.
 		 * @return A pair with a string representing the data received, and the address it was sent from.
 		*/
-		std::pair<std::string, Address> recvFromString(int size);
+		std::pair<std::string, Address> recvFromString(int size) const;
 
 #pragma endregion
 

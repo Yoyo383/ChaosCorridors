@@ -49,7 +49,7 @@ void LobbyState::update()
 			members.manager.setState(std::move(gameState));
 		}
 	}
-	catch (std::exception& err)
+	catch (sockets::exception& err)
 	{
 		std::cout << err.what() << std::endl;
 	}

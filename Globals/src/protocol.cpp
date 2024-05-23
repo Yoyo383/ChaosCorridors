@@ -3,7 +3,6 @@
 
 namespace protocol
 {
-
 	std::pair<std::string, std::string> receiveKeyValue(sockets::Socket& socket)
 	{
 		std::string key = "", value = "";
@@ -26,9 +25,9 @@ namespace protocol
 						value += data;
 				}
 			}
-			catch (std::exception& err)
+			catch (sockets::exception& err)
 			{
-				if (err.what() != std::to_string(WSAEWOULDBLOCK))
+				if (err.getErrorCode() != WSAEWOULDBLOCK)
 					std::cout << "Error in key/value: " << err.what() << std::endl;
 				return std::make_pair("", "");
 			}
@@ -49,9 +48,9 @@ namespace protocol
 			auto [packet, address] = socket.recvFrom<PositionInfoPacket>();
 			return packet;
 		}
-		catch (std::exception& err)
+		catch (sockets::exception& err)
 		{
-			if (err.what() != std::to_string(WSAEWOULDBLOCK))
+			if (err.getErrorCode() != WSAEWOULDBLOCK)
 				std::cout << "Error: " << err.what() << std::endl;
 			return { PacketType::NO_PACKET, 0, { 0, 0 } };
 		}

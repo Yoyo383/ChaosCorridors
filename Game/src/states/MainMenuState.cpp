@@ -46,9 +46,9 @@ void MainMenuState::update()
 					std::unique_ptr<LobbyState> lobbyState = std::make_unique<LobbyState>(members);
 					members.manager.addState(std::move(lobbyState));
 				}
-				catch (std::exception& err)
+				catch (sockets::exception& err)
 				{
-					std::cout << "Can't connect to server." << std::endl;
+					std::cout << err.what() << std::endl;
 				}
 			}
 		}

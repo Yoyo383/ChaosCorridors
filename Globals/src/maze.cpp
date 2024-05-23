@@ -1,4 +1,5 @@
 #include "maze.hpp"
+#include "util.hpp"
 #include <stack>
 #include <vector>
 
@@ -46,8 +47,8 @@ namespace globals
 		}
 
 		// first cell
-		int firstX = (rand() % MAZE_WIDTH) * 2 + 1;
-		int firstY = (rand() % MAZE_HEIGHT) * 2 + 1;
+		int firstX = randInt(0, MAZE_WIDTH - 1) * 2 + 1;
+		int firstY = randInt(0, MAZE_HEIGHT - 1) * 2 + 1;
 		maze[firstY][firstX] = CELL_VISITED;
 		stack.push({ firstX, firstY });
 		visitedCells = 1;
@@ -71,7 +72,7 @@ namespace globals
 
 			if (!neighbors.empty())
 			{
-				int nextCellDir = neighbors[rand() % neighbors.size()];
+				int nextCellDir = neighbors[randInt(0, neighbors.size() - 1)];
 
 				// delete the wall of the chosen neighbor
 				switch (nextCellDir)

@@ -98,34 +98,41 @@ static void handleClient(sockets::Socket socket, sockets::Address address)
 
 	while (!closed)
 	{
-		auto [key, value] = protocol::receiveKeyValue(socket);
-
-		if (key == "player")
+		try
 		{
-			name = value;
-			names.push_back(value);
-			int index = count;
-			socket.send(protocol::keyValueMessage("index", std::to_string(index)));
+			auto [key, value] = protocol::receiveKeyValue(socket);
 
-			clients[index] = Client{ socket, Player(randomPosition()), 0 };
+			if (key == "player")
+			{
+				name = value;
+				names.push_back(value);
+				int index = count;
+				socket.send(protocol::keyValueMessage("index", std::to_string(index)));
 
-			broadcast(protocol::keyValueMessage("player", value));
+				clients[index] = Client{ socket, Player(randomPosition()), 0 };
+
+				broadcast(protocol::keyValueMessage("player", value));
+			}
+
+			if (key == "udp")
+			{
+				udpAddress = { address.ip, (unsigned short)std::stoul(value.c_str()) };
+				addresses.push_back(udpAddress);
+			}
+
+			if (key == "close")
+			{
+				clients.erase(std::stoi(value));
+				deleteElement(addresses, udpAddress);
+				deleteElement(names, name);
+				socket.close();
+				closed = true;
+				count--;
+			}
 		}
-
-		if (key == "udp")
+		catch (sockets::exception& err)
 		{
-			udpAddress = { address.ip, (unsigned short)std::stoul(value.c_str()) };
-			addresses.push_back(udpAddress);
-		}
-
-		if (key == "close")
-		{
-			clients.erase(std::stoi(value));
-			deleteElement(addresses, udpAddress);
-			deleteElement(names, name);
-			socket.close();
-			closed = true;
-			count--;
+			std::cout << err.what() << std::endl;
 		}
 	}
 }
@@ -338,7 +345,7 @@ void main()
 
 		std::cout << "Game ended!" << std::endl;
 	}
-	catch (std::exception& err)
+	catch (sockets::exception& err)
 	{
 		std::cout << "Server error: " << err.what() << std::endl;
 	}
