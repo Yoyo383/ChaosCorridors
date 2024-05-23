@@ -53,6 +53,12 @@ namespace sockets
 		exception(int errorCode);
 
 		/**
+		 * @brief Creates an exception with an error message and error code 0.
+		 * @param errorMessage The error message.
+		 */
+		exception(std::string errorMessage);
+
+		/**
 		 * @brief Returns a string that represents the error.
 		 * @return A string that represents the error.
 		 */
@@ -110,14 +116,17 @@ namespace sockets
 		// The ID of the socket, used for windows functions.
 		SOCKET socketId;
 
+		// How many seconds before timeout.
+		float timeoutSeconds;
+
 		/**
-		 * @brief Creates a new socket with an ID
+		 * @brief Creates a new socket with an ID and a timeout of 2 seconds.
 		 * @param id The ID of the socket.
 		*/
 		Socket(SOCKET id);
 	public:
 		/**
-		 * @brief Creates a new socket with a protocol.
+		 * @brief Creates a new socket with a protocol and a timeout of 2 seconds.
 		 * @param protocol The protocol of the socket.
 		*/
 		Socket(Protocol protocol);
@@ -163,7 +172,7 @@ namespace sockets
 		void close() const;
 
 		/**
-		 * @brief Connects to an address.
+		 * @brief Connects to an address. If the timeout is exceeded, the socket will be closed and a new one will be created.
 		 * @param address The address to connect to.
 		*/
 		void connect(Address address) const;
@@ -172,7 +181,7 @@ namespace sockets
 		 * @brief Sets the timeout of the socket.
 		 * @param seconds Timeout in seconds.
 		*/
-		void setTimeout(float seconds) const;
+		void setTimeout(float seconds);
 
 		/**
 		 * @brief Sets whether the socket is in blocking or non-blocking mode.

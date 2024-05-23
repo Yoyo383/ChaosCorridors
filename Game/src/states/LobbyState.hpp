@@ -7,13 +7,14 @@
 class LobbyState : public State
 {
 public:
-	LobbyState(Members& members);
+	LobbyState(Members& members, std::string ip);
 
 	void update() override;
 	void draw() override;
 
 private:
 	Members& members;
+	std::string ip;
 
 	bool isFocused;
 

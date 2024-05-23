@@ -3,8 +3,8 @@
 #include "protocol.hpp"
 #include <iostream>
 
-LobbyState::LobbyState(Members& members)
-	: members(members), isFocused(true)
+LobbyState::LobbyState(Members& members, std::string ip)
+	: members(members), isFocused(true), ip(ip)
 {
 	members.tcpSocket.setBlocking(false);
 }
@@ -45,7 +45,7 @@ void LobbyState::update()
 			members.playerIndex = std::stoi(value);
 		else if (key == "start")
 		{
-			std::unique_ptr<GameState> gameState = std::make_unique<GameState>(members, isFocused);
+			std::unique_ptr<GameState> gameState = std::make_unique<GameState>(members, isFocused, ip);
 			members.manager.setState(std::move(gameState));
 		}
 	}

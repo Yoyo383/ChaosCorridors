@@ -5,6 +5,7 @@
 #include "../TextureManager.hpp"
 #include "../ui/TextField.hpp"
 #include "../Members.hpp"
+#include <thread>
 
 class MainMenuState : public State
 {
@@ -19,4 +20,12 @@ private:
 
 	Button hostButton;
 	TextField nameField;
+	TextField ipField;
+
+	sf::Sprite background;
+
+	sf::Text errorText;
+
+	std::thread connectThread;
+	bool canConnect;
 };

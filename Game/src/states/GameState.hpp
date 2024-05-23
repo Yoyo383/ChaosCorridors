@@ -17,7 +17,7 @@ struct Ray
 class GameState : public State
 {
 public:
-	GameState(Members& members, bool isFocused);
+	GameState(Members& members, bool isFocused, std::string ip);
 	~GameState();
 
 	void update() override;
@@ -43,7 +43,7 @@ public:
 private:
 	Members& members;
 
-	sockets::Address serverAddress;
+	sockets::Address serverAddressUDP;
 
 	globals::MazeArr maze;
 

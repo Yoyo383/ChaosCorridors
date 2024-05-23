@@ -22,8 +22,8 @@ int main()
 	members.textures["ceiling"].setRepeated(true);
 	members.textures.addTexture("wall", "assets/redbrick.png");
 	members.textures.addTexture("character", "assets/character.png");
-	members.textures.addTexture("hostButton", "assets/hostButton.png");
-	members.textures.addTexture("buttonNormal", "assets/buttonNormal.png");
+	members.textures.addTexture("playButton", "assets/playButton.png");
+	members.textures.addTexture("playButtonPressed", "assets/playButtonPressed.png");
 	members.textures.addTexture("bullet", "assets/bullet.png");
 	members.textures.addTexture("heart", "assets/heart.png");
 

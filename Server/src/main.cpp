@@ -11,11 +11,7 @@
 // for easier use
 using time_point = std::chrono::steady_clock::time_point;
 
-
-const unsigned short PORT = 12345;
-const unsigned short UDP_PORT = 54321;
-
-const int NUMBER_OF_PLAYERS = 2;
+const int NUMBER_OF_PLAYERS = 1;
 
 static int count = 0;
 
@@ -303,8 +299,8 @@ void main()
 
 	try
 	{
-		udpSocket.bind({ "0.0.0.0", UDP_PORT });
-		serverSocket.bind({ "0.0.0.0", PORT });
+		udpSocket.bind({ "0.0.0.0", globals::UDP_PORT });
+		serverSocket.bind({ "0.0.0.0", globals::TCP_PORT });
 		serverSocket.listen(4);
 
 		while (count < NUMBER_OF_PLAYERS)
@@ -315,6 +311,9 @@ void main()
 			thread.detach();
 			count++;
 		}
+
+		// closing to prevent new players to connect during the game
+		serverSocket.close();
 
 		std::this_thread::sleep_for(std::chrono::seconds(2));
 		initGame(udpSocket);
@@ -349,8 +348,6 @@ void main()
 	{
 		std::cout << "Server error: " << err.what() << std::endl;
 	}
-
-	serverSocket.close();
 
 	sockets::shutdown();
 }

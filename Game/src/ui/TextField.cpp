@@ -4,12 +4,13 @@ TextField::TextField(sf::Vector2f position, sf::Font& font) : isFocused(false), 
 {
 	text.setFont(font);
 	text.setPosition(position);
-	text.setFillColor(sf::Color::Black);
+	text.setFillColor(sf::Color::White);
 
 	rect.setPosition(position);
-	rect.setSize({ 20 * 30, 30 });
+	rect.setSize({ 20 * 30, 40 });
 	rect.setOutlineThickness(2);
-	rect.setOutlineColor(sf::Color::Black);
+	rect.setOutlineColor(sf::Color::White);
+	rect.setFillColor(sf::Color::Transparent);
 }
 
 std::string TextField::getText() const
@@ -28,7 +29,7 @@ void TextField::setFocus(bool focus)
 	if (isFocused)
 		rect.setOutlineColor(sf::Color::Red);
 	else
-		rect.setOutlineColor(sf::Color::Black);
+		rect.setOutlineColor(sf::Color::White);
 }
 
 void TextField::handleInput(sf::Event event)

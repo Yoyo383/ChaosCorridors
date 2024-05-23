@@ -11,7 +11,7 @@ struct Sprite
 	sf::Vector2f position;
 };
 
-GameState::GameState(Members& members, bool isFocused)
+GameState::GameState(Members& members, bool isFocused, std::string ip)
 	: members(members), maze(), isFocused(isFocused)
 {
 	members.tcpSocket.setBlocking(true);
@@ -21,7 +21,7 @@ GameState::GameState(Members& members, bool isFocused)
 
 	members.tcpSocket.setBlocking(false);
 
-	serverAddress = { "127.0.0.1", 54321 };
+	serverAddressUDP = { ip, globals::UDP_PORT };
 
 	heartSprite.setTexture(members.textures["heart"]);
 
@@ -111,7 +111,7 @@ void GameState::update()
 				packet.position = bulletPosition;
 				packet.direction = player.direction;
 
-				protocol::sendPositionInfo(members.udpSocket, serverAddress, packet);
+				protocol::sendPositionInfo(members.udpSocket, serverAddressUDP, packet);
 			}
 		}
 		else if (event.type == sf::Event::LostFocus)
@@ -184,7 +184,7 @@ void GameState::update()
 		packet.index = members.playerIndex;
 		packet.position = player.pos;
 
-		protocol::sendPositionInfo(members.udpSocket, serverAddress, packet);
+		protocol::sendPositionInfo(members.udpSocket, serverAddressUDP, packet);
 		elapsedTime = 0;
 	}
 

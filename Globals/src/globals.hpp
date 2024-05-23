@@ -5,6 +5,9 @@
 // global constants
 namespace globals
 {
+	inline const unsigned short TCP_PORT = 23456;
+	inline const unsigned short UDP_PORT = 23456;
+
 	// maze size
 	inline const int MAZE_WIDTH = 4;
 	inline const int MAZE_HEIGHT = 4;
