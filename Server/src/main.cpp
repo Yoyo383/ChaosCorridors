@@ -30,12 +30,12 @@ struct Client
 {
 	sockets::Socket tcpSocket;
 	Player player;
+	std::string name;
 	int score = 0;
 };
 
 std::vector<sockets::Address> addresses;
 
-std::vector<std::string> names;
 std::vector<Bullet> bullets;
 
 std::unordered_map<char, Client> clients;
@@ -87,8 +87,8 @@ static void handleClient(sockets::Socket socket, sockets::Address address)
 
 	std::cout << address.ip << " " << address.port << std::endl;
 
-	for (auto& name : names)
-		socket.send("player:" + name + "\n");
+	for (auto& [index, client] : clients)
+		socket.send("player:" + client.name + "\n");
 
 	bool closed = false;
 
@@ -100,12 +100,10 @@ static void handleClient(sockets::Socket socket, sockets::Address address)
 
 			if (key == "player")
 			{
-				name = value;
-				names.push_back(value);
 				int index = count;
 				socket.send(protocol::keyValueMessage("index", std::to_string(index)));
-
-				clients[index] = Client{ socket, Player(randomPosition()), 0 };
+				name = value;
+				clients[index] = Client{ socket, Player(randomPosition()), name, 0 };
 
 				broadcast(protocol::keyValueMessage("player", value));
 			}
@@ -120,7 +118,6 @@ static void handleClient(sockets::Socket socket, sockets::Address address)
 			{
 				clients.erase(std::stoi(value));
 				deleteElement(addresses, udpAddress);
-				deleteElement(names, name);
 				socket.close();
 				closed = true;
 				count--;
@@ -227,7 +224,7 @@ static bool checkDelay(int& elapsedTime, time_point& lastTimeFrame, time_point n
 	return true;
 }
 
-static void sendTimerUpdate(int& timerTime, time_point& lastTimeTimer, time_point now)
+static bool sendTimerUpdate(int& timerTime, time_point& lastTimeTimer, time_point now)
 {
 	timerTime = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastTimeTimer).count();
 	if (timerTime >= 1000)
@@ -237,7 +234,10 @@ static void sendTimerUpdate(int& timerTime, time_point& lastTimeTimer, time_poin
 
 		timer--;
 		broadcast(protocol::keyValueMessage("timer", std::to_string(timer)));
+		if (timer == 0)
+			return true;
 	}
+	return false;
 }
 
 static void handleEvents(sockets::Socket& udpSocket)
@@ -287,6 +287,28 @@ static void sendBullets(sockets::Socket& udpSocket)
 	}
 }
 
+static void sendWin()
+{
+	std::string wonPlayers;
+	int maxScore = 0;
+
+	for (auto& [index, client] : clients)
+		maxScore = max(client.score, maxScore);
+
+	for (auto& [index, client] : clients)
+	{
+		if (client.score == maxScore)
+		{
+			if (wonPlayers == "")
+				wonPlayers = client.name;
+			else
+				wonPlayers += " + " + client.name;
+		}
+	}
+
+	broadcast(protocol::keyValueMessage("end", wonPlayers));
+}
+
 void main()
 {
 	sockets::initialize();
@@ -333,13 +355,18 @@ void main()
 			if (!checkDelay(elapsedTime, lastTimeFrame, now))
 				continue;
 
-			sendTimerUpdate(timerTime, lastTimeTimer, now);
+			bool finished = sendTimerUpdate(timerTime, lastTimeTimer, now);
+			if (finished)
+				sendWin();
 
-			handleEvents(udpSocket);
+			else
+			{
+				handleEvents(udpSocket);
 
-			updateBullets(udpSocket);
+				updateBullets(udpSocket);
 
-			sendBullets(udpSocket);
+				sendBullets(udpSocket);
+			}
 		}
 
 		std::cout << "Game ended!" << std::endl;

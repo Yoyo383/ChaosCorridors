@@ -17,7 +17,7 @@ struct Player
 
 	inline static const float FOV = degToRad(60);
 	inline static const float SPEED = 2.0f;
-	inline static const float SENSITIVITY = 0.01f;
+	inline static const float SENSITIVITY = 0.005f;
 
 	sf::Vector2f pos, velocity;
 	float direction;

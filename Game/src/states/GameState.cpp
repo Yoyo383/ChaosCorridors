@@ -135,6 +135,15 @@ void GameState::update()
 		else if (key == "score")
 			score += std::stoi(value);
 
+		else if (key == "end")
+		{
+			std::cout << value << " won!" << std::endl;
+			members.manager.quit();
+			members.tcpSocket.send(protocol::keyValueMessage("close", std::to_string(members.playerIndex)));
+			members.tcpSocket.close();
+			return;
+		}
+
 	}
 	while (receivedKey != "");
 

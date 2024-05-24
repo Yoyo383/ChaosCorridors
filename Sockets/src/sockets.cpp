@@ -40,7 +40,7 @@ namespace sockets
 
 	exception::exception(int errorCode) : errorCode(errorCode)
 	{
-		const wchar_t* message = nullptr;
+		LPTSTR message = nullptr;
 		// set error message
 		int hello = FormatMessageW(
 			FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
@@ -54,9 +54,10 @@ namespace sockets
 		std::wstring tempMessage(message);
 		std::string error(tempMessage.begin(), tempMessage.end());
 		error.pop_back();
+		error.pop_back();
 		errorMessage = "[WinError " + std::to_string(errorCode) + "] " + error;
 
-		delete[] message;
+		LocalFree(message);
 	}
 
 	exception::exception(std::string errorMessage) : errorMessage(errorMessage), errorCode(0) { }
