@@ -5,7 +5,7 @@
 #include "../TextureManager.hpp"
 #include "../ui/TextField.hpp"
 #include "../Members.hpp"
-#include <thread>
+#include <future>
 
 class MainMenuState : public State
 {
@@ -15,6 +15,8 @@ public:
 	void update() override;
 	void draw() override;
 
+	bool connectToServer();
+
 private:
 	Members& members;
 
@@ -23,4 +25,10 @@ private:
 	TextField ipField;
 
 	sf::Text errorText;
+
+	std::string ip;
+
+	std::future<bool> connectFuture;
+	bool canConnect;
+	bool doesFutureExist;
 };

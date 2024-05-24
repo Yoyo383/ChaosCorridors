@@ -11,13 +11,35 @@ MainMenuState::MainMenuState(Members& members)
 	: members(members),
 	hostButton({ members.window.getSize().x / 2.0f, members.window.getSize().y / 2.0f }, members.textures, "playButton", "playButtonPressed"),
 	nameField({ 100, 100 }, members.font),
-	ipField({ 100, 150 }, members.font)
+	ipField({ 100, 150 }, members.font),
+	canConnect(true),
+	doesFutureExist(false)
 {
 	hostButton.setSizeRelativeToWindow(members.window, 0.5f);
 	errorText.setFont(members.font);
 	errorText.setFillColor(sf::Color::Red);
+}
 
-	members.tcpSocket.setTimeout(0.5f);
+bool MainMenuState::connectToServer()
+{
+	errorText.setFillColor(sf::Color::Yellow);
+	errorText.setString("Connecting to server...");
+	try
+	{
+		members.tcpSocket.connect({ ip, globals::TCP_PORT });
+	}
+	catch (sockets::exception& err)
+	{
+		errorText.setFillColor(sf::Color::Red);
+		errorText.setString("Can't connect to server.");
+
+		std::cout << err.what() << std::endl;
+		if (std::string(err.what()) == "Socket timed out")
+			members.tcpSocket = sockets::Socket(sockets::Protocol::TCP);
+
+		return false;
+	}
+	return true;
 }
 
 void MainMenuState::update()
@@ -40,36 +62,19 @@ void MainMenuState::update()
 			if (hostButton.isButtonClicked(pos))
 			{
 				hostButton.setClicked(false);
-				try
+				ip = ipField.getText();
+
+				if (nameField.getText() == "")
 				{
-					std::string ip = ipField.getText();
-
-					if (nameField.getText() == "")
-					{
-						errorText.setString("Please enter a name.");
-						return;
-					}
-
-					members.tcpSocket.connect({ ip, globals::TCP_PORT });
-
-					members.tcpSocket.send(protocol::keyValueMessage("player", nameField.getText()));
-
-					// get available port
-					members.udpSocket.bind({ "0.0.0.0", 0 });
-					sockets::Address udpAddress = members.udpSocket.getSocketName();
-
-					// send UDP port
-					members.tcpSocket.send(protocol::keyValueMessage("udp", std::to_string(udpAddress.port)));
-
-					std::unique_ptr<LobbyState> lobbyState = std::make_unique<LobbyState>(members, ip);
-					members.manager.setState(std::move(lobbyState));
+					errorText.setString("Please enter a name.");
+					return;
 				}
-				catch (sockets::exception& err)
+
+				if (canConnect)
 				{
-					errorText.setString("Can't connect to server.");
-					std::cout << err.what() << std::endl;
-					if (std::string(err.what()) == "Socket timed out")
-						members.tcpSocket = sockets::Socket(sockets::Protocol::TCP);
+					connectFuture = std::async(std::launch::async, &MainMenuState::connectToServer, this);
+					canConnect = false;
+					doesFutureExist = true;
 				}
 			}
 		}
@@ -78,6 +83,38 @@ void MainMenuState::update()
 			nameField.handleInput(event);
 			ipField.handleInput(event);
 		}
+	}
+
+	if (!doesFutureExist || connectFuture.wait_for(0s) != std::future_status::ready)
+		return;
+
+	bool connected = connectFuture.get();
+	if (!connected)
+	{
+		canConnect = true;
+		doesFutureExist = false;
+		return;
+	}
+
+	try
+	{
+		members.tcpSocket.send(protocol::keyValueMessage("player", nameField.getText()));
+
+		// get available port
+		members.udpSocket.bind({ "0.0.0.0", 0 });
+		sockets::Address udpAddress = members.udpSocket.getSocketName();
+
+		// send UDP port
+		members.tcpSocket.send(protocol::keyValueMessage("udp", std::to_string(udpAddress.port)));
+
+		std::unique_ptr<LobbyState> lobbyState = std::make_unique<LobbyState>(members, ip);
+		members.manager.setState(std::move(lobbyState));
+	}
+	catch (sockets::exception& err)
+	{
+		errorText.setFillColor(sf::Color::Red);
+		errorText.setString("Can't start connection with server.");
+		std::cout << err.what() << std::endl;
 	}
 }
 
