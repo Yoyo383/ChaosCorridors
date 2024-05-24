@@ -84,6 +84,7 @@ static void handleClient(sockets::Socket socket, sockets::Address address)
 {
 	sockets::Address udpAddress;
 	std::string name;
+	int index = 0;
 
 	std::cout << address.ip << " " << address.port << std::endl;
 
@@ -100,7 +101,7 @@ static void handleClient(sockets::Socket socket, sockets::Address address)
 
 			if (key == "player")
 			{
-				int index = count;
+				index = count;
 				socket.send(protocol::keyValueMessage("index", std::to_string(index)));
 				name = value;
 				clients[index] = Client{ socket, Player(randomPosition()), name, 0 };
@@ -114,9 +115,9 @@ static void handleClient(sockets::Socket socket, sockets::Address address)
 				addresses.push_back(udpAddress);
 			}
 
-			if (key == "close")
+			if (key == "close" || key == "")
 			{
-				clients.erase(std::stoi(value));
+				clients.erase(index);
 				deleteElement(addresses, udpAddress);
 				socket.close();
 				closed = true;
@@ -305,6 +306,8 @@ static void sendWin()
 				wonPlayers += " + " + client.name;
 		}
 	}
+
+	wonPlayers += " won!";
 
 	broadcast(protocol::keyValueMessage("end", wonPlayers));
 }

@@ -15,6 +15,7 @@ int main()
 	Members members;
 
 	members.window.create(sf::VideoMode(800, 600), "Yay window!", sf::Style::Titlebar | sf::Style::Close);
+	members.window.setVerticalSyncEnabled(true);
 
 	members.textures.addTexture("floor", "assets/wood.png");
 	members.textures["floor"].setRepeated(true);

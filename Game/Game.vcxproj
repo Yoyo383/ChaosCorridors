@@ -135,6 +135,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\states\EndState.cpp" />
     <ClCompile Include="src\states\LobbyState.cpp" />
     <ClCompile Include="src\ui\Button.cpp" />
     <ClCompile Include="src\states\MainMenuState.cpp" />
@@ -146,6 +147,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Members.hpp" />
+    <ClInclude Include="src\states\EndState.hpp" />
     <ClInclude Include="src\states\LobbyState.hpp" />
     <ClInclude Include="src\ui\Button.hpp" />
     <ClInclude Include="src\states\MainMenuState.hpp" />

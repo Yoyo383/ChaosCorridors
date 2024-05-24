@@ -62,7 +62,7 @@ void MainMenuState::update()
 					members.tcpSocket.send(protocol::keyValueMessage("udp", std::to_string(udpAddress.port)));
 
 					std::unique_ptr<LobbyState> lobbyState = std::make_unique<LobbyState>(members, ip);
-					members.manager.addState(std::move(lobbyState));
+					members.manager.setState(std::move(lobbyState));
 				}
 				catch (sockets::exception& err)
 				{

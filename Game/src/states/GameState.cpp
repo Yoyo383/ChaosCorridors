@@ -3,6 +3,7 @@
 #include "util.hpp"
 #include "globals.hpp"
 #include "protocol.hpp"
+#include "EndState.hpp"
 #include <iostream>
 
 struct Sprite
@@ -137,8 +138,11 @@ void GameState::update()
 
 		else if (key == "end")
 		{
-			std::cout << value << " won!" << std::endl;
-			members.manager.quit();
+			members.window.setMouseCursorVisible(true);
+
+			std::unique_ptr<EndState> endState = std::make_unique<EndState>(members, value);
+			members.manager.setState(std::move(endState));
+
 			members.tcpSocket.send(protocol::keyValueMessage("close", std::to_string(members.playerIndex)));
 			members.tcpSocket.close();
 			return;
