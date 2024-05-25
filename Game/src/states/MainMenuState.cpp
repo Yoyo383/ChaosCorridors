@@ -10,14 +10,20 @@ using namespace std::chrono_literals;
 MainMenuState::MainMenuState(Members& members)
 	: members(members),
 	hostButton({ members.window.getSize().x / 2.0f, members.window.getSize().y / 2.0f }, members.textures, "playButton", "playButtonPressed"),
-	nameField({ 100, 100 }, members.font),
-	ipField({ 100, 150 }, members.font),
+	nameField({ members.window.getSize().x / 2.0f, 100 }, members.font, "Name: ", 10, 30),
+	ipField({ members.window.getSize().x / 2.0f, 150 }, members.font, "IP: ", 16, 30),
 	canConnect(true),
 	doesFutureExist(false)
 {
 	hostButton.setSizeRelativeToWindow(members.window, 0.5f);
 	errorText.setFont(members.font);
 	errorText.setFillColor(sf::Color::Red);
+
+	logo.setTexture(members.textures["logo"]);
+	logo.setOrigin(logo.getGlobalBounds().getSize() / 2);
+	float scale = members.window.getSize().x / 1.5f / members.textures["logo"].getSize().x;
+	logo.setScale(scale, scale);
+	logo.setPosition(members.window.getSize().x / 2.0f, logo.getGlobalBounds().height / 3);
 }
 
 bool MainMenuState::connectToServer()
@@ -121,6 +127,8 @@ void MainMenuState::update()
 void MainMenuState::draw()
 {
 	members.window.clear(sf::Color(77, 77, 77));
+
+	members.window.draw(logo);
 
 	hostButton.draw(members.window);
 	nameField.draw(members.window);

@@ -24,6 +24,8 @@ private:
 	TextField nameField;
 	TextField ipField;
 
+	sf::Sprite logo;
+
 	sf::Text errorText;
 
 	std::string ip;
