@@ -9,11 +9,13 @@ namespace sockets
 	{
 		int result;
 		// getting ip from string
-		unsigned long ip;
-
+		unsigned long ip = 0;
+		
 		result = inet_pton(AF_INET, address.ip.c_str(), &ip);
-		if (result != 1)
+		if (result == -1)
 			throw exception(WSAGetLastError());
+		if (result == 0)
+			throw exception("Invalid IP.");
 
 		// setting up the address
 		sockaddr_in rawAddress{};
@@ -53,9 +55,10 @@ namespace sockets
 		);
 		std::wstring tempMessage(message);
 		std::string error(tempMessage.begin(), tempMessage.end());
+		// remove new line
 		error.pop_back();
 		error.pop_back();
-		errorMessage = "[WinError " + std::to_string(errorCode) + "] " + error;
+		errorMessage = "[Error " + std::to_string(errorCode) + "] " + error;
 
 		LocalFree(message);
 	}
