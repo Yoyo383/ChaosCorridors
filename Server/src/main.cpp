@@ -19,6 +19,8 @@ const int NUMBER_OF_TICKS = 60;
 
 const int KILL_PLAYER_SCORE = 100;
 
+float BULLET_SPEED = 10.0f;
+
 struct Bullet
 {
 	char playerIndex;
@@ -136,8 +138,8 @@ static void updateBullets(const sockets::Socket& udpSocket)
 	for (auto& bullet : bullets)
 	{
 		// move the bullets
-		bullet.position.x += bullet.direction.x * 6.0f * (1.0f / NUMBER_OF_TICKS);
-		bullet.position.y += bullet.direction.y * 6.0f * (1.0f / NUMBER_OF_TICKS);
+		bullet.position.x += bullet.direction.x * BULLET_SPEED * (1.0f / NUMBER_OF_TICKS);
+		bullet.position.y += bullet.direction.y * BULLET_SPEED * (1.0f / NUMBER_OF_TICKS);
 
 		for (auto& [index, client] : clients)
 		{

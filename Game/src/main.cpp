@@ -28,6 +28,7 @@ int main()
 	members.textures.addTexture("bullet", "assets/bullet.png");
 	members.textures.addTexture("heart", "assets/heart.png");
 	members.textures.addTexture("logo", "assets/logo.png");
+	members.textures.addTexture("crosshair", "assets/crosshair.png");
 
 	if (!members.font.loadFromFile("assets/retro.ttf"))
 		throw std::exception("Couldn't load font.");

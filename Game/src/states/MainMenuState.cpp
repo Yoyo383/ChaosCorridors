@@ -3,6 +3,8 @@
 #include "LobbyState.hpp"
 #include "sockets.hpp"
 #include "protocol.hpp"
+#include "util.hpp"
+#include "globals.hpp"
 #include <future>
 
 using namespace std::chrono_literals;

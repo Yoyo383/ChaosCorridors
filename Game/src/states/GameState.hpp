@@ -49,7 +49,6 @@ private:
 
 	sf::Clock deltaClock;
 	float dt;
-
 	float elapsedTime;
 	int timer;
 
@@ -61,9 +60,10 @@ private:
 	sf::Text timerText;
 	sf::Text scoreText;
 
+	sf::Sprite crosshair;
+
 	sf::Vector2i fixedMousePos;
 	bool isFocused;
-
 	bool paused;
 
 	float* zBuffer;

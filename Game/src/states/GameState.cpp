@@ -43,6 +43,11 @@ GameState::GameState(Members& members, bool isFocused, std::string ip)
 	dt = 0;
 	elapsedTime = 0;
 	zBuffer = new float[members.window.getSize().x + 1];
+
+	crosshair.setTexture(members.textures["crosshair"]);
+	//float scale = members.window.getSize().x / 30.0f / members.textures["crosshair"].getSize().x;
+	crosshair.setOrigin(crosshair.getLocalBounds().getSize() / 2);
+	crosshair.setPosition((float)fixedMousePos.x, (float)fixedMousePos.y);
 }
 
 GameState::~GameState()
@@ -100,20 +105,17 @@ void GameState::update()
 			if (event.key.code == sf::Keyboard::Escape)
 				paused = !paused;
 		}
-		else if (event.type == sf::Event::KeyReleased)
+		else if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left && !paused)
 		{
-			if (event.key.code == sf::Keyboard::Space)
-			{
-				sf::Vector2f bulletPosition = player.pos + 0.3f * sf::Vector2f{ cosf(player.direction), sinf(player.direction) };
+			sf::Vector2f bulletPosition = player.pos + 0.3f * sf::Vector2f{ cosf(player.direction), sinf(player.direction) };
 
-				protocol::Packet packet;
-				packet.type = protocol::PacketType::UPDATE_BULLET;
-				packet.index = members.playerIndex;
-				packet.position = bulletPosition;
-				packet.direction = player.direction;
+			protocol::Packet packet;
+			packet.type = protocol::PacketType::UPDATE_BULLET;
+			packet.index = members.playerIndex;
+			packet.position = bulletPosition;
+			packet.direction = player.direction;
 
-				protocol::sendPacket(members.udpSocket, serverAddressUDP, packet);
-			}
+			protocol::sendPacket(members.udpSocket, serverAddressUDP, packet);
 		}
 		else if (event.type == sf::Event::LostFocus)
 			isFocused = false;
@@ -364,6 +366,8 @@ void GameState::draw()
 
 	scoreText.setString(std::to_string(score));
 	members.window.draw(scoreText);
+
+	members.window.draw(crosshair);
 
 	members.window.display();
 }
