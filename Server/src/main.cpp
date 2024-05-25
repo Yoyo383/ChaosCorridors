@@ -57,7 +57,7 @@ template<typename T> void broadcast(T data)
 	for (auto& [index, client] : clients)
 		client.tcpSocket.send(data);
 }
-template<typename T> void broadcastUDP(sockets::Socket socket, T data)
+template<typename T> void broadcastUDP(const sockets::Socket& socket, T data)
 {
 	for (auto& address : addresses)
 		socket.sendTo(data, address);
@@ -131,7 +131,7 @@ static void handleClient(sockets::Socket socket, sockets::Address address)
 	}
 }
 
-static void updateBullets(sockets::Socket& udpSocket)
+static void updateBullets(const sockets::Socket& udpSocket)
 {
 	for (auto& bullet : bullets)
 	{
@@ -184,7 +184,7 @@ static void updateBullets(sockets::Socket& udpSocket)
 	), bullets.end());
 }
 
-static void initGame(sockets::Socket& udpSocket)
+static void initGame(const sockets::Socket& udpSocket)
 {
 	std::cout << "Game is starting!" << std::endl;
 
@@ -241,7 +241,7 @@ static bool sendTimerUpdate(int& timerTime, time_point& lastTimeTimer, time_poin
 	return false;
 }
 
-static void handleEvents(sockets::Socket& udpSocket)
+static void handleEvents(const sockets::Socket& udpSocket)
 {
 	protocol::PacketType receivedType = protocol::PacketType::NO_PACKET;
 
@@ -266,7 +266,7 @@ static void handleEvents(sockets::Socket& udpSocket)
 	while (receivedType != protocol::PacketType::NO_PACKET);
 }
 
-static void sendBullets(sockets::Socket& udpSocket)
+static void sendBullets(const sockets::Socket& udpSocket)
 {
 	for (auto& address : addresses)
 	{
@@ -361,13 +361,10 @@ void main()
 			bool finished = sendTimerUpdate(timerTime, lastTimeTimer, now);
 			if (finished)
 				sendWin();
-
 			else
 			{
 				handleEvents(udpSocket);
-
 				updateBullets(udpSocket);
-
 				sendBullets(udpSocket);
 			}
 		}

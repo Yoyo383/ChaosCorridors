@@ -3,7 +3,7 @@
 
 namespace protocol
 {
-	std::pair<std::string, std::string> receiveKeyValue(sockets::Socket& socket)
+	std::pair<std::string, std::string> receiveKeyValue(const sockets::Socket& socket)
 	{
 		std::string key = "", value = "";
 		std::string data;
@@ -41,7 +41,7 @@ namespace protocol
 		return key + ":" + value + "\n";
 	}
 
-	Packet receivePacket(sockets::Socket& socket)
+	Packet receivePacket(const sockets::Socket& socket)
 	{
 		try
 		{
@@ -56,7 +56,7 @@ namespace protocol
 		}
 	}
 
-	void sendPacket(sockets::Socket& socket, sockets::Address& address, Packet packet)
+	void sendPacket(const sockets::Socket& socket, const sockets::Address& address, Packet packet)
 	{
 		socket.sendTo(packet, address);
 	}

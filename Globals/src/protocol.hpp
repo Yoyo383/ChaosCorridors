@@ -26,10 +26,10 @@ namespace protocol
 		float direction = 0;
 	};
 
-	std::pair<std::string, std::string> receiveKeyValue(sockets::Socket& socket);
+	std::pair<std::string, std::string> receiveKeyValue(const sockets::Socket& socket);
 	std::string keyValueMessage(std::string key, std::string value);
 
-	Packet receivePacket(sockets::Socket& socket);
-
-	void sendPacket(sockets::Socket& socket, sockets::Address& address, Packet packet);
+	Packet receivePacket(const sockets::Socket& socket);
+	
+	void sendPacket(const sockets::Socket& socket, const sockets::Address& address, Packet packet);
 }
