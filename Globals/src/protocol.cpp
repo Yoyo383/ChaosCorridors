@@ -41,11 +41,11 @@ namespace protocol
 		return key + ":" + value + "\n";
 	}
 
-	PositionInfoPacket receivePositionInfo(sockets::Socket& socket)
+	Packet receivePacket(sockets::Socket& socket)
 	{
 		try
 		{
-			auto [packet, address] = socket.recvFrom<PositionInfoPacket>();
+			auto [packet, address] = socket.recvFrom<Packet>();
 			return packet;
 		}
 		catch (sockets::exception& err)
@@ -56,7 +56,7 @@ namespace protocol
 		}
 	}
 
-	void sendPositionInfo(sockets::Socket& socket, sockets::Address& address, PositionInfoPacket packet)
+	void sendPacket(sockets::Socket& socket, sockets::Address& address, Packet packet)
 	{
 		socket.sendTo(packet, address);
 	}

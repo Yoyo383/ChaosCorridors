@@ -18,7 +18,7 @@ namespace protocol
 		CLEAR_BULLETS
 	};
 
-	struct PositionInfoPacket
+	struct Packet
 	{
 		PacketType type = PacketType::NO_PACKET;
 		char index = -1;
@@ -29,7 +29,7 @@ namespace protocol
 	std::pair<std::string, std::string> receiveKeyValue(sockets::Socket& socket);
 	std::string keyValueMessage(std::string key, std::string value);
 
-	PositionInfoPacket receivePositionInfo(sockets::Socket& socket);
+	Packet receivePacket(sockets::Socket& socket);
 
-	void sendPositionInfo(sockets::Socket& socket, sockets::Address& address, PositionInfoPacket packet);
+	void sendPacket(sockets::Socket& socket, sockets::Address& address, Packet packet);
 }

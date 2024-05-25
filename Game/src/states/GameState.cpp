@@ -106,13 +106,13 @@ void GameState::update()
 			{
 				sf::Vector2f bulletPosition = player.pos + 0.3f * sf::Vector2f{ cosf(player.direction), sinf(player.direction) };
 
-				protocol::PositionInfoPacket packet;
+				protocol::Packet packet;
 				packet.type = protocol::PacketType::UPDATE_BULLET;
 				packet.index = members.playerIndex;
 				packet.position = bulletPosition;
 				packet.direction = player.direction;
 
-				protocol::sendPositionInfo(members.udpSocket, serverAddressUDP, packet);
+				protocol::sendPacket(members.udpSocket, serverAddressUDP, packet);
 			}
 		}
 		else if (event.type == sf::Event::LostFocus)
@@ -155,7 +155,7 @@ void GameState::update()
 	protocol::PacketType receivedType = protocol::PacketType::NO_PACKET;
 	do
 	{
-		protocol::PositionInfoPacket packet = protocol::receivePositionInfo(members.udpSocket);
+		protocol::Packet packet = protocol::receivePacket(members.udpSocket);
 		receivedType = packet.type;
 		if (packet.type == protocol::PacketType::INIT_PLAYER)
 		{
@@ -192,12 +192,12 @@ void GameState::update()
 
 	if (elapsedTime >= 1 / 30.0f)
 	{
-		protocol::PositionInfoPacket packet;
+		protocol::Packet packet;
 		packet.type = protocol::PacketType::UPDATE_PLAYER;
 		packet.index = members.playerIndex;
 		packet.position = player.pos;
 
-		protocol::sendPositionInfo(members.udpSocket, serverAddressUDP, packet);
+		protocol::sendPacket(members.udpSocket, serverAddressUDP, packet);
 		elapsedTime = 0;
 	}
 
