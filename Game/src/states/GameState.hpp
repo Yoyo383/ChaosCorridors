@@ -68,8 +68,8 @@ private:
 
 	float* zBuffer;
 
-	std::unordered_map<int, sf::Vector2f> bullets;
+	std::unordered_map<char, sf::Vector2f> bullets;
 
-	std::unordered_map<int, sf::Vector2f> players;
-	std::unordered_map<int, sf::Vector2f> targetPlayerPositions;
+	std::unordered_map<char, sf::Vector2f> players;
+	std::unordered_map<char, sf::Vector2f> targetPlayerPositions;
 };

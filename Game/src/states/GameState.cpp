@@ -138,6 +138,13 @@ void GameState::update()
 		else if (key == "score")
 			score += std::stoi(value);
 
+		else if (key == "exit")
+		{
+			char index = std::stoi(value);
+			players.erase(index);
+			targetPlayerPositions.erase(index);
+		}
+
 		else if (key == "end")
 		{
 			members.window.setMouseCursorVisible(true);

@@ -11,7 +11,7 @@
 // for easier use
 using time_point = std::chrono::steady_clock::time_point;
 
-const int NUMBER_OF_PLAYERS = 2;
+const int NUMBER_OF_PLAYERS = 1;
 
 static int count = 0;
 
@@ -124,6 +124,7 @@ static void handleClient(sockets::Socket socket, sockets::Address address)
 				socket.close();
 				closed = true;
 				count--;
+				broadcast(protocol::keyValueMessage("exit", std::to_string(index)));
 			}
 		}
 		catch (sockets::exception& err)
