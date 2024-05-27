@@ -55,6 +55,12 @@ void TextField::handleInput(sf::Event event)
 	text.setString(defaultText + currentText);
 }
 
+void TextField::setPosition(sf::Vector2f position)
+{
+	rect.setPosition(position);
+	text.setPosition(position - rect.getSize() / 2);
+}
+
 void TextField::draw(sf::RenderWindow& window) const
 {
 	window.draw(rect);

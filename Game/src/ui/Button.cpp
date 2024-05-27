@@ -15,7 +15,7 @@ Button::Button(sf::Vector2f position, TextureManager& textures, std::string norm
 
 void Button::setSizeRelativeToWindow(sf::RenderWindow& window, float percentage)
 {
-	float scale = window.getSize().x / (1 / percentage * currentSprite->getGlobalBounds().width);
+	float scale = window.getSize().y / (1 / percentage * currentSprite->getGlobalBounds().height);
 	normalSprite.setScale(scale, scale);
 	clickedSprite.setScale(scale, scale);
 }

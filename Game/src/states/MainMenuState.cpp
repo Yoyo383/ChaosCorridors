@@ -17,7 +17,7 @@ MainMenuState::MainMenuState(Members& members)
 	canConnect(true),
 	doesFutureExist(false)
 {
-	hostButton.setSizeRelativeToWindow(members.window, 0.5f);
+	hostButton.setSizeRelativeToWindow(members.window, 0.2f);
 	errorText.setFont(members.font);
 	errorText.setFillColor(sf::Color::Red);
 
@@ -26,6 +26,11 @@ MainMenuState::MainMenuState(Members& members)
 	float scale = members.window.getSize().x / 1.5f / members.textures["logo"].getSize().x;
 	logo.setScale(scale, scale);
 	logo.setPosition(members.window.getSize().x / 2.0f, logo.getGlobalBounds().height / 3);
+
+	auto logoBounds = logo.getGlobalBounds();
+	float y = logoBounds.top + logoBounds.height;
+	nameField.setPosition({ members.window.getSize().x / 2.0f, y });
+	ipField.setPosition({ members.window.getSize().x / 2.0f, y + 60 });
 }
 
 bool MainMenuState::connectToServer()
