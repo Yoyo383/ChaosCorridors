@@ -2,6 +2,8 @@
 #include <unordered_map>
 #include <thread>
 #include <chrono>
+#include <functional>
+#include <mutex>
 #include "sockets.hpp"
 #include "protocol.hpp"
 #include "globals.hpp"
@@ -11,19 +13,9 @@
 // for easier use
 using time_point = std::chrono::steady_clock::time_point;
 
-const int NUMBER_OF_PLAYERS = 1;
-
-static int count = 0;
-
-const int NUMBER_OF_TICKS = 60;
-
-const int KILL_PLAYER_SCORE = 100;
-
-float BULLET_SPEED = 10.0f;
-
 struct Bullet
 {
-	char playerIndex;
+	int playerIndex;
 	sf::Vector2f position;
 	sf::Vector2f direction;
 };
@@ -31,38 +23,42 @@ struct Bullet
 struct Client
 {
 	sockets::Socket tcpSocket;
+	sockets::Address udpAddress;
 	Player player;
 	std::string name;
 	int score = 0;
 };
 
-std::vector<sockets::Address> addresses;
+const int NUMBER_OF_TICKS = 60;
+const int KILL_PLAYER_SCORE = 100;
+const float BULLET_SPEED = 10.0f;
+
+int numberOfPlayers = 0;
+
+std::atomic<int> count = 0;
 
 std::vector<Bullet> bullets;
 
-std::unordered_map<char, Client> clients;
+std::vector<std::thread> clientThreads;
+
+std::unordered_map<int, Client> clients;
+std::mutex clientsMutex;
 
 globals::MazeArr maze;
 
-// Number of seconds in the game.
-static int timer = globals::GAME_TIME;
+int timer = globals::GAME_TIME;
 
 
-
-template<typename T> void deleteElement(std::vector<T>& vector, T element)
+static void forEachUDP(std::function<void(sockets::Address)> function)
 {
-	vector.erase(std::remove(vector.begin(), vector.end(), element), vector.end());
+	for (auto& [index, client] : clients)
+		function(client.udpAddress);
 }
 
 template<typename T> void broadcast(T data)
 {
 	for (auto& [index, client] : clients)
 		client.tcpSocket.send(data);
-}
-template<typename T> void broadcastUDP(const sockets::Socket& socket, T data)
-{
-	for (auto& address : addresses)
-		socket.sendTo(data, address);
 }
 
 static sf::Vector2f randomPosition()
@@ -85,13 +81,10 @@ static sf::Vector2f randomPosition()
 static void handleClient(sockets::Socket socket, sockets::Address address)
 {
 	sockets::Address udpAddress;
-	std::string name;
 	int index = 0;
 
-	std::cout << address.ip << " " << address.port << std::endl;
-
 	for (auto& [index, client] : clients)
-		socket.send("player:" + client.name + "\n");
+		socket.send(protocol::keyValueMessage("player", client.name));
 
 	bool closed = false;
 
@@ -101,35 +94,41 @@ static void handleClient(sockets::Socket socket, sockets::Address address)
 		{
 			auto [key, value] = protocol::receiveKeyValue(socket);
 
-			if (key == "player")
+			if (key == "player") // value is the name
 			{
 				index = count;
 				socket.send(protocol::keyValueMessage("index", std::to_string(index)));
-				name = value;
-				clients[index] = Client{ socket, Player(randomPosition()), name, 0 };
+
+				clientsMutex.lock();
+				clients[index] = Client{ socket, {"", 0}, Player(randomPosition()), value, 0};
+				clientsMutex.unlock();
 
 				broadcast(protocol::keyValueMessage("player", value));
 			}
 
-			if (key == "udp")
+			else if (key == "udp") // value is the UDP port
 			{
 				udpAddress = { address.ip, (unsigned short)std::stoul(value.c_str()) };
-				addresses.push_back(udpAddress);
+				clientsMutex.lock();
+				clients[index].udpAddress = udpAddress;
+				clientsMutex.unlock();
 			}
 
-			if (key == "close" || key == "")
+			else if (key == "close" || key == "") // no value
 			{
-				clients.erase(index);
-				deleteElement(addresses, udpAddress);
+				clientsMutex.lock();
 				socket.close();
+				clients.erase(index);
+				std::cout << "deleting index " << index << std::endl;
 				closed = true;
 				count--;
 				broadcast(protocol::keyValueMessage("exit", std::to_string(index)));
+				clientsMutex.unlock();
 			}
 		}
 		catch (sockets::exception& err)
 		{
-			std::cout << err.what() << std::endl;
+				std::cout << err.what() << std::endl;
 		}
 	}
 }
@@ -141,6 +140,8 @@ static void updateBullets(const sockets::Socket& udpSocket)
 		// move the bullets
 		bullet.position.x += bullet.direction.x * BULLET_SPEED * (1.0f / NUMBER_OF_TICKS);
 		bullet.position.y += bullet.direction.y * BULLET_SPEED * (1.0f / NUMBER_OF_TICKS);
+
+		clientsMutex.lock();
 
 		for (auto& [index, client] : clients)
 		{
@@ -161,8 +162,12 @@ static void updateBullets(const sockets::Socket& udpSocket)
 					packet.index = index;
 					packet.position = client.player.pos;
 
-					for (auto& address : addresses)
-						protocol::sendPacket(udpSocket, address, packet);
+					forEachUDP(
+						[packet, udpSocket](sockets::Address address)
+						{
+							protocol::sendPacket(udpSocket, address, packet);
+						}
+					);
 				}
 				else // if player got hit remove a life and notify the player
 					client.tcpSocket.send(protocol::keyValueMessage("hit", ""));
@@ -171,6 +176,8 @@ static void updateBullets(const sockets::Socket& udpSocket)
 				bullet.position.x = -1;
 			}
 		}
+
+		clientsMutex.unlock();
 	}
 
 	// remove bullets that are outside the map or collide with the map
@@ -201,18 +208,20 @@ static void initGame(const sockets::Socket& udpSocket)
 	broadcast(protocol::keyValueMessage("timer", std::to_string(timer)));
 
 	// send initial starting positions
-	for (auto& address : addresses)
-	{
-		for (auto& [index, client] : clients)
+	forEachUDP(
+		[udpSocket](sockets::Address address)
 		{
-			protocol::Packet packet;
-			packet.type = protocol::PacketType::INIT_PLAYER;
-			packet.index = index;
-			packet.position = client.player.pos;
+			for (auto& [index, client] : clients)
+			{
+				protocol::Packet packet;
+				packet.type = protocol::PacketType::INIT_PLAYER;
+				packet.index = index;
+				packet.position = client.player.pos;
 
-			protocol::sendPacket(udpSocket, address, packet);
+				protocol::sendPacket(udpSocket, address, packet);
+			}
 		}
-	}
+	);
 }
 
 static bool checkDelay(int& elapsedTime, time_point& lastTimeFrame, time_point now)
@@ -237,7 +246,9 @@ static bool sendTimerUpdate(int& timerTime, time_point& lastTimeTimer, time_poin
 		timerTime = 0;
 
 		timer--;
+		clientsMutex.lock();
 		broadcast(protocol::keyValueMessage("timer", std::to_string(timer)));
+		clientsMutex.unlock();
 		if (timer == 0)
 			return true;
 	}
@@ -258,8 +269,12 @@ static void handleEvents(const sockets::Socket& udpSocket)
 		{
 			clients[packet.index].player.pos = packet.position;
 
-			for (auto& address : addresses)
-				protocol::sendPacket(udpSocket, address, packet);
+			forEachUDP(
+				[udpSocket, packet](sockets::Address address)
+				{
+					protocol::sendPacket(udpSocket, address, packet);
+				}
+			);
 
 		}
 		else if (packet.type == protocol::PacketType::UPDATE_BULLET)
@@ -271,24 +286,26 @@ static void handleEvents(const sockets::Socket& udpSocket)
 
 static void sendBullets(const sockets::Socket& udpSocket)
 {
-	for (auto& address : addresses)
-	{
-		// clear the bullets
-		protocol::Packet packet;
-		packet.type = protocol::PacketType::CLEAR_BULLETS;
-		protocol::sendPacket(udpSocket, address, packet);
-
-		// send new bullet information
-		for (int i = 0; i < bullets.size(); i++)
+	forEachUDP(
+		[udpSocket](sockets::Address address)
 		{
+			 // clear the bullets
 			protocol::Packet packet;
-			packet.type = protocol::PacketType::UPDATE_BULLET;
-			packet.index = (char)i;
-			packet.position = bullets[i].position;
-
+			packet.type = protocol::PacketType::CLEAR_BULLETS;
 			protocol::sendPacket(udpSocket, address, packet);
+
+			packet.type = protocol::PacketType::UPDATE_BULLET;
+
+			// send new bullet information
+			for (int i = 0; i < bullets.size(); i++)
+			{
+				packet.index = (char)i;
+				packet.position = bullets[i].position;
+
+				protocol::sendPacket(udpSocket, address, packet);
+			}
 		}
-	}
+	);
 }
 
 static void sendWin()
@@ -315,9 +332,37 @@ static void sendWin()
 	broadcast(protocol::keyValueMessage("end", wonPlayers));
 }
 
+static bool parseNumberOfPlayers(const std::string& input)
+{
+	try
+	{
+		int inputInt = std::stoi(input);
+		if (inputInt <= 0)
+			return false;
+		numberOfPlayers = inputInt;
+	}
+	catch (std::invalid_argument)
+	{
+		return false;
+	}
+	return true;
+}
+
 void main()
 {
 	sockets::initialize();
+
+	std::string input;
+
+	std::cout << "Enter number of players: ";
+	std::cin >> input;
+
+	while (!parseNumberOfPlayers(input))
+	{
+		std::cout << "Invalid input." << std::endl;
+		std::cout << "Enter number of players: ";
+		std::cin >> input;
+	}
 
 	maze = globals::generateMaze();
 
@@ -329,15 +374,17 @@ void main()
 	{
 		udpSocket.bind({ "0.0.0.0", globals::UDP_PORT });
 		serverSocket.bind({ "0.0.0.0", globals::TCP_PORT });
-		serverSocket.listen(4);
+		serverSocket.listen(numberOfPlayers);
 
-		while (count < NUMBER_OF_PLAYERS)
+		std::cout << "Waiting for connections..." << std::endl;
+
+		while (count < numberOfPlayers)
 		{
 			auto [clientSocket, clientAddress] = serverSocket.accept();
 			clientSocket.setTimeout(0);
-			std::thread thread(handleClient, clientSocket, clientAddress);
-			thread.detach();
+			clientThreads.push_back(std::thread(handleClient, clientSocket, clientAddress));
 			count++;
+			std::cout << "New connection at " << clientAddress.ip << ":" << clientAddress.port << std::endl;
 		}
 
 		// closing to prevent new players to connect during the game
@@ -371,6 +418,9 @@ void main()
 				sendBullets(udpSocket);
 			}
 		}
+
+		for (auto& thread : clientThreads)
+			thread.join();
 
 		std::cout << "Game ended!" << std::endl;
 	}

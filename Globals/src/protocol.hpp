@@ -21,7 +21,7 @@ namespace protocol
 	struct Packet
 	{
 		PacketType type = PacketType::NO_PACKET;
-		char index = -1;
+		int index = -1;
 		sf::Vector2f position;
 		float direction = 0;
 	};
