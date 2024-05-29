@@ -99,38 +99,65 @@ static void handleClient(sockets::Socket socket, sockets::Address address)
 				index = count;
 				socket.send(protocol::keyValueMessage("index", std::to_string(index)));
 
-				clientsMutex.lock();
+				std::lock_guard lock(clientsMutex);
 				clients[index] = Client{ socket, {"", 0}, Player(randomPosition()), value, 0};
-				clientsMutex.unlock();
 
 				broadcast(protocol::keyValueMessage("player", value));
 			}
 
 			else if (key == "udp") // value is the UDP port
 			{
+				std::lock_guard lock(clientsMutex);
 				udpAddress = { address.ip, (unsigned short)std::stoul(value.c_str()) };
-				clientsMutex.lock();
 				clients[index].udpAddress = udpAddress;
-				clientsMutex.unlock();
 			}
 
 			else if (key == "close" || key == "") // no value
 			{
-				clientsMutex.lock();
+				std::lock_guard lock(clientsMutex);
 				socket.close();
 				clients.erase(index);
 				std::cout << "deleting index " << index << std::endl;
 				closed = true;
 				count--;
 				broadcast(protocol::keyValueMessage("exit", std::to_string(index)));
-				clientsMutex.unlock();
 			}
 		}
 		catch (sockets::exception& err)
 		{
-				std::cout << err.what() << std::endl;
+			std::cout << err.what() << std::endl;
 		}
 	}
+}
+
+static void bulletPlayerCollision(int index, Client& client, Bullet& bullet, const sockets::Socket& udpSocket)
+{
+	client.player.lives--;
+	if (client.player.lives == 0)
+	{
+		clients[bullet.playerIndex].tcpSocket.send(protocol::keyValueMessage("score", std::to_string(KILL_PLAYER_SCORE)));
+		clients[bullet.playerIndex].score += KILL_PLAYER_SCORE;
+
+		client.player.pos = randomPosition();
+		client.player.lives = 3;
+
+		protocol::Packet packet;
+		packet.type = protocol::PacketType::INIT_PLAYER;
+		packet.index = index;
+		packet.position = client.player.pos;
+
+		forEachUDP(
+			[packet, udpSocket](sockets::Address address)
+			{
+				protocol::sendPacket(udpSocket, address, packet);
+			}
+		);
+	}
+	else // if player got hit remove a life and notify the player
+		client.tcpSocket.send(protocol::keyValueMessage("hit", ""));
+
+	// set position to delete the bullet
+	bullet.position.x = -1;
 }
 
 static void updateBullets(const sockets::Socket& udpSocket)
@@ -141,43 +168,14 @@ static void updateBullets(const sockets::Socket& udpSocket)
 		bullet.position.x += bullet.direction.x * BULLET_SPEED * (1.0f / NUMBER_OF_TICKS);
 		bullet.position.y += bullet.direction.y * BULLET_SPEED * (1.0f / NUMBER_OF_TICKS);
 
-		clientsMutex.lock();
+		std::lock_guard lock(clientsMutex);
 
 		for (auto& [index, client] : clients)
 		{
 			sf::Vector2f distance = client.player.pos - bullet.position;
 			if (vecMagnitude(distance) <= 0.2f && index != bullet.playerIndex)
-			{
-				client.player.lives--;
-				if (client.player.lives == 0)
-				{
-					clients[bullet.playerIndex].tcpSocket.send(protocol::keyValueMessage("score", std::to_string(KILL_PLAYER_SCORE)));
-					clients[bullet.playerIndex].score += KILL_PLAYER_SCORE;
-
-					client.player.pos = randomPosition();
-					client.player.lives = 3;
-
-					protocol::Packet packet;
-					packet.type = protocol::PacketType::INIT_PLAYER;
-					packet.index = index;
-					packet.position = client.player.pos;
-
-					forEachUDP(
-						[packet, udpSocket](sockets::Address address)
-						{
-							protocol::sendPacket(udpSocket, address, packet);
-						}
-					);
-				}
-				else // if player got hit remove a life and notify the player
-					client.tcpSocket.send(protocol::keyValueMessage("hit", ""));
-
-				// set position to delete the bullet
-				bullet.position.x = -1;
-			}
+				bulletPlayerCollision(index, client, bullet, udpSocket);
 		}
-
-		clientsMutex.unlock();
 	}
 
 	// remove bullets that are outside the map or collide with the map
@@ -246,9 +244,8 @@ static bool sendTimerUpdate(int& timerTime, time_point& lastTimeTimer, time_poin
 		timerTime = 0;
 
 		timer--;
-		clientsMutex.lock();
+		std::lock_guard lock(clientsMutex);
 		broadcast(protocol::keyValueMessage("timer", std::to_string(timer)));
-		clientsMutex.unlock();
 		if (timer == 0)
 			return true;
 	}
@@ -383,8 +380,8 @@ void main()
 			auto [clientSocket, clientAddress] = serverSocket.accept();
 			clientSocket.setTimeout(0);
 			clientThreads.push_back(std::thread(handleClient, clientSocket, clientAddress));
-			count++;
 			std::cout << "New connection at " << clientAddress.ip << ":" << clientAddress.port << std::endl;
+			count++;
 		}
 
 		// closing to prevent new players to connect during the game

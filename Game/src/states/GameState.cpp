@@ -152,8 +152,17 @@ void GameState::update()
 			std::unique_ptr<EndState> endState = std::make_unique<EndState>(members, value);
 			members.manager.setState(std::move(endState));
 
+			members.tcpSocket.setBlocking(true);
+			members.tcpSocket.setTimeout(0);
 			members.tcpSocket.send(protocol::keyValueMessage("close", std::to_string(members.playerIndex)));
+			std::string test;
+			do
+			{
+				test = members.tcpSocket.recvString(1024);
+			}
+			while (test != "");
 			members.tcpSocket.close();
+			members.udpSocket.close();
 			return;
 		}
 
