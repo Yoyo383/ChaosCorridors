@@ -120,7 +120,8 @@ static void handleClient(sockets::Socket socket, sockets::Address address)
 				std::cout << "deleting index " << index << std::endl;
 				closed = true;
 				count--;
-				broadcast(protocol::keyValueMessage("exit", std::to_string(index)));
+				if (timer > 0)
+					broadcast(protocol::keyValueMessage("exit", std::to_string(index)));
 			}
 		}
 		catch (sockets::exception& err)
