@@ -26,7 +26,7 @@ private:
 
 	sf::Sprite logo;
 
-	sf::Text errorText;
+	sf::Text statusText;
 
 	std::string ip;
 

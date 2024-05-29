@@ -16,6 +16,9 @@ private:
 	Members& members;
 	std::string ip;
 
+	sf::Text lobbyText;
+	sf::Text statusText;
+
 	bool isFocused;
 
 	std::vector<sf::Text> playerNamesTexts;

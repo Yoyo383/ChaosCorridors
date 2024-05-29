@@ -172,7 +172,7 @@ void GameState::update()
 			if (packet.index == members.playerIndex)
 			{
 				player.pos = packet.position;
-				player.lives = 3;
+				player.lives = globals::MAX_LIFE;
 			}
 			else
 				players[packet.index] = packet.position;

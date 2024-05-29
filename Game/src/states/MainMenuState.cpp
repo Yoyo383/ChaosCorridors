@@ -18,8 +18,8 @@ MainMenuState::MainMenuState(Members& members)
 	doesFutureExist(false)
 {
 	hostButton.setSizeRelativeToWindow(members.window, 0.2f);
-	errorText.setFont(members.font);
-	errorText.setFillColor(sf::Color::Red);
+	statusText.setFont(members.font);
+	statusText.setFillColor(sf::Color::Red);
 
 	logo.setTexture(members.textures["logo"]);
 	logo.setOrigin(logo.getGlobalBounds().getSize() / 2);
@@ -35,16 +35,16 @@ MainMenuState::MainMenuState(Members& members)
 
 bool MainMenuState::connectToServer()
 {
-	errorText.setFillColor(sf::Color::Yellow);
-	errorText.setString("Connecting to server...");
+	statusText.setFillColor(sf::Color::Yellow);
+	statusText.setString("Connecting to server...");
 	try
 	{
 		members.tcpSocket.connect({ ip, globals::TCP_PORT });
 	}
 	catch (sockets::exception& err)
 	{
-		errorText.setFillColor(sf::Color::Red);
-		errorText.setString("Can't connect to server.");
+		statusText.setFillColor(sf::Color::Red);
+		statusText.setString("Can't connect to server.");
 
 		std::cout << err.what() << std::endl;
 		if (std::string(err.what()) == "Socket timed out")
@@ -79,7 +79,7 @@ void MainMenuState::update()
 
 				if (nameField.getText() == "")
 				{
-					errorText.setString("Please enter a name.");
+					statusText.setString("Please enter a name.");
 					return;
 				}
 
@@ -125,8 +125,8 @@ void MainMenuState::update()
 	}
 	catch (sockets::exception& err)
 	{
-		errorText.setFillColor(sf::Color::Red);
-		errorText.setString("Can't start connection with server.");
+		statusText.setFillColor(sf::Color::Red);
+		statusText.setString("Can't connect to server.");
 		std::cout << err.what() << std::endl;
 	}
 }
@@ -141,9 +141,9 @@ void MainMenuState::draw()
 	nameField.draw(members.window);
 	ipField.draw(members.window);
 
-	errorText.setOrigin(0, errorText.getCharacterSize());
-	errorText.setPosition(0, members.window.getSize().y - 10);
-	members.window.draw(errorText);
+	statusText.setOrigin(0, statusText.getCharacterSize());
+	statusText.setPosition(0, members.window.getSize().y - 10);
+	members.window.draw(statusText);
 
 	members.window.display();
 }

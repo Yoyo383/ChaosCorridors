@@ -10,7 +10,6 @@
 #include "maze.hpp"
 #include "Player.hpp"
 
-// for easier use
 using time_point = std::chrono::steady_clock::time_point;
 
 struct Bullet
@@ -32,35 +31,52 @@ struct Client
 const int NUMBER_OF_TICKS = 60;
 const int KILL_PLAYER_SCORE = 100;
 const float BULLET_SPEED = 10.0f;
+const int SECONDS_BEFORE_START = 2;
 
+// How many players to start the game
 int numberOfPlayers = 0;
 
+// How many players connected
 std::atomic<int> count = 0;
 
 std::vector<Bullet> bullets;
 
 std::vector<std::thread> clientThreads;
 
+// index: client
 std::unordered_map<int, Client> clients;
 std::mutex clientsMutex;
 
 globals::MazeArr maze;
 
+// How many seconds left in the game
 int timer = globals::GAME_TIME;
 
-
+/**
+ * @brief Executes a function for each UDP address.
+ * @param function The function to execute.
+ */
 static void forEachUDP(std::function<void(sockets::Address)> function)
 {
 	for (auto& [index, client] : clients)
 		function(client.udpAddress);
 }
 
+/**
+ * @brief Broadcasts to all TCP sockets.
+ * @tparam T The type of data to send.
+ * @param data The data to send.
+ */
 template<typename T> void broadcast(T data)
 {
 	for (auto& [index, client] : clients)
 		client.tcpSocket.send(data);
 }
 
+/**
+ * @brief Generates a random position in the maze.
+ * @return Random position in the maze.
+ */
 static sf::Vector2f randomPosition()
 {
 	sf::Vector2f position;
@@ -77,7 +93,11 @@ static sf::Vector2f randomPosition()
 	return position;
 }
 
-
+/**
+ * @brief Handles TCP connection for each client.
+ * @param socket The client socket.
+ * @param address The client's TCP address.
+ */
 static void handleClient(sockets::Socket socket, sockets::Address address)
 {
 	sockets::Address udpAddress;
@@ -96,10 +116,11 @@ static void handleClient(sockets::Socket socket, sockets::Address address)
 
 			if (key == "player") // value is the name
 			{
+				std::lock_guard lock(clientsMutex);
+
 				index = count;
 				socket.send(protocol::keyValueMessage("index", std::to_string(index)));
 
-				std::lock_guard lock(clientsMutex);
 				clients[index] = Client{ socket, {"", 0}, Player(randomPosition()), value, 0};
 
 				broadcast(protocol::keyValueMessage("player", value));
@@ -121,7 +142,10 @@ static void handleClient(sockets::Socket socket, sockets::Address address)
 				closed = true;
 				count--;
 				if (timer > 0)
+				{
 					broadcast(protocol::keyValueMessage("exit", std::to_string(index)));
+					broadcast(protocol::keyValueMessage("join", std::to_string(numberOfPlayers - count)));
+				}
 			}
 		}
 		catch (sockets::exception& err)
@@ -131,6 +155,13 @@ static void handleClient(sockets::Socket socket, sockets::Address address)
 	}
 }
 
+/**
+ * @brief Handles bullet and player collision.
+ * @param index The hit player's index.
+ * @param client The client that was hit.
+ * @param bullet The bullet that hit the player.
+ * @param udpSocket The UDP socket.
+ */
 static void bulletPlayerCollision(int index, Client& client, Bullet& bullet, const sockets::Socket& udpSocket)
 {
 	client.player.lives--;
@@ -140,7 +171,7 @@ static void bulletPlayerCollision(int index, Client& client, Bullet& bullet, con
 		clients[bullet.playerIndex].score += KILL_PLAYER_SCORE;
 
 		client.player.pos = randomPosition();
-		client.player.lives = 3;
+		client.player.lives = globals::MAX_LIFE;
 
 		protocol::Packet packet;
 		packet.type = protocol::PacketType::INIT_PLAYER;
@@ -161,6 +192,10 @@ static void bulletPlayerCollision(int index, Client& client, Bullet& bullet, con
 	bullet.position.x = -1;
 }
 
+/**
+ * @brief Updates all the bullets and checks for collisions.
+ * @param udpSocket The UDP socket.
+ */
 static void updateBullets(const sockets::Socket& udpSocket)
 {
 	for (auto& bullet : bullets)
@@ -193,6 +228,10 @@ static void updateBullets(const sockets::Socket& udpSocket)
 	), bullets.end());
 }
 
+/**
+ * @brief Sends initial data to all clients.
+ * @param udpSocket The UDP socket.
+ */
 static void initGame(const sockets::Socket& udpSocket)
 {
 	std::cout << "Game is starting!" << std::endl;
@@ -223,19 +262,33 @@ static void initGame(const sockets::Socket& udpSocket)
 	);
 }
 
-static bool checkDelay(int& elapsedTime, time_point& lastTimeFrame, time_point now)
+/**
+ * @brief Checks if a tick has passed.
+ * @param elapsedTime How much time has elapsed since the last tick.
+ * @param lastTimeTick Time point of the previous tick.
+ * @param now Current time point.
+ * @return Whether a tick has passed and changes elapsedTime and lastTimeTick accordingly.
+ */
+static bool checkDelay(int& elapsedTime, time_point& lastTimeTick, time_point now)
 {
-	elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastTimeFrame).count();
+	elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastTimeTick).count();
 
 	if (elapsedTime < (1000 / NUMBER_OF_TICKS))
 		return false;
 
-	lastTimeFrame = now;
+	lastTimeTick = now;
 	elapsedTime = 0;
 
 	return true;
 }
 
+/**
+ * @brief Checks if a second has passed, and if so sends all clients the updated timer.
+ * @param timerTime How much time has elapsed since last second.
+ * @param lastTimeTimer Time point of the previous second.
+ * @param now Current time point.
+ * @return Whether the game ended.
+ */
 static bool sendTimerUpdate(int& timerTime, time_point& lastTimeTimer, time_point now)
 {
 	timerTime = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastTimeTimer).count();
@@ -253,6 +306,10 @@ static bool sendTimerUpdate(int& timerTime, time_point& lastTimeTimer, time_poin
 	return false;
 }
 
+/**
+ * @brief Receives UDP packets from the clients and handles them according to their type.
+ * @param udpSocket The UDP socket.
+ */
 static void handleEvents(const sockets::Socket& udpSocket)
 {
 	protocol::PacketType receivedType = protocol::PacketType::NO_PACKET;
@@ -273,8 +330,8 @@ static void handleEvents(const sockets::Socket& udpSocket)
 					protocol::sendPacket(udpSocket, address, packet);
 				}
 			);
-
 		}
+
 		else if (packet.type == protocol::PacketType::UPDATE_BULLET)
 			bullets.push_back({ packet.index, packet.position, { cosf(packet.direction), sinf(packet.direction) } });
 
@@ -282,6 +339,10 @@ static void handleEvents(const sockets::Socket& udpSocket)
 	while (receivedType != protocol::PacketType::NO_PACKET);
 }
 
+/**
+ * @brief Sends all clients the bullets' information.
+ * @param udpSocket The UDP socket.
+ */
 static void sendBullets(const sockets::Socket& udpSocket)
 {
 	forEachUDP(
@@ -306,6 +367,9 @@ static void sendBullets(const sockets::Socket& udpSocket)
 	);
 }
 
+/**
+ * @brief Sends all clients who won the game.
+ */
 static void sendWin()
 {
 	std::string wonPlayers;
@@ -330,6 +394,11 @@ static void sendWin()
 	broadcast(protocol::keyValueMessage("end", wonPlayers));
 }
 
+/**
+ * @brief Parses input string to the number of players.
+ * @param input The input string.
+ * @return Whether the input is a valid number of players.
+ */
 static bool parseNumberOfPlayers(const std::string& input)
 {
 	try
@@ -346,6 +415,9 @@ static bool parseNumberOfPlayers(const std::string& input)
 	return true;
 }
 
+/**
+ * @brief The main function.
+ */
 void main()
 {
 	sockets::initialize();
@@ -388,12 +460,17 @@ void main()
 		// closing to prevent new players to connect during the game
 		serverSocket.close();
 
-		std::this_thread::sleep_for(std::chrono::seconds(2));
+		// wait for all clients to be in the broadcast list
+		while (clients.size() != numberOfPlayers) {}
+
+		broadcast(protocol::keyValueMessage("soon", ""));
+
+		std::this_thread::sleep_for(std::chrono::seconds(SECONDS_BEFORE_START));
 		initGame(udpSocket);
 
 		// to do the loop 60 times per second
 		int elapsedTime = 0;
-		auto lastTimeFrame = std::chrono::steady_clock::now();
+		auto lastTimeTick = std::chrono::steady_clock::now();
 
 		// to send every second an update for the timer
 		int timerTime = 0;
@@ -403,7 +480,7 @@ void main()
 		{
 			auto now = std::chrono::steady_clock::now();
 
-			if (!checkDelay(elapsedTime, lastTimeFrame, now))
+			if (!checkDelay(elapsedTime, lastTimeTick, now))
 				continue;
 
 			bool finished = sendTimerUpdate(timerTime, lastTimeTimer, now);
