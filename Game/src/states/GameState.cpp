@@ -13,13 +13,12 @@ struct Sprite
 };
 
 GameState::GameState(Members& members, bool isFocused, std::string ip)
-	: members(members), maze(), isFocused(isFocused), player({ 0, 0 })
+	: members(members), maze(), isFocused(isFocused), player({ 0, 0 }), zBuffer(members.window.getSize().x + 1)
 {
 	members.udpSocket.setBlocking(false);
+
 	members.tcpSocket.setBlocking(true);
-
 	maze = members.tcpSocket.recv<globals::MazeArr>();
-
 	members.tcpSocket.setBlocking(false);
 
 	serverAddressUDP = { ip, globals::UDP_PORT };
@@ -27,7 +26,6 @@ GameState::GameState(Members& members, bool isFocused, std::string ip)
 	heartSprite.setTexture(members.textures["heart"]);
 
 	timer = 0;
-
 	score = 0;
 
 	timerText.setFont(members.font);
@@ -38,27 +36,20 @@ GameState::GameState(Members& members, bool isFocused, std::string ip)
 	scoreText.setCharacterSize(heartSprite.getGlobalBounds().height);
 	scoreText.setPosition(0, 2 * heartSprite.getGlobalBounds().height);
 
-	fixedMousePos = { (int)members.window.getSize().x / 2, (int)members.window.getSize().y / 2 };
+	centerScreenPos = { (int)members.window.getSize().x / 2, (int)members.window.getSize().y / 2 };
 	paused = false;
+
 	dt = 0;
 	elapsedTime = 0;
-	zBuffer = new float[members.window.getSize().x + 1];
 
 	crosshair.setTexture(members.textures["crosshair"]);
-	//float scale = members.window.getSize().x / 30.0f / members.textures["crosshair"].getSize().x;
 	crosshair.setOrigin(crosshair.getLocalBounds().getSize() / 2);
-	crosshair.setPosition((float)fixedMousePos.x, (float)fixedMousePos.y);
-}
-
-GameState::~GameState()
-{
-	members.window.setMouseCursorVisible(true);
-	delete[] zBuffer;
+	crosshair.setPosition((float)centerScreenPos.x, (float)centerScreenPos.y);
 }
 
 void GameState::resetMousePos()
 {
-	sf::Mouse::setPosition(fixedMousePos, members.window);
+	sf::Mouse::setPosition(centerScreenPos, members.window);
 }
 
 sf::Vector2f GameState::wasdInput()
@@ -72,14 +63,132 @@ sf::Vector2f GameState::wasdInput()
 void GameState::setPlayerDirection()
 {
 	int currentMousePos = sf::Mouse::getPosition(members.window).x;
-	float deltaMousePos = (currentMousePos - fixedMousePos.x) * Player::SENSITIVITY;
-	player.direction += deltaMousePos;
-	/*if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
-		player.direction -= 2 * dt;
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
-		player.direction += 2 * dt;*/
+	float deltaMousePos = (currentMousePos - centerScreenPos.x) * Player::SENSITIVITY;
 
+	player.direction += deltaMousePos;
 	player.direction = fmodf(player.direction, 2 * M_PI);
+}
+
+void GameState::shootBullet()
+{
+	sf::Vector2f bulletPosition = player.pos + 0.3f * sf::Vector2f{ cosf(player.direction), sinf(player.direction) };
+
+	protocol::Packet packet;
+	packet.type = protocol::PacketType::UPDATE_BULLET;
+	packet.index = members.playerIndex;
+	packet.position = bulletPosition;
+	packet.direction = player.direction;
+
+	protocol::sendPacket(members.udpSocket, serverAddressUDP, packet);
+}
+
+void GameState::receiveUDP()
+{
+	try
+	{
+		protocol::PacketType receivedType = protocol::PacketType::NO_PACKET;
+		do
+		{
+			protocol::Packet packet = protocol::receivePacket(members.udpSocket);
+			receivedType = packet.type;
+
+			if (packet.type == protocol::PacketType::INIT_PLAYER)
+			{
+				if (packet.index == members.playerIndex)
+				{
+					player.pos = packet.position;
+					player.lives = globals::MAX_LIFE;
+				}
+				else
+					players[packet.index] = packet.position;
+			}
+
+			else if (packet.type == protocol::PacketType::UPDATE_BULLET)
+				bullets[packet.index] = packet.position;
+
+			else if (packet.type == protocol::PacketType::CLEAR_BULLETS)
+				bullets.clear();
+
+			else if (packet.type == protocol::PacketType::UPDATE_PLAYER && packet.index != members.playerIndex)
+				targetPlayerPositions[packet.index] = packet.position;
+
+		}
+		while (receivedType != protocol::PacketType::NO_PACKET);
+	}
+	catch (sockets::exception& err)
+	{
+		std::cout << "UDP error: " << err.what() << std::endl;
+	}
+}
+
+void GameState::receiveTCP()
+{
+	try
+	{
+		std::string receivedKey = "";
+		do
+		{
+			auto [key, value] = protocol::receiveKeyValue(members.tcpSocket);
+			receivedKey = key;
+
+			if (key == "hit") // no value
+				player.lives--;
+
+			else if (key == "timer") // value is new timer
+				timer = std::stoi(value);
+
+			else if (key == "score") // value is score modifier
+				score += std::stoi(value);
+
+			else if (key == "exit") // value is the index of who left
+			{
+				char index = std::stoi(value);
+				players.erase(index);
+				targetPlayerPositions.erase(index);
+			}
+
+			else if (key == "end") // value is who won
+			{
+				members.window.setMouseCursorVisible(true);
+
+				std::unique_ptr<EndState> endState = std::make_unique<EndState>(members, value);
+				members.manager.setState(std::move(endState));
+
+				members.tcpSocket.send(protocol::keyValueMessage("close", ""));
+				members.tcpSocket.close();
+				members.udpSocket.close();
+				return;
+			}
+
+		}
+		while (receivedKey != "");
+	}
+	catch (sockets::exception& err)
+	{
+		std::cout << "TCP error: " << err.what() << std::endl;
+	}
+}
+
+void GameState::movePlayers()
+{
+	for (auto& [index, targetPosition] : targetPlayerPositions)
+	{
+		sf::Vector2f actualPosition = players[index];
+		sf::Vector2f direction = targetPosition - actualPosition;
+		if (vecMagnitude(direction) <= 0.01f)
+			continue;
+		players[index] += vecNormalize(direction) * dt * Player::SPEED;
+	}
+}
+
+void GameState::sendPosition()
+{
+	protocol::Packet packet;
+	packet.type = protocol::PacketType::UPDATE_PLAYER;
+	packet.index = members.playerIndex;
+	packet.position = player.pos;
+
+	protocol::sendPacket(members.udpSocket, serverAddressUDP, packet);
 }
 
 void GameState::update()
@@ -89,125 +198,38 @@ void GameState::update()
 
 	sf::Event event;
 
-	members.window.setTitle(std::to_string(1 / dt));
-
 	while (members.window.pollEvent(event))
 	{
 		if (event.type == sf::Event::Closed)
 		{
 			members.manager.quit();
-			members.tcpSocket.send(protocol::keyValueMessage("close", std::to_string(members.playerIndex)));
-			members.tcpSocket.close();
-			return;
-		}
-		else if (event.type == sf::Event::KeyPressed)
-		{
-			if (event.key.code == sf::Keyboard::Escape)
-				paused = !paused;
-		}
-		else if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left && !paused)
-		{
-			sf::Vector2f bulletPosition = player.pos + 0.3f * sf::Vector2f{ cosf(player.direction), sinf(player.direction) };
-
-			protocol::Packet packet;
-			packet.type = protocol::PacketType::UPDATE_BULLET;
-			packet.index = members.playerIndex;
-			packet.position = bulletPosition;
-			packet.direction = player.direction;
-
-			protocol::sendPacket(members.udpSocket, serverAddressUDP, packet);
-		}
-		else if (event.type == sf::Event::LostFocus)
-			isFocused = false;
-		else if (event.type == sf::Event::GainedFocus)
-			isFocused = true;
-	}
-
-	std::string receivedKey = "";
-	do
-	{
-		auto [key, value] = protocol::receiveKeyValue(members.tcpSocket);
-		receivedKey = key;
-
-		if (key == "hit") // no value
-			player.lives--;
-
-		else if (key == "timer") // value is new timer
-			timer = std::stoi(value);
-
-		else if (key == "score") // value is score modifier
-			score += std::stoi(value);
-
-		else if (key == "exit") // value is the index of who left
-		{
-			char index = std::stoi(value);
-			players.erase(index);
-			targetPlayerPositions.erase(index);
-		}
-
-		else if (key == "end") // value is who won
-		{
-			members.window.setMouseCursorVisible(true);
-
-			std::unique_ptr<EndState> endState = std::make_unique<EndState>(members, value);
-			members.manager.setState(std::move(endState));
-
 			members.tcpSocket.send(protocol::keyValueMessage("close", ""));
 			members.tcpSocket.close();
 			members.udpSocket.close();
 			return;
 		}
 
-	}
-	while (receivedKey != "");
+		else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape)
+			paused = !paused;
 
+		else if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left && !paused)
+			shootBullet();
 
-	protocol::PacketType receivedType = protocol::PacketType::NO_PACKET;
-	do
-	{
-		protocol::Packet packet = protocol::receivePacket(members.udpSocket);
-		receivedType = packet.type;
-		if (packet.type == protocol::PacketType::INIT_PLAYER)
-		{
-			if (packet.index == members.playerIndex)
-			{
-				player.pos = packet.position;
-				player.lives = globals::MAX_LIFE;
-			}
-			else
-				players[packet.index] = packet.position;
-		}
+		else if (event.type == sf::Event::LostFocus)
+			isFocused = false;
 
-		else if (packet.type == protocol::PacketType::UPDATE_BULLET)
-			bullets[packet.index] = packet.position;
-
-		else if (packet.type == protocol::PacketType::CLEAR_BULLETS)
-			bullets.clear();
-
-		else if (packet.type == protocol::PacketType::UPDATE_PLAYER && packet.index != members.playerIndex)
-			targetPlayerPositions[packet.index] = packet.position;
-
-	}
-	while (receivedType != protocol::PacketType::NO_PACKET);
-
-
-	for (auto& [index, targetPosition] : targetPlayerPositions)
-	{
-		sf::Vector2f actualPosition = players[index];
-		sf::Vector2f direction = targetPosition - actualPosition;
-		if (vecMagnitude(direction) <= 0.01f)
-			continue;
-		players[index] += vecNormalize(direction) * dt * Player::SPEED;
+		else if (event.type == sf::Event::GainedFocus)
+			isFocused = true;
 	}
 
-	if (elapsedTime >= 1 / 30.0f)
-	{
-		protocol::Packet packet;
-		packet.type = protocol::PacketType::UPDATE_PLAYER;
-		packet.index = members.playerIndex;
-		packet.position = player.pos;
+	receiveTCP();
+	receiveUDP();
 
-		protocol::sendPacket(members.udpSocket, serverAddressUDP, packet);
+	movePlayers();
+
+	if (elapsedTime >= 1.0f / NUMBER_OF_TICKS)
+	{
+		sendPosition();
 		elapsedTime = 0;
 	}
 

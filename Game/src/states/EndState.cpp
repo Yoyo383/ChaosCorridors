@@ -4,8 +4,8 @@ EndState::EndState(Members& members, std::string wonString) : members(members), 
 {
 	wonText.setFont(members.font);
 	wonText.setString(wonString);
-	wonText.setFillColor(sf::Color::Black);
-	wonText.setCharacterSize(members.window.getSize().x / 10);
+	wonText.setFillColor(sf::Color::Green);
+	wonText.setCharacterSize(60);
 }
 
 void EndState::update()
@@ -19,7 +19,7 @@ void EndState::update()
 
 void EndState::draw()
 {
-	members.window.clear(sf::Color::White);
+	members.window.clear(sf::Color(77, 77, 77));
 
 	members.window.draw(wonText);
 

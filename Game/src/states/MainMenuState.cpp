@@ -55,60 +55,8 @@ bool MainMenuState::connectToServer()
 	return true;
 }
 
-void MainMenuState::update()
+void MainMenuState::startConnection()
 {
-	sf::Event event;
-
-	while (members.window.pollEvent(event))
-	{
-		if (event.type == sf::Event::Closed)
-			members.manager.quit();
-		else if (event.type == sf::Event::MouseButtonPressed)
-			hostButton.isButtonClicked(sf::Vector2f(sf::Mouse::getPosition(members.window)));
-
-		else if (event.type == sf::Event::MouseButtonReleased)
-		{
-			sf::Vector2f pos = sf::Vector2f(sf::Mouse::getPosition(members.window));
-			nameField.setFocus(nameField.contains(pos));
-			ipField.setFocus(ipField.contains(pos));
-
-			if (hostButton.isButtonClicked(pos))
-			{
-				hostButton.setClicked(false);
-				ip = ipField.getText();
-
-				if (nameField.getText() == "")
-				{
-					statusText.setString("Please enter a name.");
-					return;
-				}
-
-				if (canConnect)
-				{
-					connectFuture = std::async(std::launch::async, &MainMenuState::connectToServer, this);
-					canConnect = false;
-					doesFutureExist = true;
-				}
-			}
-		}
-		else
-		{
-			nameField.handleInput(event);
-			ipField.handleInput(event);
-		}
-	}
-
-	if (!doesFutureExist || connectFuture.wait_for(0s) != std::future_status::ready)
-		return;
-
-	bool connected = connectFuture.get();
-	if (!connected)
-	{
-		canConnect = true;
-		doesFutureExist = false;
-		return;
-	}
-
 	try
 	{
 		members.tcpSocket.send(protocol::keyValueMessage("player", nameField.getText()));
@@ -129,6 +77,69 @@ void MainMenuState::update()
 		statusText.setString("Can't connect to server.");
 		std::cout << err.what() << std::endl;
 	}
+}
+
+void MainMenuState::handleButtonPress()
+{
+	hostButton.setClicked(false);
+	ip = ipField.getText();
+
+	if (nameField.getText() == "")
+	{
+		statusText.setString("Please enter a name.");
+		return;
+	}
+
+	if (canConnect)
+	{
+		connectFuture = std::async(std::launch::async, &MainMenuState::connectToServer, this);
+		canConnect = false;
+		doesFutureExist = true;
+	}
+}
+
+void MainMenuState::update()
+{
+	sf::Event event;
+
+	while (members.window.pollEvent(event))
+	{
+		if (event.type == sf::Event::Closed)
+			members.manager.quit();
+
+		else if (event.type == sf::Event::MouseButtonPressed)
+			hostButton.isButtonClicked(sf::Vector2f(sf::Mouse::getPosition(members.window)));
+
+		else if (event.type == sf::Event::MouseButtonReleased)
+		{
+			sf::Vector2f pos = sf::Vector2f(sf::Mouse::getPosition(members.window));
+			nameField.setFocus(nameField.contains(pos));
+			ipField.setFocus(ipField.contains(pos));
+
+			if (hostButton.isButtonClicked(pos))
+				handleButtonPress();
+		}
+		else
+		{
+			nameField.handleInput(event);
+			ipField.handleInput(event);
+		}
+	}
+
+	// checks if connecting has answer
+	if (!doesFutureExist || connectFuture.wait_for(0s) != std::future_status::ready)
+		return;
+
+	// if not connected then bad
+	bool connected = connectFuture.get();
+	if (!connected)
+	{
+		canConnect = true;
+		doesFutureExist = false;
+		return;
+	}
+
+	startConnection();
 }
 
 void MainMenuState::draw()

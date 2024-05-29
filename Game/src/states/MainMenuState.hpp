@@ -7,14 +7,42 @@
 #include "../Members.hpp"
 #include <future>
 
+/**
+ * @brief Main menu state.
+ */
 class MainMenuState : public State
 {
 public:
+	/**
+	 * @brief Creates a new main menu.
+	 * @param members The members.
+	 */
 	MainMenuState(Members& members);
 
+	/**
+	 * @brief Updates the state.
+	 */
 	void update() override;
+
+	/**
+	 * @brief Draws the state.
+	 */
 	void draw() override;
 
+	/**
+	 * @brief Sends and receives initial information from the server and switches to lobby state.
+	 */
+	void startConnection();
+
+	/**
+	 * @brief Handles button press.
+	 */
+	void handleButtonPress();
+
+	/**
+	 * @brief Tries connecting to the server.
+	 * @return Whether the connection succeeded.
+	 */
 	bool connectToServer();
 
 private:

@@ -7,6 +7,9 @@
 // A struct to manage all global members between states.
 struct Members
 {
+	/**
+	 * @brief Creates a new Members object with the sockets initialized.
+	 */
 	Members() : tcpSocket(sockets::Protocol::TCP), udpSocket(sockets::Protocol::UDP), playerIndex(0) {}
 
 	// The SFML window.

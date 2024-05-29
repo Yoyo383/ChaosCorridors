@@ -42,6 +42,7 @@ void LobbyState::update()
 	try
 	{
 		auto [key, value] = protocol::receiveKeyValue(members.tcpSocket);
+
 		if (key == "player") // value is new player name
 		{
 			sf::Text text;
@@ -51,13 +52,16 @@ void LobbyState::update()
 			text.setString(value);
 			playerNamesTexts.push_back(text);
 		}
+
 		else if (key == "index") // value is the index of the player
 			members.playerIndex = std::stoi(value);
+
 		else if (key == "start") // no value
 		{
 			std::unique_ptr<GameState> gameState = std::make_unique<GameState>(members, isFocused, ip);
 			members.manager.setState(std::move(gameState));
 		}
+
 		else if (key == "soon") // no value
 			statusText.setString("Starting!");
 	}
