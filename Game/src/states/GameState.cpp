@@ -129,38 +129,30 @@ void GameState::update()
 		auto [key, value] = protocol::receiveKeyValue(members.tcpSocket);
 		receivedKey = key;
 
-		if (key == "hit")
+		if (key == "hit") // no value
 			player.lives--;
 
-		else if (key == "timer")
+		else if (key == "timer") // value is new timer
 			timer = std::stoi(value);
 
-		else if (key == "score")
+		else if (key == "score") // value is score modifier
 			score += std::stoi(value);
 
-		else if (key == "exit")
+		else if (key == "exit") // value is the index of who left
 		{
 			char index = std::stoi(value);
 			players.erase(index);
 			targetPlayerPositions.erase(index);
 		}
 
-		else if (key == "end")
+		else if (key == "end") // value is who won
 		{
 			members.window.setMouseCursorVisible(true);
 
 			std::unique_ptr<EndState> endState = std::make_unique<EndState>(members, value);
 			members.manager.setState(std::move(endState));
 
-			members.tcpSocket.setBlocking(true);
-			members.tcpSocket.setTimeout(0);
-			members.tcpSocket.send(protocol::keyValueMessage("close", std::to_string(members.playerIndex)));
-			std::string test;
-			do
-			{
-				test = members.tcpSocket.recvString(1024);
-			}
-			while (test != "");
+			members.tcpSocket.send(protocol::keyValueMessage("close", ""));
 			members.tcpSocket.close();
 			members.udpSocket.close();
 			return;

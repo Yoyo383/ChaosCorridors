@@ -6,18 +6,18 @@ namespace protocol
 	std::pair<std::string, std::string> receiveKeyValue(const sockets::Socket& socket)
 	{
 		std::string key = "", value = "";
-		std::string data;
+		char data = 0;
 		bool toKey = true;
 
-		while (data != "\n")
+		while (data != KEY_VALUE_END)
 		{
 			try
 			{
-				data = socket.recvString(1);
+				data = socket.recv(1)[0];
 
-				if (data == ":")
+				if (data == KEY_VALUE_SEPERATOR)
 					toKey = false;
-				else if (data != "\n")
+				else if (data != KEY_VALUE_END)
 				{
 					if (toKey)
 						key += data;
@@ -38,7 +38,7 @@ namespace protocol
 
 	std::string keyValueMessage(std::string key, std::string value)
 	{
-		return key + ":" + value + "\n";
+		return key + KEY_VALUE_SEPERATOR + value + KEY_VALUE_END;
 	}
 
 	Packet receivePacket(const sockets::Socket& socket)

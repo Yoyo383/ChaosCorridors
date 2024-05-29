@@ -9,6 +9,9 @@
 namespace protocol
 {
 
+	inline const char KEY_VALUE_END = '\r';
+	inline const char KEY_VALUE_SEPERATOR = ':';
+
 	enum class PacketType : char
 	{
 		NO_PACKET,

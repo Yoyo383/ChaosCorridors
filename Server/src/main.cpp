@@ -320,11 +320,11 @@ static void sendWin()
 			if (wonPlayers == "")
 				wonPlayers = client.name;
 			else
-				wonPlayers += " + " + client.name;
+				wonPlayers += " +\n" + client.name;
 		}
 	}
 
-	wonPlayers += " won!";
+	wonPlayers += "\nwon!";
 
 	broadcast(protocol::keyValueMessage("end", wonPlayers));
 }
