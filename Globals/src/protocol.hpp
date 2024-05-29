@@ -8,7 +8,6 @@
 
 namespace protocol
 {
-
 	inline const char KEY_VALUE_END = '\r';
 	inline const char KEY_VALUE_SEPERATOR = ':';
 
@@ -29,10 +28,33 @@ namespace protocol
 		float direction = 0;
 	};
 
-	std::pair<std::string, std::string> receiveKeyValue(const sockets::Socket& socket);
+	/**
+	 * @brief Receives a key-value pair.
+	 * @param tcpSocket The socket to receive from.
+	 * @return A pair of key and value. If an exception occurs, the key and the value will be empty strings.
+	 */
+	std::pair<std::string, std::string> receiveKeyValue(const sockets::Socket& tcpSocket);
+
+	/**
+	 * @brief Creates a key-value message.
+	 * @param key The key.
+	 * @param value The value.
+	 * @return Key-value message.
+	 */
 	std::string keyValueMessage(std::string key, std::string value);
 
-	Packet receivePacket(const sockets::Socket& socket);
+	/**
+	 * @brief Receives a Packet.
+	 * @param udpSocket The socket to receive from.
+	 * @return 
+	 */
+	Packet receivePacket(const sockets::Socket& udpSocket);
 	
-	void sendPacket(const sockets::Socket& socket, const sockets::Address& address, Packet packet);
+	/**
+	 * @brief Sends a packet to an address.
+	 * @param udpSocket The socket. 
+	 * @param address The address.
+	 * @param packet The packet.
+	 */
+	void sendPacket(const sockets::Socket& udpSocket, const sockets::Address& address, Packet packet);
 }

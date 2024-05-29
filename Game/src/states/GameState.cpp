@@ -13,7 +13,7 @@ struct Sprite
 };
 
 GameState::GameState(Members& members, bool isFocused, std::string ip)
-	: members(members), maze(), isFocused(isFocused)
+	: members(members), maze(), isFocused(isFocused), player({ 0, 0 })
 {
 	members.udpSocket.setBlocking(false);
 	members.tcpSocket.setBlocking(true);

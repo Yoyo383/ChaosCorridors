@@ -3,7 +3,7 @@
 
 namespace protocol
 {
-	std::pair<std::string, std::string> receiveKeyValue(const sockets::Socket& socket)
+	std::pair<std::string, std::string> receiveKeyValue(const sockets::Socket& tcpSocket)
 	{
 		std::string key = "", value = "";
 		char data = 0;
@@ -13,7 +13,7 @@ namespace protocol
 		{
 			try
 			{
-				data = socket.recv(1)[0];
+				data = tcpSocket.recv(1)[0];
 
 				if (data == KEY_VALUE_SEPERATOR)
 					toKey = false;
@@ -41,11 +41,11 @@ namespace protocol
 		return key + KEY_VALUE_SEPERATOR + value + KEY_VALUE_END;
 	}
 
-	Packet receivePacket(const sockets::Socket& socket)
+	Packet receivePacket(const sockets::Socket& udpSocket)
 	{
 		try
 		{
-			auto [packet, address] = socket.recvFrom<Packet>();
+			auto [packet, address] = udpSocket.recvFrom<Packet>();
 			return packet;
 		}
 		catch (sockets::exception& err)
@@ -56,8 +56,8 @@ namespace protocol
 		}
 	}
 
-	void sendPacket(const sockets::Socket& socket, const sockets::Address& address, Packet packet)
+	void sendPacket(const sockets::Socket& udpSocket, const sockets::Address& address, Packet packet)
 	{
-		socket.sendTo(packet, address);
+		udpSocket.sendTo(packet, address);
 	}
 }

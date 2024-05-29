@@ -2,8 +2,7 @@
 #include "util.hpp"
 
 Player::Player(sf::Vector2f pos) : pos(pos), direction(0), velocity(0, 0), lives(globals::MAX_LIFE) {}
-Player::Player(float x, float y) : pos(x, y), direction(0), velocity(0, 0), lives(globals::MAX_LIFE) {}
-Player::Player() : pos(1.5f, 1.5f), direction(0), velocity(0, 0), lives(globals::MAX_LIFE) {}
+
 
 void Player::calculateVelocity(sf::Vector2f wasd, float dt)
 {
@@ -26,6 +25,7 @@ void Player::calculateVelocity(sf::Vector2f wasd, float dt)
 	// calculating velocity
 	velocity = vecNormalize(velocity) * SPEED * dt;
 }
+
 
 void Player::checkCollision(const globals::MazeArr& maze)
 {

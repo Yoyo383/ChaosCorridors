@@ -23,7 +23,7 @@ struct Client
 {
 	sockets::Socket tcpSocket;
 	sockets::Address udpAddress;
-	Player player;
+	Player player = Player({ 0, 0 });
 	std::string name;
 	int score = 0;
 };
