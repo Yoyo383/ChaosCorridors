@@ -87,6 +87,7 @@ void GameState::receiveUDP()
 	try
 	{
 		protocol::PacketType receivedType = protocol::PacketType::NO_PACKET;
+		// receive until received NO_PACKET
 		do
 		{
 			protocol::Packet packet = protocol::receivePacket(members.udpSocket);
@@ -126,6 +127,7 @@ void GameState::receiveTCP()
 	try
 	{
 		std::string receivedKey = "";
+		// receive until received empty message
 		do
 		{
 			auto [key, value] = protocol::receiveKeyValue(members.tcpSocket);
@@ -227,6 +229,7 @@ void GameState::update()
 
 	movePlayers();
 
+	// send position NUMBER_OF_TICKS times per second.
 	if (elapsedTime >= 1.0f / NUMBER_OF_TICKS)
 	{
 		sendPosition();
@@ -258,6 +261,64 @@ void GameState::update()
 	player.calculateVelocity(wasd, dt);
 	player.checkCollision(maze);
 	player.move();
+}
+
+void GameState::draw()
+{
+	members.window.clear(sf::Color::Black);
+
+	drawFloorAndCeiling();
+	drawWalls();
+
+	std::vector<Sprite> sprites;
+
+	for (auto& [index, position] : players)
+	{
+		sprites.push_back({ "character", position });
+	}
+
+	for (auto& [index, position] : bullets)
+	{
+		sprites.push_back({ "bullet", position });
+	}
+
+	std::sort(sprites.begin(), sprites.end(),
+		[this](Sprite pos1, Sprite pos2)
+		{
+			return vecMagnitude(pos1.position - player.pos) > vecMagnitude(pos2.position - player.pos);
+		}
+	);
+
+	for (auto& sprite : sprites)
+	{
+		drawSprite(sprite.position, sprite.texture);
+	}
+
+	for (int i = 0; i < player.lives; i++)
+	{
+		heartSprite.setPosition({ i * heartSprite.getGlobalBounds().width, 0 });
+		members.window.draw(heartSprite);
+	}
+
+	std::string secondsString = std::to_string(timer % 60);
+	std::string leadingZeros = std::string(2 - std::min(2, (int)secondsString.length()), '0');
+	// pad seconds with zeros
+	std::string timerString = std::to_string(timer / 60) + ":" + leadingZeros + secondsString;
+	timerText.setString(timerString);
+
+	sf::Color timerColor;
+	timerColor.g = (int)((255.0f / globals::GAME_TIME) * timer);
+	timerColor.r = 255 - timerColor.g;
+	timerText.setFillColor(timerColor);
+
+	members.window.draw(timerText);
+
+	scoreText.setString(std::to_string(score));
+	members.window.draw(scoreText);
+
+	members.window.draw(crosshair);
+
+	members.window.display();
 }
 
 Ray GameState::raycast(float angle)
@@ -342,64 +403,6 @@ Ray GameState::raycast(float angle)
 		hitCoord = hitPos.x;
 
 	return { foundCell, verticalHit, distance, hitCoord - int(hitCoord) };
-}
-
-void GameState::draw()
-{
-	members.window.clear(sf::Color::Black);
-
-	drawFloorAndCeiling();
-	drawWalls();
-
-	std::vector<Sprite> sprites;
-
-	for (auto& [index, position] : players)
-	{
-		sprites.push_back({ "character", position });
-	}
-
-	for (auto& [index, position] : bullets)
-	{
-		sprites.push_back({ "bullet", position });
-	}
-
-	std::sort(sprites.begin(), sprites.end(),
-		[this](Sprite pos1, Sprite pos2)
-		{
-			return vecMagnitude(pos1.position - player.pos) > vecMagnitude(pos2.position - player.pos);
-		}
-	);
-
-	for (auto& sprite : sprites)
-	{
-		drawSprite(sprite.position, sprite.texture);
-	}
-
-	for (int i = 0; i < player.lives; i++)
-	{
-		heartSprite.setPosition({ i * heartSprite.getGlobalBounds().width, 0 });
-		members.window.draw(heartSprite);
-	}
-
-	std::string secondsString = std::to_string(timer % 60);
-	std::string leadingZeros = std::string(2 - std::min(2, (int)secondsString.length()), '0');
-	// pad seconds with zeros
-	std::string timerString = std::to_string(timer / 60) + ":" + leadingZeros + secondsString;
-	timerText.setString(timerString);
-
-	sf::Color timerColor;
-	timerColor.g = (int)((255.0f / globals::GAME_TIME) * timer);
-	timerColor.r = 255 - timerColor.g;
-	timerText.setFillColor(timerColor);
-
-	members.window.draw(timerText);
-
-	scoreText.setString(std::to_string(score));
-	members.window.draw(scoreText);
-
-	members.window.draw(crosshair);
-
-	members.window.display();
 }
 
 void GameState::drawFloorAndCeiling()

@@ -3,7 +3,21 @@
 #include "states/StateManager.hpp"
 #include "Members.hpp"
 
-constexpr unsigned short PORT = 12345;
+static void loadTextures(TextureManager& textures)
+{
+	textures.addTexture("floor", "assets/wood.png");
+	textures["floor"].setRepeated(true);
+	textures.addTexture("ceiling", "assets/colorstone.png");
+	textures["ceiling"].setRepeated(true);
+	textures.addTexture("wall", "assets/redbrick.png");
+	textures.addTexture("character", "assets/character.png");
+	textures.addTexture("playButton", "assets/playButton.png");
+	textures.addTexture("playButtonPressed", "assets/playButtonPressed.png");
+	textures.addTexture("bullet", "assets/bullet.png");
+	textures.addTexture("heart", "assets/heart.png");
+	textures.addTexture("logo", "assets/logo.png");
+	textures.addTexture("crosshair", "assets/crosshair.png");
+}
 
 int main()
 {
@@ -11,28 +25,22 @@ int main()
 
 	Members members;
 
+	// creating window
 	members.window.create(sf::VideoMode(800, 600), "Chaos Corridors", sf::Style::Titlebar | sf::Style::Close);
 	members.window.setVerticalSyncEnabled(true);
 
-	members.textures.addTexture("floor", "assets/wood.png");
-	members.textures["floor"].setRepeated(true);
-	members.textures.addTexture("ceiling", "assets/colorstone.png");
-	members.textures["ceiling"].setRepeated(true);
-	members.textures.addTexture("wall", "assets/redbrick.png");
-	members.textures.addTexture("character", "assets/character.png");
-	members.textures.addTexture("playButton", "assets/playButton.png");
-	members.textures.addTexture("playButtonPressed", "assets/playButtonPressed.png");
-	members.textures.addTexture("bullet", "assets/bullet.png");
-	members.textures.addTexture("heart", "assets/heart.png");
-	members.textures.addTexture("logo", "assets/logo.png");
-	members.textures.addTexture("crosshair", "assets/crosshair.png");
+	// loading textures
+	loadTextures(members.textures);
 
+	// loading font
 	if (!members.font.loadFromFile("assets/retro.ttf"))
 		throw std::exception("Couldn't load font.");
 
+	// loading main menu
 	std::unique_ptr<MainMenuState> mainMenuState = std::make_unique<MainMenuState>(members);
 	members.manager.addState(std::move(mainMenuState));
 
+	// game loop
 	while (members.manager.isRunning())
 	{
 		members.manager.changeState();

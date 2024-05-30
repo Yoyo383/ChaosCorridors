@@ -11,8 +11,8 @@ namespace globals
 	inline const int MAX_LIFE = 3;
 
 	// maze size
-	inline const int MAZE_WIDTH = 4;
-	inline const int MAZE_HEIGHT = 4;
+	inline const int MAZE_WIDTH = 8;
+	inline const int MAZE_HEIGHT = 8;
 
 	// the world array size (with walls)
 	inline const int WORLD_WIDTH = MAZE_WIDTH * 2 + 1;
