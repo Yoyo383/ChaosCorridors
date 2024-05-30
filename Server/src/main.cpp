@@ -142,10 +142,7 @@ static void handleClient(sockets::Socket socket, sockets::Address address)
 				closed = true;
 				count--;
 				if (timer > 0)
-				{
 					broadcast(protocol::keyValueMessage("exit", std::to_string(index)));
-					broadcast(protocol::keyValueMessage("join", std::to_string(numberOfPlayers - count)));
-				}
 			}
 		}
 		catch (sockets::exception& err)
@@ -348,7 +345,7 @@ static void sendBullets(const sockets::Socket& udpSocket)
 	forEachUDP(
 		[udpSocket](sockets::Address address)
 		{
-			 // clear the bullets
+			// clear the bullets
 			protocol::Packet packet;
 			packet.type = protocol::PacketType::CLEAR_BULLETS;
 			protocol::sendPacket(udpSocket, address, packet);
