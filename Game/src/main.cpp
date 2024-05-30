@@ -3,6 +3,9 @@
 #include "states/StateManager.hpp"
 #include "Members.hpp"
 
+const int WINDOW_WIDTH = 800;
+const int WINDOW_HEIGHT = 600;
+
 /**
  * @brief Loads all the textures.
  * @param textures The texture manager.
@@ -34,7 +37,7 @@ int main()
 	Members members;
 
 	// creating window
-	members.window.create(sf::VideoMode(800, 600), "Chaos Corridors", sf::Style::Titlebar | sf::Style::Close);
+	members.window.create(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Chaos Corridors", sf::Style::Titlebar | sf::Style::Close);
 	members.window.setVerticalSyncEnabled(true);
 
 	// loading textures
