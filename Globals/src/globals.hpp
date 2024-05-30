@@ -19,7 +19,7 @@ namespace globals
 	inline const int WORLD_HEIGHT = MAZE_HEIGHT * 2 + 1;
 
 	// how many seconds is the game
-	inline const int GAME_TIME = 120;
+	inline const int GAME_TIME = 180;
 
 	// cell state
 	enum

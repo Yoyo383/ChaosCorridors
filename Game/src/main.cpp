@@ -3,6 +3,10 @@
 #include "states/StateManager.hpp"
 #include "Members.hpp"
 
+/**
+ * @brief Loads all the textures.
+ * @param textures The texture manager.
+ */
 static void loadTextures(TextureManager& textures)
 {
 	textures.addTexture("floor", "assets/wood.png");
@@ -19,6 +23,10 @@ static void loadTextures(TextureManager& textures)
 	textures.addTexture("crosshair", "assets/crosshair.png");
 }
 
+/**
+ * @brief The main function.
+ * @return Exit code.
+ */
 int main()
 {
 	sockets::initialize();

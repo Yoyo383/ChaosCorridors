@@ -183,7 +183,6 @@ namespace sockets
 		 * @brief Sends a variable to the socket.
 		 * @tparam T The type of the variable.
 		 * @param obj The variable.
-		 * @return The number of bytes sent.
 		 */
 		template<typename T> void send(T obj) const
 		{
@@ -191,10 +190,7 @@ namespace sockets
 			const char* realBytes = bytes.data();
 			int sent = 0;
 			do
-			{
 				sent += send(realBytes + sizeof(char) * sent, sizeof(T));
-				//realBytes = realBytes + sizeof(char) * sent;
-			}
 			while (sent < sizeof(T));
 		}
 		/**
