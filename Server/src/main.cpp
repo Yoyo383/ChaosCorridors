@@ -149,7 +149,7 @@ static void handleClient(sockets::Socket socket, sockets::Address address)
 				std::lock_guard lock(clientsMutex);
 				socket.close();
 				clients.erase(index);
-				std::cout << "deleting index " << index << std::endl;
+				std::cout << "Disconnected from " << address.ip << ":" << address.port << std::endl;
 				closed = true;
 				count--;
 				if (timer > 0)
