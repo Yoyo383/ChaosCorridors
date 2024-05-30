@@ -93,18 +93,7 @@ void GameState::receiveUDP()
 			protocol::Packet packet = protocol::receivePacket(members.udpSocket);
 			receivedType = packet.type;
 
-			if (packet.type == protocol::PacketType::INIT_PLAYER)
-			{
-				if (packet.index == members.playerIndex)
-				{
-					player.pos = packet.position;
-					player.lives = globals::MAX_LIFE;
-				}
-				else
-					players[packet.index] = packet.position;
-			}
-
-			else if (packet.type == protocol::PacketType::UPDATE_BULLET)
+			if (packet.type == protocol::PacketType::UPDATE_BULLET)
 				bullets[packet.index] = packet.position;
 
 			else if (packet.type == protocol::PacketType::CLEAR_BULLETS)
@@ -160,6 +149,21 @@ bool GameState::receiveTCP()
 				members.tcpSocket.close();
 				members.udpSocket.close();
 				return false;
+			}
+
+			else if (key == "init") // value is index, x, y
+			{
+				std::vector<std::string> split = splitString(value, ' ');
+				int index = std::stoi(split[0]);
+				float x = std::stof(split[1]);
+				float y = std::stof(split[2]);
+				if (index == members.playerIndex)
+				{
+					player.pos = { x, y };
+					player.lives = globals::MAX_LIFE;
+				}
+				else
+					players[index] = { x, y };
 			}
 
 		}

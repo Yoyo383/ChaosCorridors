@@ -94,6 +94,17 @@ static sf::Vector2f randomPosition()
 }
 
 /**
+ * @brief Broadcasts a new position of a player.
+ * @param index The index of the player.
+ * @param position The new position.
+ */
+static void broadcastNewPosition(int index, sf::Vector2f position)
+{
+	std::string value = std::to_string(index) + " " + std::to_string(position.x) + " " + std::to_string(position.y);
+	broadcast(protocol::keyValueMessage("init", value));
+}
+
+/**
  * @brief Handles TCP connection for each client.
  * @param socket The client socket.
  * @param address The client's TCP address.
@@ -170,17 +181,7 @@ static void bulletPlayerCollision(int index, Client& client, Bullet& bullet, con
 		client.player.pos = randomPosition();
 		client.player.lives = globals::MAX_LIFE;
 
-		protocol::Packet packet;
-		packet.type = protocol::PacketType::INIT_PLAYER;
-		packet.index = index;
-		packet.position = client.player.pos;
-
-		forEachUDP(
-			[packet, udpSocket](sockets::Address address)
-			{
-				protocol::sendPacket(udpSocket, address, packet);
-			}
-		);
+		broadcastNewPosition(index, client.player.pos);
 	}
 	else // if player got hit remove a life and notify the player
 		client.tcpSocket.send(protocol::keyValueMessage("hit", ""));
@@ -243,20 +244,8 @@ static void initGame(const sockets::Socket& udpSocket)
 	broadcast(protocol::keyValueMessage("timer", std::to_string(timer)));
 
 	// send initial starting positions
-	forEachUDP(
-		[udpSocket](sockets::Address address)
-		{
-			for (auto& [index, client] : clients)
-			{
-				protocol::Packet packet;
-				packet.type = protocol::PacketType::INIT_PLAYER;
-				packet.index = index;
-				packet.position = client.player.pos;
-
-				protocol::sendPacket(udpSocket, address, packet);
-			}
-		}
-	);
+	for (auto& [index, client] : clients)
+		broadcastNewPosition(index, client.player.pos);
 }
 
 /**

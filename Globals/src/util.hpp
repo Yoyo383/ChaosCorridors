@@ -1,6 +1,17 @@
 #pragma once
 
 #include "SFML/System/Vector2.hpp"
+#include <vector>
+#include <string>
+#include <sstream>
+
+/**
+ * @brief Splits a string with a seperator.
+ * @param str The string to split.
+ * @param seperator The seperator character.
+ * @return A vector of the strings split.
+ */
+std::vector<std::string> splitString(std::string str, char seperator);
 
 /**
  * @brief Generates a random int between min and max (both inclusive).

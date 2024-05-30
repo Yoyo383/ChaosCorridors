@@ -2,6 +2,20 @@
 #include <math.h>
 #include <random>
 
+std::vector<std::string> splitString(std::string str, char seperator)
+{
+	std::stringstream stream(str);
+	std::string segment;
+	std::vector<std::string> result;
+
+	while (std::getline(stream, segment, seperator))
+	{
+		result.push_back(segment);
+	}
+
+	return result;
+}
+
 int randInt(int min, int max)
 {
 	thread_local std::mt19937 generator{ std::random_device{}() };
