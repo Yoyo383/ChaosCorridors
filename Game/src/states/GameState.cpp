@@ -212,7 +212,9 @@ void GameState::update()
 		{
 			members.manager.quit();
 			members.tcpSocket.send(protocol::keyValueMessage("close", ""));
+			members.tcpSocket.recv(1024); // to stop closing with RST
 			members.tcpSocket.close();
+
 			members.udpSocket.close();
 			return;
 		}

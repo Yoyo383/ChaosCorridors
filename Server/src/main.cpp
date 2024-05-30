@@ -132,7 +132,7 @@ static void handleClient(sockets::Socket socket, sockets::Address address)
 				index = count;
 				socket.send(protocol::keyValueMessage("index", std::to_string(index)));
 
-				clients[index] = Client{ socket, {"", 0}, Player(randomPosition()), value, 0};
+				clients[index] = Client{ socket, {"", 0}, Player(randomPosition()), value, 0 };
 
 				broadcast(protocol::keyValueMessage("player", value));
 			}
@@ -449,6 +449,7 @@ void main()
 		// wait for all clients to be in the broadcast list
 		while (clients.size() != numberOfPlayers) {}
 
+		std::this_thread::sleep_for(std::chrono::milliseconds(500));
 		broadcast(protocol::keyValueMessage("soon", ""));
 
 		std::this_thread::sleep_for(std::chrono::seconds(SECONDS_BEFORE_START));
