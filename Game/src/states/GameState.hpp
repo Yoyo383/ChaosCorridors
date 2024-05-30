@@ -75,8 +75,9 @@ public:
 
 	/**
 	 * @brief Receives packets on TCP and process them.
+	 * @return Whether the game continues (if received message that says the game ended, returns false).
 	 */
-	void receiveTCP();
+	bool receiveTCP();
 
 	/**
 	 * @brief Moves all players by a bit to their updated positions.

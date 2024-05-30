@@ -122,7 +122,7 @@ void GameState::receiveUDP()
 	}
 }
 
-void GameState::receiveTCP()
+bool GameState::receiveTCP()
 {
 	try
 	{
@@ -159,7 +159,7 @@ void GameState::receiveTCP()
 				members.tcpSocket.send(protocol::keyValueMessage("close", ""));
 				members.tcpSocket.close();
 				members.udpSocket.close();
-				return;
+				return false;
 			}
 
 		}
@@ -169,6 +169,8 @@ void GameState::receiveTCP()
 	{
 		std::cout << "TCP error: " << err.what() << std::endl;
 	}
+
+	return true;
 }
 
 void GameState::movePlayers()
@@ -224,7 +226,8 @@ void GameState::update()
 			isFocused = true;
 	}
 
-	receiveTCP();
+	if (!receiveTCP())
+		return;
 	receiveUDP();
 
 	movePlayers();
