@@ -58,7 +58,5 @@ private:
 
 	std::string ip;
 
-	std::future<bool> connectFuture;
-	bool canConnect;
-	bool doesFutureExist;
+	bool isConnected;
 };

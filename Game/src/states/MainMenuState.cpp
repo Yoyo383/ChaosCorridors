@@ -14,8 +14,7 @@ MainMenuState::MainMenuState(Members& members)
 	hostButton({ members.window.getSize().x / 2.0f, members.window.getSize().y / 2.0f }, members.textures, "playButton", "playButtonPressed"),
 	nameField({ members.window.getSize().x / 2.0f, 100 }, members.font, "Name: ", 10, 30),
 	ipField({ members.window.getSize().x / 2.0f, 150 }, members.font, "IP: ", 16, 30),
-	canConnect(true),
-	doesFutureExist(false)
+	isConnected(false)
 {
 	hostButton.setSizeRelativeToWindow(members.window, 0.2f);
 	statusText.setFont(members.font);
@@ -89,13 +88,7 @@ void MainMenuState::handleButtonPress()
 		statusText.setString("Please enter a name.");
 		return;
 	}
-
-	if (canConnect)
-	{
-		connectFuture = std::async(std::launch::async, &MainMenuState::connectToServer, this);
-		canConnect = false;
-		doesFutureExist = true;
-	}
+	isConnected = connectToServer();
 }
 
 void MainMenuState::update()
@@ -126,20 +119,8 @@ void MainMenuState::update()
 		}
 	}
 
-	// checks if connecting has answer
-	if (!doesFutureExist || connectFuture.wait_for(0s) != std::future_status::ready)
-		return;
-
-	// if not connected then bad
-	bool connected = connectFuture.get();
-	if (!connected)
-	{
-		canConnect = true;
-		doesFutureExist = false;
-		return;
-	}
-
-	startConnection();
+	if (isConnected)
+		startConnection();
 }
 
 void MainMenuState::draw()
